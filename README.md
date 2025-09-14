@@ -1,21 +1,36 @@
-# KB Labs — Product Template
+# KB Labs Core (@kb-labs/core)
 
-This is the **baseline template** for products under the **@kb-labs** namespace.  
-It is designed for multi-package repositories using pnpm workspaces.  
+This is the **core library** for all KB Labs products and tools.  
+It provides essential utilities, system interfaces, and shared functionality across the KB Labs ecosystem.  
 
-**Goals:** Fast bootstrap, unified quality rules, simple publishing, and reusable core.
+**Goals:** Reliable core utilities, consistent APIs, and extensible architecture for all KB Labs projects.
 
 ## 📁 Repository Structure
 
 ```
 apps/
-├── demo/                    # Example app / playground
+├── demo/                    # Example app demonstrating core functionality
 packages/
-├── package-name/            # Example package (lib/cli/adapter)
+├── config/                  # Configuration management and runtime utilities
+├── sys/                     # System interfaces (logging, filesystem, repository)
 fixtures/                    # Fixtures for snapshot/integration testing
 docs/
 └── adr/                     # Architecture Decision Records (ADRs)
 ```
+
+## 📦 Core Packages
+
+### @kb-labs/core-config
+Configuration management and runtime utilities:
+- Environment variable handling
+- Runtime configuration
+- Type-safe configuration schemas
+
+### @kb-labs/core-sys
+System interfaces and utilities:
+- **Logging**: Structured logging with multiple sinks
+- **Filesystem**: Cross-platform file system operations
+- **Repository**: Git repository utilities and metadata
 
 ## 🚀 Quick Start
 
@@ -34,15 +49,23 @@ pnpm test        # Run tests
 pnpm lint        # Lint code
 ```
 
-### Creating a New Package
+### Using Core Packages
 
 ```bash
-# Using the CLI tool (recommended)
-pnpm dlx @kb-labs/create-pkg my-new-pkg
+# Install specific core packages
+pnpm add @kb-labs/core-config @kb-labs/core-sys
 
-# Or manually copy and modify
-cp -r packages/package-name packages/<new-package-name>
-# Then update metadata and imports
+# Example usage
+import { getLogger } from '@kb-labs/core-sys/logging'
+import { getEnvVar } from '@kb-labs/core-config'
+```
+
+### Creating a New Core Package
+
+```bash
+# Copy existing package structure
+cp -r packages/config packages/<new-package-name>
+# Update package.json, tsconfig, and imports
 ```
 
 ## 🛠️ Available Scripts
@@ -68,11 +91,34 @@ cp -r packages/package-name packages/<new-package-name>
 - **Testing:** Vitest with fixtures for integration testing
 - **Versioning:** SemVer with automated releases through Changesets
 - **Architecture:** Document decisions in ADRs (see `docs/adr/`)
+- **API Stability:** Core packages maintain backward compatibility
+- **Documentation:** All public APIs must be documented
 
 ## 🔧 Requirements
 
 - **Node.js:** >= 18.18.0
 - **pnpm:** >= 9.0.0
+
+## 🚧 Roadmap
+
+### Planned Core Packages
+
+- **@kb-labs/core-crypto**: Cryptographic utilities and secure operations
+- **@kb-labs/core-http**: HTTP client with retry, timeout, and error handling
+- **@kb-labs/core-validation**: Schema validation and data transformation
+- **@kb-labs/core-cache**: Caching layer with multiple backends
+- **@kb-labs/core-storage**: Unified storage interface for files, databases, and cloud
+- **@kb-labs/core-events**: Event system and pub/sub functionality
+- **@kb-labs/core-metrics**: Performance monitoring and metrics collection
+
+### Future Enhancements
+
+- Plugin system for extensibility
+- Cross-platform compatibility improvements
+- Performance optimizations
+- Additional logging sinks (Sentry, DataDog, etc.)
+- Enhanced configuration validation
+- TypeScript utility types and helpers
 
 ## 📄 License
 
