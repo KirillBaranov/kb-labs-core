@@ -9,7 +9,7 @@ export default [
   js.configs.recommended,
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
-    ignores: ['eslint.config.js'],
+    ignores: ['eslint.config.js', '**/__tests__/**'],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {

@@ -3,5 +3,10 @@
   "references": [
     { "path": "packages/package-name" },
     { "path": "apps/demo" }
+  ],
+  "exclude": [
+    "**/__tests__/**",
+    "dist",
+    "node_modules"
   ]
 }

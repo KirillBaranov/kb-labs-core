@@ -26,15 +26,19 @@
     "build": "pnpm -r run build",
     "build:clean": "pnpm -r run clean && pnpm -r run build",
     "dev": "pnpm -r --parallel run dev",
+
     "// ——— quality": "────────────────────────────────────────",
     "lint": "pnpm -r run lint",
     "lint:fix": "pnpm -r run lint:fix",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "type-check": "tsc -b tsconfig.tools.json",
+
     "// ——— ci/qa": "────────────────────────────────────────",
     "check": "pnpm lint && pnpm type-check && pnpm test -- --run",
     "ci": "pnpm clean && pnpm build && pnpm check",
+
     "// ——— cleanup": "────────────────────────────────────────",
     "clean": "pnpm -r run clean",
     "clean:all": "rimraf node_modules packages/*/node_modules apps/*/node_modules dist"

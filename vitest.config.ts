@@ -27,6 +27,16 @@ export default defineConfig({
         '**/__tests__/**',
         '**/*.spec.*',
         '**/*.test.*',
+        // non-source and config files
+        'eslint.config.js',
+        '**/vitest.config.ts',
+        '**/tsup.config.ts',
+        '**/tsconfig*.json',
+        'apps/**',
+        // barrel files / types
+        '**/index.ts',
+        '**/types.ts',
+        '**/types/**'
       ],
     },
   },
