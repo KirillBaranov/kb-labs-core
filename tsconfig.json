@@ -1,7 +1,8 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/package-name" },
+    { "path": "packages/sys" },
+    { "path": "packages/config" },
     { "path": "apps/demo" }
   ],
   "exclude": [

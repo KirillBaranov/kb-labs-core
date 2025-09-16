@@ -15,7 +15,8 @@ export default [
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './tsconfig.json',
+        // Use TS Project Service to auto-detect tsconfig per folder
+        projectService: true,
       },
       globals: {
         // Browser globals for demo apps
