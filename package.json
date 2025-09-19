@@ -36,6 +36,14 @@
     "packages/*"
   ],
   "scripts": {
+    "// ——— devkit": "────────────────────────────────────────",
+    "sync": "node scripts/devkit-sync.mjs",
+    "sync:force": "node scripts/devkit-sync.mjs --force",
+    "sync:agents": "node scripts/devkit-sync.mjs agents",
+    "sync:cursorrules": "node scripts/devkit-sync.mjs cursorrules",
+    "sync:vscode": "node scripts/devkit-sync.mjs vscode",
+    "sync:check": "node scripts/devkit-sync.mjs --check",
+    "postinstall": "pnpm -s sync || true",
     "// ——— core": "────────────────────────────────────────",
     "clean": "rimraf dist",
     "build:js": "tsup --config tsup.config.ts",
@@ -44,7 +52,6 @@
     "build:all": "pnpm -r run build",
     "build:clean": "pnpm -r run clean && pnpm -r run build",
     "dev": "pnpm -r --parallel run dev",
-
     "// ——— quality": "────────────────────────────────────────",
     "lint": "pnpm -r run lint",
     "lint:fix": "pnpm -r run lint:fix",
@@ -53,14 +60,9 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "type-check": "tsc -b tsconfig.tools.json",
-
     "// ——— ci/qa": "────────────────────────────────────────",
     "check": "pnpm lint && pnpm type-check && pnpm test -- --run",
     "ci": "pnpm clean && pnpm build && pnpm check",
-    "sync": "node scripts/devkit-sync.mjs",
-    "sync:check": "node scripts/devkit-sync.mjs --check",
-    "drift:check": "pnpm sync:check",
-
     "// ——— cleanup": "────────────────────────────────────────",
     "clean:all": "rimraf node_modules packages/*/node_modules apps/*/node_modules dist"
   },
