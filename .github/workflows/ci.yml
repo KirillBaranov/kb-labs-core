@@ -3,26 +3,34 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - '.vscode/**'
+      - '.idea/**'
   pull_request:
-    branches: [main]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   drift-check:
+    name: DevKit Drift Check
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js and pnpm
-        uses: KirillBaranov/kb-labs-devkit/.github/actions/setup-node-pnpm@main
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: KirillBaranov/kb-labs-devkit/.github/actions/setup-node-pnpm@main
         with:
           node-version: '20'
-          pnpm-version: '9.x'
-      
-      - name: Install dependencies
-        run: pnpm i
-      
-      - name: Check sync drift
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+      - name: Run drift check
         run: pnpm sync:check
 
   ci:
@@ -31,3 +39,5 @@ jobs:
     with:
       node-version: '20'
       run-coverage: true
+    # add if secrets are needed
+    # secrets: inherit
