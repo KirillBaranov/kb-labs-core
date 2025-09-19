@@ -1,24 +1,6 @@
 {
+  "extends": "@kb-labs/devkit/tsconfig/node.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2022", "DOM"],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-
-    "strict": true,
-    "noImplicitAny": true,
-    "noUncheckedIndexedAccess": true,
-    "skipLibCheck": true,
-
-    "declaration": false,
-    "declarationMap": false,
-    "sourceMap": true,
-    "inlineSources": true,
-
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-
     "baseUrl": "."
   },
   "exclude": [

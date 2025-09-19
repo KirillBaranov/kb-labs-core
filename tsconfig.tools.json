@@ -2,7 +2,8 @@
   "extends": "./tsconfig.base.json",
   "files": [],
   "references": [
-    { "path": "packages/package-name" },
+    { "path": "packages/config" },
+    { "path": "packages/sys" },
     { "path": "apps/demo" }
   ],
   "compilerOptions": {

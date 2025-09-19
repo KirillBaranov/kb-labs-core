@@ -64,3 +64,6 @@ packages/*/coverage/
 analytics/
 *.sqlite
 *.db
+
+# kb-labs
+kb-labs/DEVKIT_SYNC.json
