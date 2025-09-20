@@ -1,4 +1,4 @@
-import { LogRecord, Redactor } from "./types";
+import type { LogRecord, Redactor } from "./types";
 
 /** Simple key-based redactor; masks values by key in meta recursively. */
 export function createRedactor(opts?: { keys?: string[]; mask?: string }): Redactor {
@@ -13,7 +13,7 @@ export function createRedactor(opts?: { keys?: string[]; mask?: string }): Redac
             }
             return out;
         }
-        if (Array.isArray(v)) return v.map((x) => redactValue(x, path));
+        if (Array.isArray(v)) {return v.map((x) => redactValue(x, path));}
         return v;
     }
 

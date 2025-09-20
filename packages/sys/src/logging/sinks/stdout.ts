@@ -1,4 +1,4 @@
-import { LogRecord, LogSink } from "../types";
+import type { LogRecord, LogSink } from "../types";
 
 export const stdoutSink: LogSink = {
     handle(rec: LogRecord) {

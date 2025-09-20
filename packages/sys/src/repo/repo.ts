@@ -15,7 +15,7 @@ export async function findRepoRoot(startDir = process.cwd()): Promise<string> {
             try { await fsp.access(path.join(dir, m)); return dir; } catch { /* continue */ }
         }
         const parent = path.dirname(dir);
-        if (parent === dir) return dir; // FS root as fallback
+        if (parent === dir) {return dir;} // FS root as fallback
         dir = parent;
     }
 }

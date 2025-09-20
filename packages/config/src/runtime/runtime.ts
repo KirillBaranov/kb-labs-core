@@ -7,7 +7,7 @@
 
 import { promises as fsp } from "node:fs";
 import path from "node:path";
-import {Diagnostic, FindNearestConfigOpts, JsonReadResult} from "../types";
+import type { Diagnostic, FindNearestConfigOpts, JsonReadResult } from "../types";
 
 /** Find nearest config file walking up from startDir until stopDir or FS root. */
 export async function findNearestConfig(opts: FindNearestConfigOpts): Promise<{ path: string | null; tried: string[] }> {
@@ -27,8 +27,8 @@ export async function findNearestConfig(opts: FindNearestConfigOpts): Promise<{ 
             } catch { /* continue */ }
         }
         const parent = path.dirname(dir);
-        if (parent === dir) break;
-        if (stop && (dir === stop || parent === stop)) break;
+        if (parent === dir) { break; }
+        if (stop && (dir === stop || parent === stop)) { break; }
         dir = parent;
     }
     return { path: null, tried };
@@ -54,24 +54,24 @@ export async function readJsonWithDiagnostics<T = unknown>(p: string): Promise<J
 
 /** Shallow pick of defined fields only. */
 export function pickDefined<T extends Record<string, any>>(obj: T | undefined): Partial<T> {
-    if (!obj) return {};
+    if (!obj) { return {}; }
     const out: Partial<T> = {};
     for (const [k, v] of Object.entries(obj)) {
-        if (v !== undefined) (out as any)[k] = v;
+        if (v !== undefined) { (out as any)[k] = v; }
     }
     return out;
 }
 
 /** Deep merge (objects/arrays), ignoring `undefined` on the overlay. */
 export function mergeDefined<T>(base: T, over?: Partial<T>): T {
-    if (!over) return base;
+    if (!over) { return base; }
     if (Array.isArray(base) && Array.isArray(over)) {
         return [...base, ...over.filter(v => v !== undefined)] as unknown as T;
     }
     if (isPlainObject(base) && isPlainObject(over)) {
         const out: any = { ...base };
         for (const [k, v] of Object.entries(over)) {
-            if (v === undefined) continue;
+            if (v === undefined) { continue; }
             if (isPlainObject((base as any)[k]) && isPlainObject(v)) {
                 out[k] = mergeDefined((base as any)[k], v as any);
             } else if (Array.isArray((base as any)[k]) && Array.isArray(v)) {
@@ -90,7 +90,7 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
     return typeof v === "object" && v !== null && Object.getPrototypeOf(v) === Object.prototype;
 }
 
-export interface ResolveConfigArgs<TConfig, TEnvMap = unknown> {
+export interface ResolveConfigArgs<TConfig, _TEnvMap = unknown> {
     defaults: TConfig;
     fileConfig?: Partial<TConfig>;
     envMapper?: (env: NodeJS.ProcessEnv) => Partial<TConfig> | undefined; // product supplies mapping
@@ -106,7 +106,7 @@ export function resolveConfig<TConfig>(args: ResolveConfigArgs<TConfig>): { valu
     const diagnostics: Diagnostic[] = [];
     const envPart = args.envMapper?.(process.env) ?? {};
 
-    let merged = mergeDefined(
+    const merged = mergeDefined(
         mergeDefined(
             mergeDefined(structuredClone(args.defaults), args.fileConfig),
             envPart,
@@ -118,7 +118,7 @@ export function resolveConfig<TConfig>(args: ResolveConfigArgs<TConfig>): { valu
         const res = args.validate(merged);
         if (!res.ok) {
             diagnostics.push({ level: "error", code: "CONFIG_VALIDATION_FAILED", message: "Configuration did not pass validation." });
-            if (res.diagnostics) diagnostics.push(...res.diagnostics);
+            if (res.diagnostics) { diagnostics.push(...res.diagnostics); }
         } else if (res.diagnostics?.length) {
             diagnostics.push(...res.diagnostics);
         }

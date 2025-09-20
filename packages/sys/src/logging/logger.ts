@@ -1,4 +1,4 @@
-import { ConfigureOpts, LogLevel, LogRecord, LogSink, Logger, Redactor } from "./types";
+import type { ConfigureOpts, LogLevel, LogRecord, LogSink, Logger, Redactor } from "./types";
 
 const LEVEL_ORDER: Record<LogLevel, number> = { debug: 10, info: 20, warn: 30, error: 40 };
 
@@ -9,11 +9,11 @@ let categoryFilter: ConfigureOpts["categoryFilter"];
 let clock: () => Date = () => new Date();
 
 export function configureLogger(opts: ConfigureOpts): void {
-    if (opts.level) globalLevel = opts.level;
-    if (opts.sinks) sinks = [...opts.sinks];
-    if (opts.redactor !== undefined) redactor = opts.redactor;
-    if (opts.categoryFilter !== undefined) categoryFilter = opts.categoryFilter;
-    if (opts.clock) clock = opts.clock;
+    if (opts.level) {globalLevel = opts.level;}
+    if (opts.sinks) {sinks = [...opts.sinks];}
+    if (opts.redactor !== undefined) {redactor = opts.redactor;}
+    if (opts.categoryFilter !== undefined) {categoryFilter = opts.categoryFilter;}
+    if (opts.clock) {clock = opts.clock;}
 }
 
 export function addSink(sink: LogSink): void { sinks.push(sink); }
@@ -21,8 +21,8 @@ export function removeSink(sink: LogSink): void { sinks = sinks.filter(s => s !=
 export function setLogLevel(level: LogLevel): void { globalLevel = level; }
 
 function allowedCategory(cat?: string): boolean {
-    if (!categoryFilter) return true;
-    if (Array.isArray(categoryFilter)) return !cat ? false : categoryFilter.includes(cat);
+    if (!categoryFilter) {return true;}
+    if (Array.isArray(categoryFilter)) {return !cat ? false : categoryFilter.includes(cat);}
     return !!cat && categoryFilter.test(cat);
 }
 
@@ -38,8 +38,8 @@ function baseLogger(bindings?: { category?: string; meta?: Record<string, unknow
     const boundMeta = bindings?.meta ?? {};
 
     function emit(level: LogLevel, msg: string, meta?: Record<string, unknown> | Error) {
-        if (LEVEL_ORDER[level] < LEVEL_ORDER[globalLevel]) return;
-        if (!allowedCategory(boundCat)) return;
+        if (LEVEL_ORDER[level] < LEVEL_ORDER[globalLevel]) {return;}
+        if (!allowedCategory(boundCat)) {return;}
 
         let err: LogRecord["err"] | undefined;
         let attach: Record<string, unknown> | undefined;
@@ -77,7 +77,7 @@ export function getLogger(category?: string): Logger {
 /** Generic ENV bootstrap (no product-specific vars). */
 export function configureFromEnv(env: NodeJS.ProcessEnv = process.env): void {
     const lvl = (env.LOG_LEVEL ?? "").toLowerCase();
-    if (lvl === "debug" || lvl === "info" || lvl === "warn" || lvl === "error") setLogLevel(lvl as LogLevel);
+    if (lvl === "debug" || lvl === "info" || lvl === "warn" || lvl === "error") {setLogLevel(lvl as LogLevel);}
 
     const filter = env.LOG_CATEGORY_FILTER;
     if (filter?.length) {
