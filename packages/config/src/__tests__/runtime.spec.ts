@@ -11,7 +11,7 @@ async function makeTmpDir(prefix = 'kb-core-config-') {
 }
 
 async function rmDirSafe(dir: string) {
-  try { await fsp.rm(dir, { recursive: true, force: true }) } catch {}
+  try { await fsp.rm(dir, { recursive: true, force: true }) } catch { }
 }
 
 describe('runtime utils', () => {
@@ -59,7 +59,7 @@ describe('runtime utils', () => {
       await fsp.writeFile(file, '{"x":1}', 'utf8')
       const res = await readJsonWithDiagnostics<{ x: number }>(file)
       expect(res.ok).toBe(true)
-      if (res.ok) expect(res.data.x).toBe(1)
+      if (res.ok) { expect(res.data.x).toBe(1) }
       expect(res.diagnostics).toEqual([])
     })
 
@@ -68,14 +68,14 @@ describe('runtime utils', () => {
       await fsp.writeFile(file, '{x:}', 'utf8')
       const res = await readJsonWithDiagnostics(file)
       expect(res.ok).toBe(false)
-      if (!res.ok) expect(res.diagnostics.find(d => d.code === 'JSON_PARSE_FAILED')).toBeTruthy()
+      if (!res.ok) { expect(res.diagnostics.find(d => d.code === 'JSON_PARSE_FAILED')).toBeTruthy() }
     })
 
     it('returns diagnostics on read error', async () => {
       const file = path.join(tmp, 'missing.json')
       const res = await readJsonWithDiagnostics(file)
       expect(res.ok).toBe(false)
-      if (!res.ok) expect(res.diagnostics.find(d => d.code === 'FILE_READ_FAILED')).toBeTruthy()
+      if (!res.ok) { expect(res.diagnostics.find(d => d.code === 'FILE_READ_FAILED')).toBeTruthy() }
     })
   })
 
@@ -107,9 +107,9 @@ describe('runtime utils', () => {
     it('applies precedence: defaults < file < env < cli; and validate', () => {
       const defaults = { a: 1, b: { x: 1 }, c: 'd', f: 0 }
       const file = { a: 2, b: { y: 2 } }
-      const envMapper = (env: NodeJS.ProcessEnv) => ({ b: { z: Number(env.TEST_Z ?? 0) }, c: env.TEST_C })
+      const envMapper = (env: NodeJS.ProcessEnv) => ({ b: { x: Number(env.TEST_X ?? 1), z: Number(env.TEST_Z ?? 0) }, c: env.TEST_C })
       const cli = { c: 'cli', f: undefined as unknown as number }
-      const validate = (cfg: typeof defaults) => ({ ok: cfg.a > 0, diagnostics: [{ level: 'info', code: 'VALIDATED', message: 'ok' }] })
+      const validate = (cfg: typeof defaults) => ({ ok: cfg.a > 0, diagnostics: [{ level: 'info' as const, code: 'VALIDATED', message: 'ok' }] })
 
       const { value, diagnostics } = resolveConfig({ defaults, fileConfig: file as any, envMapper, cliOverrides: cli, validate })
 

@@ -45,7 +45,7 @@ describe.sequential('redactor', () => {
       mask: '***',
     })
     const seen: any[] = []
-    configureLogger({ redactor: (r) => redact(r), sinks: [{ handle: r => seen.push(r) }] })
+    configureLogger({ redactor: (r) => redact(r), sinks: [{ handle: r => { seen.push(r) } }] })
     getLogger('x').info('ok', { token: 'secret', keep: 1 })
     await Promise.resolve();
     await new Promise(r => setTimeout(r, 1))
@@ -65,17 +65,17 @@ describe.sequential('sinks', () => {
     await Promise.resolve();
     await new Promise(r => setTimeout(r, 1))
     expect(spy).toHaveBeenCalled()
-    const call = spy.mock.calls[0][0] as string
+    const call = spy.mock.calls[0]?.[0] as string
     const obj = JSON.parse(call.trim())
     expect(obj).toEqual({ time: '2020-01-01T00:00:00.000Z', level: 'info', category: 'cat', msg: 'hello', meta: { a: 1 } })
     spy.mockRestore()
   })
 
   it('stdoutSink routes based on level and formats line', async () => {
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const dbgSpy = vi.spyOn(console, 'debug').mockImplementation(() => {})
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => { })
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { })
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
+    const dbgSpy = vi.spyOn(console, 'debug').mockImplementation(() => { })
 
     configureLogger({ level: 'debug' })
     addSink(stdoutSink)

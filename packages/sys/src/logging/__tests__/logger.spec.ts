@@ -1,7 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { configureLogger, setLogLevel, addSink, removeSink, getLogger } from '..'
-
-type Rec = ReturnType<typeof makeRecord>
+import { describe, it, expect, beforeEach } from 'vitest'
+import { configureLogger, setLogLevel, addSink, getLogger } from '..'
 
 function makeRecord() {
   const records: any[] = []
