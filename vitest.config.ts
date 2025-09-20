@@ -26,7 +26,9 @@ export default defineConfig({
         // barrel files / types
         '**/index.ts',
         '**/types.ts',
-        '**/types/**'
+        '**/types/**',
+        // devkit scripts
+        'scripts/devkit-sync.mjs'
       ],
     },
   },
