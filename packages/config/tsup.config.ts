@@ -7,5 +7,4 @@ export default defineConfig({
     index: 'src/index.ts',
   },
   external: ['ajv', 'ajv-formats', 'yaml', 'picomatch'],
-  dts: true
 })
