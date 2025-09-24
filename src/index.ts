@@ -16,7 +16,7 @@ export {
   // Utils
   toBool,
   toInt
-} from '../packages/config/src';
+} from '@kb-labs/core-config';
 
 export {
   // Types
@@ -26,7 +26,7 @@ export {
   type Redactor,
   type ConfigureOpts,
   type Logger,
-  
+
   // Functions
   configureLogger,
   configureFromEnv,
@@ -39,4 +39,4 @@ export {
   jsonSink,
   toAbsolute,
   findRepoRoot
-} from '../packages/sys/src';
+} from '@kb-labs/core-sys';
