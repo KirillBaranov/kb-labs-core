@@ -18,11 +18,9 @@
   "sideEffects": false,
   "scripts": {
     "clean": "rimraf dist",
-    "build:js": "tsup --config tsup.config.ts",
-    "build:types": "tsc -p tsconfig.types.json --emitDeclarationOnly",
-    "build": "pnpm clean && pnpm build:js && pnpm build:types",
+    "build": "pnpm clean && tsup --config tsup.config.ts",
     "dev": "tsup --config tsup.config.ts --watch",
-    "type-check": "tsc -p tsconfig.types.json --noEmit",
+    "type-check": "tsc --noEmit",
     "test": "vitest run",
     "lint": "eslint . --ignore-pattern 'dist/**'",
     "lint:fix": "eslint . --fix --ignore-pattern 'dist/**'"
