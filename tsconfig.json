@@ -1,9 +1,18 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/sys" },
-    { "path": "packages/config" },
-    { "path": "apps/demo" }
+    {
+      "path": "."
+    },
+    {
+      "path": "packages/sys"
+    },
+    {
+      "path": "packages/config"
+    },
+    {
+      "path": "apps/demo"
+    }
   ],
   "exclude": [
     "**/__tests__/**",
