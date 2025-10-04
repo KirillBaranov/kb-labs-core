@@ -1,0 +1,11 @@
+{
+  "name": "default",
+  "kind": "composite",
+  "scope": "repo",
+  "version": "1.0.0",
+  "products": {
+    "review": {
+      "enabled": true
+    }
+  }
+}

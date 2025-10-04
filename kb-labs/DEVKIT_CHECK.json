@@ -1,0 +1,55 @@
+{
+  "source": "@kb-labs/devkit",
+  "version": "0.1.0",
+  "when": "2025-10-04T22:31:22.477Z",
+  "scope": "managed-only",
+  "items": [
+    "agents",
+    "cursorrules",
+    "vscode",
+    "ci"
+  ],
+  "report": {
+    "schemaVersion": "2-min",
+    "devkit": {
+      "version": "0.1.0",
+      "commit": null
+    },
+    "repo": {},
+    "run": {
+      "id": "39716bc482f8feaa18833735e034c02a",
+      "startedAt": null,
+      "finishedAt": null
+    },
+    "summary": {
+      "filesChanged": 0,
+      "kept": 4,
+      "skipped": 0,
+      "conflicts": 0,
+      "mode": "check",
+      "driftCount": 0
+    },
+    "targets": [
+      {
+        "id": "agents",
+        "status": "ok",
+        "files": []
+      },
+      {
+        "id": "cursorrules",
+        "status": "ok",
+        "files": []
+      },
+      {
+        "id": "vscode",
+        "status": "ok",
+        "files": []
+      },
+      {
+        "id": "ci",
+        "status": "ok",
+        "files": []
+      }
+    ]
+  }
+}
