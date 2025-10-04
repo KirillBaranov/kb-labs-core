@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import path from "node:path";
 import { loadProfile } from "../loader";
-import { ProfileNotFoundError, ProfileValidationError } from "../errors";
+import { ProfileNotFoundError, ProfileSchemaError } from "../errors";
 
 // Mock the dependencies
 vi.mock("@kb-labs/core-config", () => ({
@@ -88,7 +88,7 @@ describe("loadProfile", () => {
     await expect(loadProfile({ name: "nonexistent" })).rejects.toThrow(ProfileNotFoundError);
   });
 
-  it("should throw ProfileValidationError when JSON parsing fails", async () => {
+  it("should throw ProfileSchemaError when JSON parsing fails", async () => {
     mockReadJsonWithDiagnostics.mockResolvedValue({
       ok: false,
       diagnostics: [
@@ -101,10 +101,10 @@ describe("loadProfile", () => {
       ]
     });
 
-    await expect(loadProfile({ name: "invalid-json" })).rejects.toThrow(ProfileValidationError);
+    await expect(loadProfile({ name: "invalid-json" })).rejects.toThrow(ProfileSchemaError);
   });
 
-  it("should throw ProfileValidationError when profile schema validation fails", async () => {
+  it("should throw ProfileSchemaError when profile schema validation fails", async () => {
     const invalidProfile = {
       name: "test",
       // missing required fields
@@ -117,10 +117,10 @@ describe("loadProfile", () => {
       diagnostics: []
     });
 
-    await expect(loadProfile({ name: "invalid-schema" })).rejects.toThrow(ProfileValidationError);
+    await expect(loadProfile({ name: "invalid-schema" })).rejects.toThrow(ProfileSchemaError);
   });
 
-  it("should throw ProfileValidationError for other read errors", async () => {
+  it("should throw ProfileSchemaError for other read errors", async () => {
     mockReadJsonWithDiagnostics.mockResolvedValue({
       ok: false,
       diagnostics: [
@@ -133,7 +133,7 @@ describe("loadProfile", () => {
       ]
     });
 
-    await expect(loadProfile({ name: "permission-error" })).rejects.toThrow(ProfileValidationError);
+    await expect(loadProfile({ name: "permission-error" })).rejects.toThrow(ProfileSchemaError);
   });
 
   it("should construct correct profile path", async () => {

@@ -36,7 +36,10 @@ describe("User Example Integration Test", () => {
       expect(res.name).toBe("default");
       expect(res.kind).toBe("composite");
       expect(Object.keys(res.products)).toEqual(["review"]);
-      expect(res.products.review.enabled).toBe(true);
+
+      if (res.products.review) {
+        expect(res.products.review.enabled).toBe(true);
+      }
 
       console.log("✅ User example works!");
       console.log("Profile name:", res.name);

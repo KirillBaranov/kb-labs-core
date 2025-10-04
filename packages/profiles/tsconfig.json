@@ -1,9 +1,15 @@
 {
   "extends": "@kb-labs/devkit/tsconfig/lib.json",
   "compilerOptions": {
-    "baseUrl": "."
+    "baseUrl": ".",
+    "rootDir": "src"
   },
   "include": [
     "src"
+  ],
+  "exclude": [
+    "/tests/",
+    "dist",
+    "node_modules"
   ]
 }
