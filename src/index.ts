@@ -40,3 +40,24 @@ export {
   toAbsolute,
   findRepoRoot
 } from '@kb-labs/core-sys';
+
+export {
+  // Profile Functions
+  loadProfile,
+  validateProfile,
+  mergeProfiles,
+  resolveProfile,
+
+  // Profile Service
+  ProfileService,
+
+  // Types
+  type RawProfile,
+  type ResolvedProfile,
+  type ResolveOptions,
+
+  // Error Classes
+  ProfileNotFoundError,
+  ExtendResolutionError,
+  SchemaValidationError
+} from '@kb-labs/core-profiles';
