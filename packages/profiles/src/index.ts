@@ -18,3 +18,6 @@ export {
   ExtendResolutionError,
   SchemaValidationError
 } from "./errors";
+
+// Factory
+export * from "./factory";

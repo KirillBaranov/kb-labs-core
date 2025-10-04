@@ -106,7 +106,7 @@ export async function loadWithExtendsAndOverrides(opts: LoadWithExtendsAndOverri
   // Load extends chain (left to right)
   if (profileData.extends && Array.isArray(profileData.extends)) {
     for (const extendName of profileData.extends) {
-      if (typeof extendName !== 'string') continue;
+      if (typeof extendName !== 'string') { continue; }
 
       const extendPath = path.join(profileDir, "..", extendName, "profile.json");
       try {
@@ -124,7 +124,7 @@ export async function loadWithExtendsAndOverrides(opts: LoadWithExtendsAndOverri
   // Load overrides chain (left to right)
   if (profileData.overrides && Array.isArray(profileData.overrides)) {
     for (const overrideName of profileData.overrides) {
-      if (typeof overrideName !== 'string') continue;
+      if (typeof overrideName !== 'string') { continue; }
 
       const overridePath = path.join(profileDir, "..", overrideName, "profile.json");
       try {
@@ -204,12 +204,6 @@ export async function loadProfile(opts: LoadProfileOptions = {}): Promise<LoadPr
   };
 }
 
-/**
- * Load rules from rules/**/*.json files, validate with AJV schema, normalize and de - dup by id
-  * 
- * @param opts - Loading options
-  * @returns Promise resolving to loaded and validated rules
-    */
 export async function loadRulesFrom(opts: LoadWithExtendsAndOverridesOptions = {}): Promise<LoadRulesFromResult> {
   const { name = "default", cwd = process.cwd() } = opts;
   const logger = getLogger();

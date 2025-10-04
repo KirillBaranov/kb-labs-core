@@ -113,7 +113,13 @@ describe('runtime utils', () => {
 
       const { value, diagnostics } = resolveConfig({ defaults, fileConfig: file as any, envMapper, cliOverrides: cli, validate })
 
-      expect(value).toEqual({ a: 2, b: { x: 1, y: 2, z: 0 }, c: 'cli', f: 0 })
+      expect(value).toEqual({
+        a: 2,
+        b: { x: 1, y: 2, z: 0 },
+        c: 'cli',
+        f: 0,
+        profiles: { rootDir: '.kb/profiles', defaultName: 'default', strict: true }
+      })
       expect(diagnostics.some(d => d.code === 'VALIDATED')).toBe(true)
     })
 
@@ -121,7 +127,10 @@ describe('runtime utils', () => {
       vi.stubEnv('TEST_Z', '5')
       const defaults = { b: { z: 0 } }
       const { value } = resolveConfig({ defaults: defaults as any, envMapper: (e) => ({ b: { z: Number(e.TEST_Z) } }) })
-      expect(value).toEqual({ b: { z: 5 } })
+      expect(value).toEqual({
+        b: { z: 5 },
+        profiles: { rootDir: '.kb/profiles', defaultName: 'default', strict: true }
+      })
       vi.unstubAllEnvs()
     })
   })

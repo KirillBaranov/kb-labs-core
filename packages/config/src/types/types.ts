@@ -11,3 +11,13 @@ export interface FindNearestConfigOpts {
     stopDir?: string;             // stop climbing at/before this dir (e.g., repo root)
     filenames: string[];          // e.g., [".kb-labsrc.json", ".sentinelrc.json"]
 }
+
+export interface ProfilesConfig {
+    rootDir?: string;
+    defaultName?: string;
+    strict?: boolean;
+}
+
+export interface KBConfig {
+    profiles?: ProfilesConfig;
+}

@@ -7,7 +7,7 @@
 
 import { promises as fsp } from "node:fs";
 import path from "node:path";
-import type { Diagnostic, FindNearestConfigOpts, JsonReadResult } from "../types";
+import type { Diagnostic, FindNearestConfigOpts, JsonReadResult, ProfilesConfig, KBConfig } from "../types";
 
 /** Find nearest config file walking up from startDir until stopDir or FS root. */
 export async function findNearestConfig(opts: FindNearestConfigOpts): Promise<{ path: string | null; tried: string[] }> {
@@ -90,6 +90,10 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
     return typeof v === "object" && v !== null && Object.getPrototypeOf(v) === Object.prototype;
 }
 
+const SYSTEM_DEFAULTS = {
+    profiles: { rootDir: '.kb/profiles', defaultName: 'default', strict: true }
+} as const;
+
 export interface ResolveConfigArgs<TConfig, _TEnvMap = unknown> {
     defaults: TConfig;
     fileConfig?: Partial<TConfig>;
@@ -108,11 +112,11 @@ export function resolveConfig<TConfig>(args: ResolveConfigArgs<TConfig>): { valu
 
     const merged = mergeDefined(
         mergeDefined(
-            mergeDefined(structuredClone(args.defaults), args.fileConfig),
+            mergeDefined(mergeDefined(structuredClone(SYSTEM_DEFAULTS) as unknown as Partial<TConfig>, structuredClone(args.defaults)), args.fileConfig),
             envPart,
         ),
         args.cliOverrides,
-    );
+    ) as TConfig;
 
     if (args.validate) {
         const res = args.validate(merged);
@@ -126,3 +130,6 @@ export function resolveConfig<TConfig>(args: ResolveConfigArgs<TConfig>): { valu
 
     return { value: merged, diagnostics };
 }
+
+export { SYSTEM_DEFAULTS };
+export type { ProfilesConfig, KBConfig };
