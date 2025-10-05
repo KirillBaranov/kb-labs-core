@@ -72,7 +72,7 @@
     ]
   },
   "devDependencies": {
-    "@kb-labs/devkit": "workspace:*",
+    "@kb-labs/devkit": "github:KirillBaranov/kb-labs-devkit#main",
     "@kb-labs/profile-schemas": "workspace:*",
     "@types/node": "^24.3.3",
     "@types/picomatch": "^4",
