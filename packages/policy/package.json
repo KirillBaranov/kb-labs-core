@@ -1,5 +1,5 @@
 {
-  "name": "@kb-labs/core-profiles",
+  "name": "@kb-labs/core-policy",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -21,23 +21,16 @@
     "build": "pnpm clean && tsup --config tsup.config.ts",
     "dev": "tsup --config tsup.config.ts --watch",
     "type-check": "tsc --noEmit",
-    "test": "vitest run -c ../../vitest.config.ts",
+    "test": "vitest run",
     "lint": "eslint . --ignore-pattern 'dist/**'",
     "lint:fix": "eslint . --fix --ignore-pattern 'dist/**'"
   },
   "dependencies": {
-    "@kb-labs/core-config": "link:../config",
-    "@kb-labs/core-sys": "link:../sys",
-    "@kb-labs/profile-schemas": "link:../../../kb-labs-profile-schemas",
     "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
-    "glob": "^10.3.10",
-    "picomatch": "^4.0.2",
-    "yaml": "^2.5.1"
+    "ajv-formats": "^3.0.1"
   },
   "devDependencies": {
     "@types/node": "^24.3.3",
-    "@types/picomatch": "^4",
     "cpy-cli": "^4.2.0",
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",

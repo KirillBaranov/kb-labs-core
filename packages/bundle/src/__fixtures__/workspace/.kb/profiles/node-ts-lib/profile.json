@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schemas.kb-labs.dev/profile/profile.schema.json",
+  "schemaVersion": "1.0",
+  "name": "node-ts-lib",
+  "version": "1.2.0",
+  "extends": ["@kb-labs/profile-base@^1.0.0"],
+  "exports": {
+    "ai-review": {
+      "rules": "artifacts/ai-review/rules.yml",
+      "prompts": "artifacts/ai-review/prompts/**"
+    }
+  },
+  "defaults": {
+    "ai-review": {
+      "$ref": "./defaults/ai-review.json"
+    }
+  }
+}

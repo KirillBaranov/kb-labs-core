@@ -1,0 +1,12 @@
+rules:
+  - name: "no-console"
+    severity: "warning"
+    message: "Avoid console.log in production code"
+  
+  - name: "no-debugger"
+    severity: "error"
+    message: "Remove debugger statements"
+  
+  - name: "no-unused-vars"
+    severity: "warning"
+    message: "Remove unused variables"

@@ -104,3 +104,56 @@ export type LoadProfileResult = {
         repoRoot: string;
     };
 };
+
+export interface ProfileInfo {
+  name: string;
+  version: string;
+  manifestPath: string;
+  exports: Record<string, Record<string, string | string[]>>;
+  extends?: string[];
+  overlays?: string[];
+}
+
+export interface ArtifactDescriptor {
+  product: string;
+  key: string;
+  selector?: string;
+}
+
+export interface ArtifactMetadata {
+  absPath: string;
+  relPath: string;
+  sha256: string;
+  size: number;
+  mime: string;
+}
+
+export interface MaterializeResult {
+  filesCopied: number;
+  filesSkipped: number;
+  bytesWritten: number;
+  outputs: string[];
+  manifest: Record<string, { relPath: string; sha256: string; size: number; }>;
+}
+
+export interface ArtifactCache {
+  clearCaches(): void;
+  getStats(): { size: number };
+}
+
+// New profile manifest schema (v1.0)
+export interface ProfileManifest {
+  $schema?: string;
+  schemaVersion: '1.0';
+  name: string;
+  version: string;
+  extends?: string[];
+  overrides?: string[];
+  exports: Record<string, Record<string, string | string[]>>;
+  defaults: Record<string, { $ref: string }>;
+  discovery?: {
+    packages?: string[];
+    languages?: string[];
+  };
+  metadata?: Record<string, unknown>;
+}
