@@ -14,5 +14,11 @@ export * from './preset/resolve-preset'
 export * from './lockfile/lockfile'
 export * from './types/preset'
 
+// Init system exports
+export * from './types/init'
+export * from './api/init-workspace'
+export * from './api/upsert-lockfile'
+export * from './utils/fs-atomic'
+
 // Re-export clearCaches for convenience
 export { clearCaches } from './cache/fs-cache'
