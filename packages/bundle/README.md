@@ -271,3 +271,101 @@ describe('My Test', () => {
   });
 });
 ```
+
+## Initialization (Init System)
+
+The bundle package also provides the `initAll()` function for workspace initialization.
+
+### initAll()
+
+Initialize a complete KB Labs workspace with configuration, profiles, policy, and lockfile:
+
+```typescript
+import { initAll } from '@kb-labs/core-bundle';
+
+const result = await initAll({
+  cwd: process.cwd(),
+  format: 'yaml',                    // or 'json'
+  products: ['aiReview'],            // products to set up
+  profileKey: 'default',
+  profileRef: 'node-ts-lib',         // npm package or local path
+  presetRef: '@kb-labs/org-preset@^1.0.0', // optional
+  scaffoldLocalProfile: true,        // create local profile scaffold
+  policyBundle: 'default',           // optional
+  dryRun: false,
+  force: false,
+});
+
+// Result contains aggregated stats
+console.log(`Created: ${result.stats.created}`);
+console.log(`Updated: ${result.stats.updated}`);
+console.log(`Skipped: ${result.stats.skipped}`);
+console.log(`Conflicts: ${result.stats.conflicts}`);
+```
+
+### What Gets Created
+
+Running `initAll()` with default options creates:
+
+```
+workspace/
+├── kb-labs.config.yaml          # Workspace configuration
+├── .kb/
+│   ├── lock.json               # Lockfile with schema version
+│   ├── profiles/
+│   │   └── node-ts-lib/
+│   │       ├── profile.json    # Profile manifest (new format)
+│   │       ├── defaults/
+│   │       │   └── ai-review.json
+│   │       └── artifacts/
+│   │           └── ai-review/
+│   │               ├── rules.yml
+│   │               └── prompts/
+│   │                   └── review.md
+│   └── ai-review/
+│       └── ai-review.config.json  # Product-specific config
+└── .gitignore                   # Updated with KB Labs entries
+```
+
+### Init Options
+
+- **format**: `'yaml'` (default) or `'json'` - workspace config format
+- **products**: Array of `ProductId` - which products to initialize (default: `['aiReview']`)
+- **profileKey**: Profile key in workspace config (default: `'default'`)
+- **profileRef**: Profile reference - npm package like `'@kb-labs/profile-node@^1.0.0'` or local path
+- **scaffoldLocalProfile**: Create local profile scaffold (default: `false`)
+- **presetRef**: Org preset to extend (optional)
+- **policyBundle**: Policy bundle name (optional)
+- **dryRun**: Preview changes without writing (default: `false`)
+- **force**: Overwrite existing files (default: `false`)
+
+### Idempotency
+
+The init system is idempotent - running it multiple times with the same options will skip unchanged files:
+
+```typescript
+// First run - creates files
+await initAll({ cwd, products: ['aiReview'], scaffoldLocalProfile: true });
+
+// Second run - skips unchanged files
+const result = await initAll({ cwd, products: ['aiReview'] });
+console.log(result.stats.skipped); // > 0
+```
+
+### Dry Run
+
+Preview what would be created without making changes:
+
+```typescript
+const result = await initAll({
+  cwd: process.cwd(),
+  products: ['aiReview'],
+  scaffoldLocalProfile: true,
+  dryRun: true,
+});
+
+// Check what would be created
+result.workspace.actions.forEach(action => {
+  console.log(`${action.kind}: ${action.path}`);
+});
+```
