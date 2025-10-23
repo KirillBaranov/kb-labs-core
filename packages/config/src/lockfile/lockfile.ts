@@ -24,14 +24,38 @@ export interface LockfileData {
  * Read lockfile from workspace
  */
 export async function readLockfile(cwd: string): Promise<LockfileData | null> {
-  const lockfilePath = path.join(cwd, '.kb', 'lockfile.json');
+  const lockfilePath = path.join(cwd, '.kb', 'lock.json');
   
   try {
     const lockfileData = await fsp.readFile(lockfilePath, 'utf-8');
     return JSON.parse(lockfileData) as LockfileData;
   } catch {
-    return null;
+    // Try old location for backward compatibility
+    const oldLockfilePath = path.join(cwd, '.kb', 'lockfile.json');
+    try {
+      const lockfileData = await fsp.readFile(oldLockfilePath, 'utf-8');
+      return JSON.parse(lockfileData) as LockfileData;
+    } catch {
+      return null;
+    }
   }
+}
+
+/**
+ * Stable JSON serialization with sorted keys for predictable diffs
+ */
+function stableStringify(obj: any, space = 2): string {
+  return JSON.stringify(obj, (key, value) => {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return Object.keys(value)
+        .sort()
+        .reduce((sorted: any, key) => {
+          sorted[key] = value[key];
+          return sorted;
+        }, {});
+    }
+    return value;
+  }, space);
 }
 
 /**
@@ -42,7 +66,7 @@ export async function writeLockfile(
   lockfileData: LockfileData
 ): Promise<void> {
   const lockfileDir = path.join(cwd, '.kb');
-  const lockfilePath = path.join(lockfileDir, 'lockfile.json');
+  const lockfilePath = path.join(lockfileDir, 'lock.json');
   
   // Ensure .kb directory exists
   await fsp.mkdir(lockfileDir, { recursive: true });
@@ -52,8 +76,9 @@ export async function writeLockfile(
     lockfileData.$schema = 'https://schemas.kb-labs.dev/lockfile.schema.json';
   }
   
-  // Write lockfile
-  await fsp.writeFile(lockfilePath, JSON.stringify(lockfileData, null, 2));
+  // Use atomic write with stable key ordering
+  const { writeFileAtomic } = await import('../utils/fs-atomic');
+  await writeFileAtomic(lockfilePath, stableStringify(lockfileData, 2) + '\n');
 }
 
 /**
@@ -65,7 +90,7 @@ export async function updateLockfile(
     orgPreset?: string;
     profile?: string;
     policyBundle?: string;
-    configHashes?: Record<ProductId, any>;
+    configHashes?: Record<string, any>;
   }
 ): Promise<LockfileData> {
   const existing = await readLockfile(cwd);
@@ -105,7 +130,7 @@ export function getLockfileConfigHash(product: ProductId, config: any): string {
  */
 export async function isLockfileUpToDate(
   cwd: string,
-  configs: Record<ProductId, any>
+  configs: Record<string, any>
 ): Promise<boolean> {
   const lockfile = await readLockfile(cwd);
   if (!lockfile) {

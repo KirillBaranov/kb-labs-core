@@ -5,6 +5,9 @@
 
 import type { ProductId } from '../types/types';
 
+// Re-export ProductId for convenience
+export type { ProductId } from '../types/types';
+
 const FS_MAP = new Map([
   ['aiReview', 'ai-review'],
   ['aiDocs', 'ai-docs'],
