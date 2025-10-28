@@ -19,11 +19,11 @@ export class KbError extends Error {
  * Maps KbError codes to CLI exit codes
  */
 export function getExitCode(err: KbError): number {
-  if (err.code === 'ERR_FORBIDDEN') return 3;
-  if (err.code === 'ERR_CONFIG_NOT_FOUND') return 2;
-  if (err.code === 'ERR_CONFIG_EXISTS_CONFLICT') return 2;
-  if (err.code === 'ERR_PATH_OUTSIDE_WORKSPACE') return 2;
-  if (err.code.startsWith('ERR_')) return 1;
+  if (err.code === 'ERR_FORBIDDEN') {return 3;}
+  if (err.code === 'ERR_CONFIG_NOT_FOUND') {return 2;}
+  if (err.code === 'ERR_CONFIG_EXISTS_CONFLICT') {return 2;}
+  if (err.code === 'ERR_PATH_OUTSIDE_WORKSPACE') {return 2;}
+  if (err.code.startsWith('ERR_')) {return 1;}
   return 1;
 }
 

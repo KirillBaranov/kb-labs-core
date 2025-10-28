@@ -27,8 +27,8 @@ function generateDiffPreview(oldContent: string, newContent: string): string {
     const newLine = newLines[i] || '';
     
     if (oldLine !== newLine) {
-      if (oldLine) diff.push(`- ${oldLine}`);
-      if (newLine) diff.push(`+ ${newLine}`);
+      if (oldLine) {diff.push(`- ${oldLine}`);}
+      if (newLine) {diff.push(`+ ${newLine}`);}
     }
   }
   

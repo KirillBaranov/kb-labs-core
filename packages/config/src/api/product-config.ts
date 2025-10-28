@@ -9,7 +9,7 @@ import { KbError, ERROR_HINTS } from '../errors/kb-error';
 import { readWorkspaceConfig } from './read-config';
 import { layeredMergeWithTrace } from '../merge/layered-merge';
 import { toFsProduct } from '../utils/product-normalize';
-import { ProductId, ResolveOptions, ProductConfigResult, ConfigLayer } from '../types';
+import type { ProductId, ResolveOptions, ProductConfigResult, ConfigLayer } from '../types';
 import { computeConfigHash } from '../hash/config-hash';
 import { resolvePreset, getPresetConfigForProduct } from '../preset/resolve-preset';
 import { updateLockfile } from '../lockfile/lockfile';

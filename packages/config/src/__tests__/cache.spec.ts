@@ -51,6 +51,9 @@ describe('Filesystem Cache', () => {
       const result1 = await readConfigFile(configPath);
       expect(result1.data).toEqual(configData1);
 
+      // Small delay to ensure mtime changes
+      await new Promise(resolve => setTimeout(resolve, 10));
+
       // Modify file
       await fsp.writeFile(configPath, JSON.stringify(configData2, null, 2));
 

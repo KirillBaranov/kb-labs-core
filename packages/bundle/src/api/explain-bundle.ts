@@ -3,12 +3,14 @@
  * Bundle explanation logic
  */
 
-import { 
-  explainProductConfig,
-  ProductId,
+import type {
   MergeTrace
 } from '@kb-labs/core-config';
-import { ExplainBundleOptions } from '../types/types';
+import { 
+  explainProductConfig,
+  ProductId
+} from '@kb-labs/core-config';
+import type { ExplainBundleOptions } from '../types/types';
 
 /**
  * Explain bundle configuration (trace only)

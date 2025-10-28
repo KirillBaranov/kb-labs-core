@@ -25,7 +25,7 @@ import {
   createPermitsFunction 
 } from '@kb-labs/core-policy';
 import { KbError, ERROR_HINTS } from '@kb-labs/core-config';
-import { LoadBundleOptions, Bundle } from '../types/types';
+import type { LoadBundleOptions, Bundle } from '../types/types';
 
 /**
  * Load bundle with config, profile, artifacts, and policy

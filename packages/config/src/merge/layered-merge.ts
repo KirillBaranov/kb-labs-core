@@ -3,7 +3,7 @@
  * Layered merge with trace for configuration layers
  */
 
-import { ConfigLayer, MergeTrace } from '../types';
+import type { ConfigLayer, MergeTrace } from '../types';
 
 export interface LayeredMergeResult {
   merged: any;

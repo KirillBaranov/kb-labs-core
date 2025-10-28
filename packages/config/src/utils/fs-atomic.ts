@@ -4,6 +4,8 @@
  */
 
 import { promises as fs } from 'node:fs';
+import { resolve } from 'node:path';
+import { KbError } from '../errors/kb-error';
 import { dirname } from 'node:path';
 
 /**
@@ -41,12 +43,10 @@ export async function writeFileAtomic(
  * Throws ERR_PATH_OUTSIDE_WORKSPACE if the path escapes the workspace
  */
 export function ensureWithinWorkspace(targetPath: string, workspaceRoot: string): void {
-  const { resolve } = require('node:path');
   const absTarget = resolve(targetPath);
   const absRoot = resolve(workspaceRoot);
   
   if (!absTarget.startsWith(absRoot)) {
-    const { KbError } = require('../errors/kb-error');
     throw new KbError(
       'ERR_PATH_OUTSIDE_WORKSPACE',
       `Refusing to write outside workspace: ${targetPath}`,

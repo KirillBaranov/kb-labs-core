@@ -8,6 +8,15 @@
       ],
       "@kb-labs/core-sys": [
         "packages/sys/src"
+      ],
+      "@kb-labs/core-profiles": [
+        "packages/profiles/src"
+      ],
+      "@kb-labs/core-policy": [
+        "packages/policy/src"
+      ],
+      "@kb-labs/core-bundle": [
+        "packages/bundle/src"
       ]
     }
   }

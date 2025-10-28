@@ -92,8 +92,10 @@
   "packageManager": "pnpm@9.11.0",
   "dependencies": {
     "@kb-labs/core-config": "link:packages/config",
-    "@kb-labs/core-profiles": "link:packages/profiles",
     "@kb-labs/core-sys": "link:packages/sys",
+    "@kb-labs/core-profiles": "link:packages/profiles",
+    "@kb-labs/core-policy": "link:packages/policy",
+    "@kb-labs/core-bundle": "link:packages/bundle",
     "zod": "^4.1.5"
   }
 }

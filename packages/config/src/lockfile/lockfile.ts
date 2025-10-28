@@ -8,7 +8,7 @@ import path from 'node:path';
 import { KbError, ERROR_HINTS } from '../errors/kb-error';
 import { computeConfigHash } from '../hash/config-hash';
 import { toFsProduct } from '../utils/product-normalize';
-import { ProductId } from '../types';
+import type { ProductId } from '../types';
 
 export interface LockfileData {
   $schema?: string;

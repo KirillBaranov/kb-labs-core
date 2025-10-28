@@ -27,8 +27,8 @@
   },
   "dependencies": {
     "@kb-labs/core-config": "link:../config",
-    "@kb-labs/core-profiles": "link:../profiles",
-    "@kb-labs/core-policy": "link:../policy"
+    "@kb-labs/core-policy": "link:../policy",
+    "@kb-labs/core-profiles": "link:../profiles"
   },
   "devDependencies": {
     "@types/node": "^24.3.3",

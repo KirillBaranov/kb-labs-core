@@ -7,7 +7,7 @@ import { promises as fsp } from 'node:fs';
 import path from 'node:path';
 import { KbError, ERROR_HINTS } from '../errors/kb-error';
 import { toFsProduct } from '../utils/product-normalize';
-import { ProductId } from '../types';
+import type { ProductId } from '../types';
 
 export interface PresetInfo {
   name: string;

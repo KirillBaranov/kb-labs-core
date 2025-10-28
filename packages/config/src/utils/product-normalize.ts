@@ -32,7 +32,7 @@ export function toFsProduct(id: ProductId): string {
  */
 export function toConfigProduct(fsKey: string): ProductId {
   for (const [k, v] of FS_MAP) {
-    if (v === fsKey) return k as ProductId;
+    if (v === fsKey) {return k as ProductId;}
   }
   return fsKey as ProductId;
 }

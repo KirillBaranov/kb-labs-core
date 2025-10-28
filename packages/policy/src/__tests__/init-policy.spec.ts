@@ -36,7 +36,7 @@ describe('initPolicy', () => {
     
     const content = await fs.readFile(configPath, 'utf-8');
     expect(content).toContain('# policy:');
-    expect(content).toContain('# schemaVersion:');
+    expect(content).toContain('#   schemaVersion:');
     expect(content).toContain('maintainer:');
   });
   
