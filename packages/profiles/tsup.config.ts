@@ -6,7 +6,7 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
   },
-  external: ['ajv', 'ajv-formats', 'yaml', 'picomatch'],
+  external: ['ajv', 'ajv-formats', 'yaml', 'picomatch', '@kb-labs/core-sys'],
   dts: {
     resolve: true,
     compilerOptions: {

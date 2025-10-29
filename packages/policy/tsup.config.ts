@@ -6,5 +6,8 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
   },
-  external: ['ajv', 'ajv-formats'],
+  external: ['ajv', 'ajv-formats', '@kb-labs/core-config'],
+  dts: {
+    resolve: true,
+  },
 })

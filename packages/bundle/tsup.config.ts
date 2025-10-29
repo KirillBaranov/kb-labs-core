@@ -7,4 +7,7 @@ export default defineConfig({
     index: 'src/index.ts',
   },
   external: ['@kb-labs/core-config', '@kb-labs/core-profiles', '@kb-labs/core-policy'],
+  dts: {
+    resolve: true,
+  },
 })
