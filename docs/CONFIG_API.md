@@ -17,6 +17,7 @@ interface LoadBundleOptions {
   profileKey?: string;        // Default: 'default'
   cli?: Record<string, any>;   // Optional CLI overrides
   writeFinalConfig?: boolean;  // Optional: write merged config
+  validate?: boolean | 'warn'; // Optional: validate product config (CLI uses --no-fail for warn)
 }
 ```
 

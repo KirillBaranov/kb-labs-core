@@ -84,6 +84,33 @@ kb config explain --product aiReview --json
 - `--profile-key` - Profile key (default: default)
 - `--json` - Output as JSON
 
+#### `kb config inspect`
+Inspect product configuration (summary + validation).
+
+```bash
+kb config inspect --product aiReview
+kb config inspect --product devlink --json
+```
+
+**Options:**
+- `--product` - Product ID (required)
+- `--profile-key` - Profile key (default: default)
+- `--json` - Output as JSON
+
+#### `kb config validate`
+Validate merged configuration against JSON Schemas.
+
+```bash
+kb config validate --product aiReview
+kb config validate --product devlink --no-fail --json
+```
+
+**Options:**
+- `--product` - Product ID (required)
+- `--profile-key` - Profile key (default: default)
+- `--no-fail` - Warn instead of failing
+- `--json` - Output as JSON
+
 #### `kb config doctor` (aliases: `kb doctor`)
 Check configuration health and get suggestions.
 
@@ -113,6 +140,20 @@ kb bundle print --product devlink --with-trace
 - `--json` - Output as JSON
 - `--with-trace` - Include configuration trace
 
+#### `kb bundle inspect`
+Inspect bundle (profile + config + artifacts + trace).
+
+```bash
+kb bundle inspect --product aiReview
+kb bundle inspect --product aiReview --trace --json
+```
+
+**Options:**
+- `--product` - Product ID (required)
+- `--profile-key` - Profile key (default: default)
+- `--trace` - Include compact trace
+- `--json` - Output as JSON
+
 ### profiles group
 
 #### `kb profiles resolve`
@@ -121,6 +162,30 @@ Resolve and display profile configuration.
 ```bash
 kb profiles resolve
 kb profiles resolve --profile-key production --json
+```
+
+**Options:**
+- `--profile-key` - Profile key (default: default)
+- `--json` - Output as JSON
+
+#### `kb profiles validate`
+Validate profile manifest (v1.0).
+
+```bash
+kb profiles validate
+kb profiles validate --profile-key production --json
+```
+
+**Options:**
+- `--profile-key` - Profile key (default: default)
+- `--json` - Output as JSON
+
+#### `kb profiles inspect`
+Inspect profile manifest (summary).
+
+```bash
+kb profiles inspect
+kb profiles inspect --profile-key production --json
 ```
 
 **Options:**

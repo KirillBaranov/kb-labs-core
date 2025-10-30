@@ -114,6 +114,37 @@ await bundle.artifacts.materialize(['rules', 'prompts']);
 ```
 
 ### 5. Update Policy Checks
+## Profile Manifest v1.0 and Validation
+
+Profiles support a new manifest format with `schemaVersion: "1.0"`.
+
+Example:
+
+```json
+{
+  "schemaVersion": "1.0",
+  "name": "node-ts-lib",
+  "version": "1.0.0",
+  "extends": [],
+  "exports": { "ai-review": { "rules": "artifacts/ai-review/rules.yml" } },
+  "defaults": { "ai-review": { "$ref": "./defaults/ai-review.json" } }
+}
+```
+
+Validation is integrated:
+
+- At runtime via bundle:
+
+```ts
+const bundle = await loadBundle({ cwd, product: 'aiReview', validate: true });
+```
+
+- Via CLI:
+
+```bash
+kb config validate --product aiReview
+```
+
 
 **Before:**
 ```typescript
