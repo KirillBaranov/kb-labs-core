@@ -12,6 +12,7 @@
       "@kb-labs/core-profiles": [
         "packages/profiles/src"
       ],
+      
       "@kb-labs/core-policy": [
         "packages/policy/src"
       ],

@@ -1,8 +1,14 @@
 import { defineConfig } from 'vitest/config'
 import nodePreset from '@kb-labs/devkit/vitest/node.js'
+import path from 'node:path'
 
 export default defineConfig({
   ...nodePreset,
+  resolve: {
+    alias: {
+      '@kb-labs/profile-schemas': path.resolve(__dirname, '../kb-labs-profile-schemas/packages/profile-schemas/dist/index.js'),
+    },
+  },
   test: {
     ...nodePreset.test,
     include: [
