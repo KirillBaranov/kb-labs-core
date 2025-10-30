@@ -6,8 +6,9 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
   },
-  external: ['@kb-labs/core-config', '@kb-labs/core-profiles', '@kb-labs/core-policy'],
+  external: [/^@kb-labs\//],
   dts: {
-    resolve: true,
+    resolve: false,
   },
+  skipNodeModulesBundle: true,
 })

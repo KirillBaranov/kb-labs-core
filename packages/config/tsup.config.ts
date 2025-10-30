@@ -6,5 +6,8 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
   },
-  external: ['ajv', 'ajv-formats', 'yaml', 'picomatch'],
+  external: [/^@kb-labs\//, 'ajv', 'ajv-formats', 'yaml', 'picomatch'],
+  // Disable DTS to avoid circular type generation with @kb-labs/core-profiles
+  dts: false,
+  skipNodeModulesBundle: true,
 })

@@ -6,11 +6,7 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
   },
-  external: ['ajv', 'ajv-formats', 'yaml', 'picomatch', '@kb-labs/core-sys'],
-  dts: {
-    resolve: true,
-    compilerOptions: {
-      rootDir: 'src'
-    }
-  }
+  external: [/^@kb-labs\//, 'ajv', 'ajv-formats', 'yaml', 'picomatch'],
+  dts: false,
+  skipNodeModulesBundle: true,
 })
