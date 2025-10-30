@@ -5,6 +5,34 @@ It provides essential utilities, system interfaces, and shared functionality acr
 
 **Goals:** Reliable core utilities, consistent APIs, and extensible architecture for all KB Labs projects.
 
+## 🚀 Quick Start
+
+### Load Bundle for Your Product
+
+```typescript
+import { loadBundle } from '@kb-labs/core-bundle';
+
+const bundle = await loadBundle({
+  cwd: process.cwd(),
+  product: 'aiReview',
+  profileKey: 'default'
+});
+
+// Access merged configuration (6 layers)
+const config = bundle.config as AiReviewConfig;
+
+// Access artifacts
+const rules = await bundle.artifacts.list('rules');
+
+// Check permissions
+if (!bundle.policy.permits('aiReview.run')) {
+  throw new Error('Permission denied');
+}
+
+// Debug with trace
+console.log(bundle.trace);
+```
+
 ## 📁 Repository Structure
 
 ```
@@ -21,10 +49,31 @@ docs/
 ## 📦 Core Packages
 
 ### @kb-labs/core-config
-Configuration management and runtime utilities:
-- Environment variable handling
-- Runtime configuration
-- Type-safe configuration schemas
+Configuration management with layered merge:
+- 6-layer configuration system (runtime → profile → preset → workspace → local → CLI)
+- Product normalization (kebab-case ↔ camelCase)
+- LRU caching with automatic invalidation
+- Find-up resolution
+
+### @kb-labs/core-profiles
+Profile system with artifacts and defaults:
+- New v1.0 manifest format
+- Artifacts API (list, read, materialize)
+- Extends resolution with cycle detection
+- Security constraints (whitelist, size limits, SHA256 verification)
+
+### @kb-labs/core-bundle
+Facade orchestrating all components:
+- Single entry point (`loadBundle()`) for complete bundle
+- Coordinates config, profiles, artifacts, and policy
+- Lazy loading with detailed trace support
+
+### @kb-labs/core-cli
+CLI commands for configuration management:
+- `kb init setup` - Initialize complete workspace
+- `kb config get` - Get product configuration
+- `kb config explain` - Explain configuration resolution
+- `kb doctor` - Health check with suggestions
 
 ### @kb-labs/core-sys
 System interfaces and utilities:
@@ -32,15 +81,13 @@ System interfaces and utilities:
 - **Filesystem**: Cross-platform file system operations
 - **Repository**: Git repository utilities and metadata
 
-## 🚀 Quick Start
-
-### Installation
+## 💻 Installation
 
 ```bash
 pnpm install
 ```
 
-### Development
+## 🛠️ Development
 
 ```bash
 pnpm dev         # Parallel dev mode for selected packages/apps
@@ -49,15 +96,55 @@ pnpm test        # Run tests
 pnpm lint        # Lint code
 ```
 
-### Using Core Packages
+## 📚 Documentation
 
-```bash
-# Install specific core packages
-pnpm add @kb-labs/core-config @kb-labs/core-sys
+- **[Migration Guide](./MIGRATION_GUIDE.md)** - Step-by-step guide for migrating products
+- **[Config API Reference](./docs/CONFIG_API.md)** - Complete API documentation
+- **[Bundle Overview](./docs/BUNDLE_OVERVIEW.md)** - System architecture
+- **[Adding a Product](./docs/ADDING_PRODUCT.md)** - How to add a new product
 
-# Example usage
-import { getLogger } from '@kb-labs/core-sys/logging'
-import { getEnvVar } from '@kb-labs/core-config'
+## 🔍 Configuration System
+
+### 6 Layers of Configuration
+
+Configuration is merged from 6 layers (later layers override earlier ones):
+
+1. **Runtime defaults** - Built-in defaults for each product
+2. **Profile defaults** - From profile manifest
+3. **Preset defaults** - From org preset package
+4. **Workspace config** - From `kb-labs.config.yaml`
+5. **Local config** - From `.kb/<product>/<product>.config.json`
+6. **CLI overrides** - From command line arguments
+
+### Example Configuration
+
+**kb-labs.config.yaml:**
+```yaml
+schemaVersion: "1.0"
+profiles:
+  default: "node-ts-lib@1.2.0"
+products:
+  ai-review:
+    enabled: true
+    rules: ["security", "performance"]
+```
+
+**Profile:** `.kb/profiles/node-ts-lib/profile.json`
+```json
+{
+  "schemaVersion": "1.0",
+  "name": "node-ts-lib",
+  "exports": {
+    "ai-review": {
+      "rules": "artifacts/ai-review/rules.yml"
+    }
+  },
+  "defaults": {
+    "ai-review": {
+      "$ref": "./defaults/ai-review.json"
+    }
+  }
+}
 ```
 
 ### Creating a New Core Package

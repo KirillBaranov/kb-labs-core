@@ -17,12 +17,12 @@ importers:
       '@kb-labs/core-policy':
         specifier: link:packages/policy
         version: link:packages/policy
-      '@kb-labs/core-profiles':
-        specifier: link:packages/profiles
-        version: link:packages/profiles
       '@kb-labs/core-sys':
         specifier: link:packages/sys
         version: link:packages/sys
+      '@kb-labs/shared-cli-ui':
+        specifier: link:../kb-labs-shared/packages/cli-ui
+        version: link:../kb-labs-shared/packages/cli-ui
       zod:
         specifier: ^4.1.5
         version: 4.1.12
@@ -30,9 +30,6 @@ importers:
       '@kb-labs/devkit':
         specifier: link:../kb-labs-devkit
         version: link:../kb-labs-devkit
-      '@kb-labs/profile-schemas':
-        specifier: link:../kb-labs-profile-schemas
-        version: link:../kb-labs-profile-schemas
       '@types/node':
         specifier: ^24.3.3
         version: 24.9.1
@@ -217,8 +214,45 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
+  packages/cli:
+    dependencies:
+      '@kb-labs/core-bundle':
+        specifier: link:../bundle
+        version: link:../bundle
+      '@kb-labs/core-config':
+        specifier: link:../config
+        version: link:../config
+      '@kb-labs/core-policy':
+        specifier: link:../policy
+        version: link:../policy
+      '@kb-labs/core-profiles':
+        specifier: link:../profiles
+        version: link:../profiles
+      '@kb-labs/shared-cli-ui':
+        specifier: link:../../../kb-labs-shared/packages/cli-ui
+        version: link:../../../kb-labs-shared/packages/cli-ui
+    devDependencies:
+      '@types/node':
+        specifier: ^24.3.3
+        version: 24.9.1
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
+
   packages/config:
     dependencies:
+      '@kb-labs/core-profiles':
+        specifier: link:../profiles
+        version: link:../profiles
       ajv:
         specifier: ^8.17.1
         version: 8.17.1
@@ -327,9 +361,6 @@ importers:
       '@kb-labs/core-sys':
         specifier: link:../sys
         version: link:../sys
-      '@kb-labs/profile-schemas':
-        specifier: link:../../../kb-labs-profile-schemas
-        version: link:../../../kb-labs-profile-schemas
       ajv:
         specifier: ^8.17.1
         version: 8.17.1
