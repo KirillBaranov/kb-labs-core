@@ -1,5 +1,6 @@
 export const SCHEMA_ID = {
   profile: "https://schemas.kb-labs.dev/profile/profile.schema.json",
+  profileManifestV1: "https://schemas.kb-labs.dev/profile/profile-manifest-v1.schema.json",
   io: "https://schemas.kb-labs.dev/profile/profile.io.json",
   diff: "https://schemas.kb-labs.dev/profile/profile.diff.json",
   cap: "https://schemas.kb-labs.dev/profile/profile.cap.json",

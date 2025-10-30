@@ -1,20 +1,14 @@
 import Ajv, { type ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
 import { SCHEMA_ID } from "../constants";
-import {
-  profile as profileSchema,
-  rules as rulesSchema,
-  io as ioSchema,
-  diff as diffSchema,
-  cap as capSchema,
-} from "@kb-labs/profile-schemas";
+import { rules as rulesSchema, io as ioSchema, diff as diffSchema, cap as capSchema, profileManifestV1 as profileManifestV1Schema } from "@kb-labs/profile-schemas";
 import type { ValidateResult } from "../types";
 
 function createAjv(): Ajv {
   const ajv = new Ajv({ allErrors: true, strict: false });
   addFormats(ajv);
-  // register all schemas once; ajv uses $id
-  [profileSchema, ioSchema, diffSchema, capSchema, rulesSchema].forEach((s: any) =>
+  // register schemas once; ajv uses $id (v1 manifest only)
+  [profileManifestV1Schema, ioSchema, diffSchema, capSchema, rulesSchema].forEach((s: any) =>
     ajv.addSchema(s)
   );
   return ajv;
@@ -26,13 +20,29 @@ function ajv(): Ajv {
 }
 
 export function getProfileValidator(): ValidateFunction {
-  const v = ajv().getSchema(SCHEMA_ID.profile);
+  // point to v1 manifest validator (legacy format no longer supported)
+  const v = ajv().getSchema(SCHEMA_ID.profileManifestV1);
   if (!v) { throw new Error("Profile schema is not registered"); }
   return v;
 }
 
 export function validateProfile(json: unknown): ValidateResult {
-  const v = getProfileValidator();
+  const rawProfile = json as any;
+  // Only v1.0 manifest is supported
+  if (!rawProfile || rawProfile.schemaVersion !== '1.0') {
+    return {
+      ok: false,
+      errors: [
+        {
+          instancePath: '',
+          message: 'Only profile manifests with schemaVersion="1.0" are supported',
+        },
+      ] as any,
+    };
+  }
+
+  const v = ajv().getSchema(SCHEMA_ID.profileManifestV1);
+  if (!v) { throw new Error("Profile v1 schema is not registered"); }
   const ok = v(json);
   return { ok: !!ok, errors: ok ? null : (v.errors as any) ?? null };
 }
