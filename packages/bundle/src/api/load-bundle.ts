@@ -10,7 +10,8 @@ import {
   toFsProduct, 
   readWorkspaceConfig,
   ProductId,
-  MergeTrace 
+  MergeTrace,
+  validateProductConfig,
 } from '@kb-labs/core-config';
 import { 
   loadProfile, 
@@ -33,7 +34,7 @@ import type { LoadBundleOptions, Bundle } from '../types/types';
  * Load bundle with config, profile, artifacts, and policy
  */
 export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bundle<T>> {
-  const { cwd, product, profileKey = 'default', cli, writeFinalConfig } = opts;
+  const { cwd, product, profileKey = 'default', cli, writeFinalConfig, validate } = opts;
   const fsProduct = toFsProduct(product);
 
   // 1. Read workspace config
@@ -74,6 +75,20 @@ export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bund
     cli,
     writeFinal: writeFinalConfig
   }, null, profileInfo);
+
+  // Optional validation
+  if (validate) {
+    const result = validateProductConfig(product, configResult.config);
+    if (!result.ok) {
+      if (validate === 'warn') {
+        console.warn('Config validation warnings:', result.errors);
+      } else {
+        const err = new Error('Config validation failed');
+        (err as any).details = result.errors;
+        throw err;
+      }
+    }
+  }
 
   // 4. Resolve policy
   const policyResult = await resolvePolicy({

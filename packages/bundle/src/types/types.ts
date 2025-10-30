@@ -12,6 +12,7 @@ export interface LoadBundleOptions {
   profileKey?: string;
   cli?: Record<string, unknown>;
   writeFinalConfig?: boolean;
+  validate?: boolean | 'warn';
 }
 
 export interface Bundle<T = any> {
