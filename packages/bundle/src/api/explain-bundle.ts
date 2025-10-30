@@ -8,22 +8,57 @@ import type {
 } from '@kb-labs/core-config';
 import { 
   explainProductConfig,
+  readWorkspaceConfig,
   ProductId
 } from '@kb-labs/core-config';
+import { 
+  loadProfile,
+  extractProfileInfo,
+  normalizeManifest
+} from '@kb-labs/core-profiles';
+import { KbError, ERROR_HINTS } from '@kb-labs/core-config';
 import type { ExplainBundleOptions } from '../types/types';
 
 /**
  * Explain bundle configuration (trace only)
  */
 export async function explainBundle(opts: ExplainBundleOptions): Promise<MergeTrace[]> {
-  const { cwd, product, cli } = opts;
+  const { cwd, product, cli, profileKey = 'default' } = opts;
+  
+  // Read workspace config
+  const workspaceConfig = await readWorkspaceConfig(cwd);
+  if (!workspaceConfig?.data) {
+    throw new KbError(
+      'ERR_CONFIG_NOT_FOUND',
+      'No workspace configuration found',
+      ERROR_HINTS.ERR_CONFIG_NOT_FOUND,
+      { cwd }
+    );
+  }
+  
+  // Load profile if available
+  let profileInfo;
+  const workspaceData = workspaceConfig.data as any;
+  const profiles = workspaceData.profiles || {};
+  const profileRef = profiles[profileKey];
+  
+  if (profileRef) {
+    try {
+      const profile = await loadProfile({ cwd, name: profileRef });
+      const manifest = normalizeManifest(profile.profile);
+      profileInfo = extractProfileInfo(manifest, profile.meta.pathAbs);
+    } catch (error) {
+      // Profile loading failed, continue without it
+      console.warn('Warning: Could not load profile for explanation:', error);
+    }
+  }
   
   // Get configuration trace without resolving
   const result = await explainProductConfig({
     cwd,
     product,
     cli
-  }, null);
+  }, null, profileInfo);
   
   return result.trace;
 }

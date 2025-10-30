@@ -18,6 +18,8 @@ import {
   normalizeManifest,
   listArtifacts,
   materializeArtifacts,
+  readArtifactText,
+  readArtifactJson,
   clearCaches as clearProfileCaches
 } from '@kb-labs/core-profiles';
 import { 
@@ -30,7 +32,7 @@ import type { LoadBundleOptions, Bundle } from '../types/types';
 /**
  * Load bundle with config, profile, artifacts, and policy
  */
-export async function loadBundle(opts: LoadBundleOptions): Promise<Bundle> {
+export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bundle<T>> {
   const { cwd, product, profileKey = 'default', cli, writeFinalConfig } = opts;
   const fsProduct = toFsProduct(product);
 
@@ -71,7 +73,7 @@ export async function loadBundle(opts: LoadBundleOptions): Promise<Bundle> {
     product,
     cli,
     writeFinal: writeFinalConfig
-  }, null);
+  }, null, profileInfo);
 
   // 4. Resolve policy
   const policyResult = await resolvePolicy({
@@ -156,6 +158,36 @@ function createArtifactsWrapper(
         filesSkipped: result.filesSkipped,
         bytesWritten: result.bytesWritten
       };
+    },
+    
+    // Convenience methods for better DX
+    async readText(relPath: string): Promise<string> {
+      const result = await readArtifactText(profileInfo, relPath);
+      return result.text;
+    },
+    
+    async readJson<T = any>(relPath: string): Promise<T> {
+      const result = await readArtifactJson<T>(profileInfo, relPath);
+      return result.data;
+    },
+    
+    async readAll(key: string): Promise<Array<{ path: string; content: string }>> {
+      const artifacts = await listArtifacts(profileInfo, {
+        product: fsProduct,
+        key
+      });
+      
+      const contents = await Promise.all(
+        artifacts.map(async (artifact) => {
+          const result = await readArtifactText(profileInfo, artifact.relPath);
+          return {
+            path: artifact.relPath,
+            content: result.text
+          };
+        })
+      );
+      
+      return contents;
     }
   };
 }

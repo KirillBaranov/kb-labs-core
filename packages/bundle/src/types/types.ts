@@ -14,9 +14,9 @@ export interface LoadBundleOptions {
   writeFinalConfig?: boolean;
 }
 
-export interface Bundle {
+export interface Bundle<T = any> {
   product: ProductId;
-  config: unknown;
+  config: T;
   profile: {
     key: string;
     name: string;
@@ -31,6 +31,10 @@ export interface Bundle {
       filesSkipped: number;
       bytesWritten: number;
     }>;
+    // Convenience methods for better DX
+    readText(relPath: string): Promise<string>;
+    readJson<T = any>(relPath: string): Promise<T>;
+    readAll(key: string): Promise<Array<{ path: string; content: string }>>;
   };
   policy: {
     bundle?: string;
