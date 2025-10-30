@@ -13,13 +13,16 @@ import type { ProductId, ResolveOptions, ProductConfigResult, ConfigLayer } from
 import { computeConfigHash } from '../hash/config-hash';
 import { resolvePreset, getPresetConfigForProduct } from '../preset/resolve-preset';
 import { updateLockfile } from '../lockfile/lockfile';
+import type { ProfileInfo } from '@kb-labs/core-profiles';
+import { getProductDefaults } from '@kb-labs/core-profiles';
 
 /**
  * Get product configuration with layered merge and trace
  */
 export async function getProductConfig<T>(
   opts: ResolveOptions,
-  schema: any
+  schema: any,
+  profileInfo?: ProfileInfo
 ): Promise<ProductConfigResult<T>> {
   const { cwd, product, cli = {}, writeFinal = false } = opts;
   const fsProduct = toFsProduct(product);
@@ -37,12 +40,27 @@ export async function getProductConfig<T>(
     source: 'runtime:defaults',
   });
   
-  // 2. Profile defaults (will be injected by profiles package)
-  // This is a placeholder - actual implementation will come from profiles integration
+  // 2. Profile defaults
+  let profileDefaults = {};
+  if (profileInfo) {
+    try {
+      profileDefaults = await getProductDefaults(
+        profileInfo,
+        toFsProduct(product),
+        schema
+      );
+    } catch (error) {
+      // Profile defaults failed, continue without them
+      console.warn('Warning: Could not load profile defaults:', error);
+    }
+  }
+  
   layers.push({
     label: 'profile',
-    value: {},
-    source: 'profile:defaults',
+    value: profileDefaults,
+    source: profileInfo 
+        ? `profile:${profileInfo.name}@${profileInfo.version}`
+        : 'profile:none',
   });
   
   // 3. Preset defaults (resolve org preset if configured)
@@ -145,9 +163,10 @@ export async function getProductConfig<T>(
  */
 export async function explainProductConfig(
   opts: Omit<ResolveOptions, 'writeFinal'>,
-  schema: any
+  schema: any,
+  profileInfo?: ProfileInfo
 ): Promise<{ trace: any[] }> {
-  const result = await getProductConfig(opts, schema);
+  const result = await getProductConfig(opts, schema, profileInfo);
   return { trace: result.trace };
 }
 

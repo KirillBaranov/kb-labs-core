@@ -2,6 +2,7 @@
 export * from './types'
 export * from './runtime'
 export * from './utils'
+export * from './utils/paths'
 
 // Enhanced config system exports
 export * from './errors/kb-error'
