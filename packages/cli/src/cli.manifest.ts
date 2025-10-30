@@ -125,6 +125,40 @@ export const commands: CommandManifest[] = [
   },
   {
     manifestVersion: '1.0',
+    id: 'config:inspect',
+    group: 'config',
+    describe: 'Inspect product configuration (summary + validation)',
+    requires: ['@kb-labs/core-bundle'],
+    flags: [
+      { name: 'product', type: 'string', required: true },
+      { name: 'profile-key', type: 'string', default: 'default' },
+      { name: 'cwd', type: 'string' },
+      { name: 'json', type: 'boolean' }
+    ],
+    examples: ['kb config inspect --product aiReview'],
+    loader: async () => import('./cli/config/inspect'),
+  },
+  {
+    manifestVersion: '1.0',
+    id: 'config:validate',
+    group: 'config',
+    describe: 'Validate product configuration against schemas',
+    requires: ['@kb-labs/core-bundle'],
+    flags: [
+      { name: 'product', type: 'string', required: true, description: 'Product ID' },
+      { name: 'profile-key', type: 'string', default: 'default' },
+      { name: 'no-fail', type: 'boolean', description: 'Warn instead of failing' },
+      { name: 'cwd', type: 'string' },
+      { name: 'json', type: 'boolean' }
+    ],
+    examples: [
+      'kb config validate --product aiReview',
+      'kb config validate --product devlink --no-fail',
+    ],
+    loader: async () => import('./cli/config/validate'),
+  },
+  {
+    manifestVersion: '1.0',
     id: 'config:explain',
     group: 'config',
     describe: 'Explain configuration resolution',
@@ -173,6 +207,22 @@ export const commands: CommandManifest[] = [
     ],
     loader: async () => import('./cli/bundle/print'),
   },
+  {
+    manifestVersion: '1.0',
+    id: 'bundle:inspect',
+    group: 'bundle',
+    describe: 'Inspect bundle (profile + config + artifacts + trace)',
+    requires: ['@kb-labs/core-bundle'],
+    flags: [
+      { name: 'product', type: 'string', required: true },
+      { name: 'profile-key', type: 'string', default: 'default' },
+      { name: 'trace', type: 'boolean' },
+      { name: 'cwd', type: 'string' },
+      { name: 'json', type: 'boolean' }
+    ],
+    examples: ['kb bundle inspect --product aiReview --trace'],
+    loader: async () => import('./cli/bundle/inspect'),
+  },
   
   // profiles group  
   {
@@ -188,6 +238,23 @@ export const commands: CommandManifest[] = [
     ],
     examples: ['kb profiles resolve', 'kb profiles resolve --profile-key production'],
     loader: async () => import('./cli/profiles/resolve'),
+  },
+  {
+    manifestVersion: '1.0',
+    id: 'profiles:validate',
+    group: 'profiles',
+    describe: 'Validate profile manifest (legacy and v1.0)',
+    requires: ['@kb-labs/core-profiles'],
+    flags: [
+      { name: 'profile-key', type: 'string', default: 'default' },
+      { name: 'cwd', type: 'string' },
+      { name: 'json', type: 'boolean' }
+    ],
+    examples: [
+      'kb profiles validate',
+      'kb profiles validate --profile-key production --json'
+    ],
+    loader: async () => import('./cli/profiles/validate'),
   },
 ];
 
