@@ -31,11 +31,12 @@
     "lint:fix": "eslint . --fix --ignore-pattern 'dist/**'"
   },
   "dependencies": {
-    "@kb-labs/core-bundle": "link:../bundle",
-    "@kb-labs/core-config": "link:../config",
-    "@kb-labs/core-policy": "link:../policy",
-    "@kb-labs/core-profiles": "link:../profiles",
-    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui"
+    "@kb-labs/core-bundle": "workspace:*",
+    "@kb-labs/core-config": "workspace:*",
+    "@kb-labs/core-policy": "workspace:*",
+    "@kb-labs/core-profiles": "workspace:*",
+    "@kb-labs/shared-cli-ui": "workspace:*",
+    "yaml": "^2.5.1"
   },
   "devDependencies": {
     "@types/node": "^24.3.3",

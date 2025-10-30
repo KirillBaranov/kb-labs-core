@@ -53,18 +53,18 @@
     "test:watch": "vitest -c ../../vitest.config.ts"
   },
   "dependencies": {
-    "@kb-labs/core-bundle": "link:../bundle",
-    "@kb-labs/core-config": "link:../config",
-    "@kb-labs/core-policy": "link:../policy",
-    "@kb-labs/core-profiles": "link:../profiles",
-    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui"
+    "@kb-labs/core-bundle": "workspace:*",
+    "@kb-labs/core-config": "workspace:*",
+    "@kb-labs/core-policy": "workspace:*",
+    "@kb-labs/core-profiles": "workspace:*",
+    "@kb-labs/core-sys": "workspace:^",
+    "@kb-labs/shared-cli-ui": "workspace:*"
   },
   "devDependencies": {
-    "@kb-labs/devkit": "link:../../../kb-labs-devkit",
+    "@kb-labs/devkit": "workspace:*",
     "@types/node": "^24.7.0",
     "tsup": "^8",
-    "tsx": "^4.20.5",
+    "tsx": "^4.20.6",
     "vitest": "^3"
   }
 }
-

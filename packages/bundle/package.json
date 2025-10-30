@@ -26,8 +26,8 @@
     "lint:fix": "eslint . --fix --ignore-pattern 'dist/**'"
   },
   "dependencies": {
-    "@kb-labs/core-config": "link:../config",
-    "@kb-labs/core-policy": "link:../policy",
+    "@kb-labs/core-config": "workspace:*",
+    "@kb-labs/core-policy": "workspace:*",
     "@kb-labs/core-profiles": "link:../profiles"
   },
   "devDependencies": {
