@@ -28,7 +28,7 @@
   "dependencies": {
     "@kb-labs/core-config": "workspace:*",
     "@kb-labs/core-policy": "workspace:*",
-    "@kb-labs/core-profiles": "link:../profiles"
+    "@kb-labs/core-profiles": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.3.3",

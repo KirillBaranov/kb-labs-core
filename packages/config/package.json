@@ -33,7 +33,7 @@
     "yaml": "^2.5.1"
   },
   "devDependencies": {
-    "@kb-labs/devkit": "link:../../../kb-labs-devkit",
+    "@kb-labs/devkit": "workspace:*",
     "@types/node": "^24.3.3",
     "@types/picomatch": "^4",
     "@typescript-eslint/eslint-plugin": "^8",

@@ -28,7 +28,7 @@
   "dependencies": {
     "@kb-labs/core-config": "workspace:*",
     "@kb-labs/core-sys": "workspace:*",
-    "@kb-labs/profile-schemas": "link:../../../kb-labs-profile-schemas",
+    "@kb-labs/profile-schemas": "workspace:*",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "glob": "^10.3.10",
