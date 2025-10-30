@@ -3,7 +3,8 @@
  * Policy resolution with preset and workspace overrides
  */
 
-import { Policy, PolicyResolutionOptions, PolicyResolutionResult, Identity } from '../types/types';
+import type { Policy, PolicyResolutionOptions, PolicyResolutionResult} from '../types/types';
+import { Identity } from '../types/types';
 import { KbError, ERROR_HINTS } from '@kb-labs/core-config';
 
 /**

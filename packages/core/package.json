@@ -58,7 +58,7 @@
     "@kb-labs/core-policy": "workspace:*",
     "@kb-labs/core-profiles": "workspace:*",
     "@kb-labs/core-sys": "workspace:^",
-    "@kb-labs/shared-cli-ui": "workspace:*"
+    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui"
   },
   "devDependencies": {
     "@kb-labs/devkit": "workspace:*",

@@ -7,7 +7,8 @@ import { describe, it, expect } from 'vitest';
 import { resolvePolicy, validatePolicy } from '../resolve/resolve-policy';
 import { can, createPermitsFunction, requirePermission } from '../check/can';
 import { validatePolicySchema } from '../schema/policy-schema';
-import { Policy, Identity, BASE_ACTIONS } from '../types/types';
+import type { Policy, Identity} from '../types/types';
+import { BASE_ACTIONS } from '../types/types';
 import { KbError } from '@kb-labs/core-config';
 
 describe('Policy System', () => {

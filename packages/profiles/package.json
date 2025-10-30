@@ -22,8 +22,8 @@
     "dev": "tsup --config tsup.config.ts --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest run -c ../../vitest.config.ts",
-    "lint": "eslint . --ignore-pattern 'dist/**'",
-    "lint:fix": "eslint . --fix --ignore-pattern 'dist/**'"
+    "lint": "eslint . --ignore-pattern 'dist/**' --ignore-pattern 'eslint.config.js' --ignore-pattern 'tsup.config.ts' --ignore-pattern 'vitest.config.ts'",
+    "lint:fix": "eslint . --fix --ignore-pattern 'dist/**' --ignore-pattern 'eslint.config.js' --ignore-pattern 'tsup.config.ts' --ignore-pattern 'vitest.config.ts'"
   },
   "dependencies": {
     "@kb-labs/core-config": "workspace:*",

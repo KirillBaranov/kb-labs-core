@@ -22,8 +22,8 @@
     "dev": "tsup --config tsup.config.ts --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "lint": "eslint . --ignore-pattern 'dist/**'",
-    "lint:fix": "eslint . --fix --ignore-pattern 'dist/**'"
+    "lint": "eslint . --ignore-pattern 'dist/**' --ignore-pattern 'coverage/**'",
+    "lint:fix": "eslint . --fix --ignore-pattern 'dist/**' --ignore-pattern 'coverage/**'"
   },
   "dependencies": {
     "ajv": "^8.17.1",

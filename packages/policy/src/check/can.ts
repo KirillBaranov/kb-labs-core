@@ -3,7 +3,7 @@
  * Permission checker with permit-all default
  */
 
-import { Policy, Identity, PolicyRule } from '../types/types';
+import type { Policy, Identity, PolicyRule } from '../types/types';
 import { KbError, ERROR_HINTS } from '@kb-labs/core-config';
 
 /**

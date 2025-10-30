@@ -14,7 +14,7 @@ export function resolveIo(base?: IoRules, override?: IoRules): IoResolved {
   const d = new Set<string>([...(base?.deny ?? []), ...(override?.deny ?? [])]);
 
   const conflicts: string[] = [];
-  for (const pat of a) if (d.has(pat)) conflicts.push(pat);
+  for (const pat of a) {if (d.has(pat)) {conflicts.push(pat);}}
 
   return { allow: [...a], deny: [...d], conflicts };
 }
