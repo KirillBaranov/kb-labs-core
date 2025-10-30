@@ -216,6 +216,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@kb-labs/cli-core':
+        specifier: link:../../../kb-labs-cli/packages/core
+        version: link:../../../kb-labs-cli/packages/core
       '@kb-labs/core-bundle':
         specifier: workspace:*
         version: link:../bundle
@@ -228,6 +231,9 @@ importers:
       '@kb-labs/core-profiles':
         specifier: workspace:*
         version: link:../profiles
+      '@kb-labs/profile-schemas':
+        specifier: link:../../../kb-labs-profile-schemas
+        version: link:../../../kb-labs-profile-schemas
       '@kb-labs/shared-cli-ui':
         specifier: link:../../../kb-labs-shared/packages/cli-ui
         version: link:../../../kb-labs-shared/packages/cli-ui
