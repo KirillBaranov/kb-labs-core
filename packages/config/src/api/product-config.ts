@@ -13,8 +13,7 @@ import type { ProductId, ResolveOptions, ProductConfigResult, ConfigLayer } from
 import { computeConfigHash } from '../hash/config-hash';
 import { resolvePreset, getPresetConfigForProduct } from '../preset/resolve-preset';
 import { updateLockfile } from '../lockfile/lockfile';
-import type { ProfileInfo } from '@kb-labs/core-profiles';
-import { getProductDefaults } from '@kb-labs/core-profiles';
+type ProfileInfo = any;
 
 /**
  * Get product configuration with layered merge and trace
@@ -44,11 +43,9 @@ export async function getProductConfig<T>(
   let profileDefaults = {};
   if (profileInfo) {
     try {
-      profileDefaults = await getProductDefaults(
-        profileInfo,
-        toFsProduct(product),
-        schema
-      );
+      const mod = await import('@kb-labs/core-profiles');
+      const getProductDefaults: any = (mod as any).getProductDefaults;
+      profileDefaults = await getProductDefaults(profileInfo, toFsProduct(product), schema);
     } catch (error) {
       // Profile defaults failed, continue without them
       console.warn('Warning: Could not load profile defaults:', error);

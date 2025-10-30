@@ -9,6 +9,7 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { upsertLockfile } from '../api/upsert-lockfile';
 import { readLockfile, writeLockfile } from '../lockfile/lockfile';
+import type { LockfileData } from '../lockfile/lockfile';
 import { ensureWithinWorkspace } from '../utils/fs-atomic';
 import { KbError } from '../errors/kb-error';
 
@@ -114,7 +115,7 @@ describe('upsertLockfile', () => {
 
   describe('lockfile updates', () => {
     it('should update existing lockfile', async () => {
-      const existingLockfile = {
+      const existingLockfile: LockfileData = {
         $schema: 'https://schemas.kb-labs.dev/lockfile.schema.json',
         schemaVersion: '1.0',
         orgPreset: 'old/preset',
@@ -151,7 +152,7 @@ describe('upsertLockfile', () => {
     });
 
     it('should preserve existing values when not provided', async () => {
-      const existingLockfile = {
+      const existingLockfile: LockfileData = {
         $schema: 'https://schemas.kb-labs.dev/lockfile.schema.json',
         schemaVersion: '1.0',
         orgPreset: 'existing/preset',
@@ -178,7 +179,7 @@ describe('upsertLockfile', () => {
     });
 
     it('should handle undefined values correctly', async () => {
-      const existingLockfile = {
+      const existingLockfile: LockfileData = {
         $schema: 'https://schemas.kb-labs.dev/lockfile.schema.json',
         schemaVersion: '1.0',
         orgPreset: 'existing/preset',

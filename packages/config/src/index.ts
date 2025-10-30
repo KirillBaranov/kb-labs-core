@@ -23,3 +23,6 @@ export * from './utils/fs-atomic'
 
 // Re-export clearCaches for convenience
 export { clearCaches } from './cache/fs-cache'
+
+// Validation API
+export { validateProductConfig } from './validation/validate-config'
