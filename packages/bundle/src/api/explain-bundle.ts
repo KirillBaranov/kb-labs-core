@@ -9,8 +9,8 @@ import type {
 import { 
   explainProductConfig,
   readWorkspaceConfig,
-  ProductId
 } from '@kb-labs/core-config';
+import type { ProductId } from '@kb-labs/core-types';
 import { 
   loadProfile,
   extractProfileInfo,

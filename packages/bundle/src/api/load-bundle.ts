@@ -9,10 +9,10 @@ import {
   getProductConfig, 
   toFsProduct, 
   readWorkspaceConfig,
-  ProductId,
   MergeTrace,
   validateProductConfig,
 } from '@kb-labs/core-config';
+import type { ProductId } from '@kb-labs/core-types';
 import { 
   loadProfile, 
   extractProfileInfo, 
@@ -107,7 +107,7 @@ export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bund
 
   return {
     product,
-    config: configResult.config,
+    config: configResult.config as unknown as T,
     profile: {
       key: profileKey,
       name: profileInfo.name,

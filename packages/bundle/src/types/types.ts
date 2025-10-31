@@ -3,7 +3,8 @@
  * Bundle system types
  */
 
-import type { ProductId, MergeTrace } from '@kb-labs/core-config';
+import type { ProductId } from '@kb-labs/core-types';
+import type { MergeTrace } from '@kb-labs/core-config';
 import type { ArtifactMetadata } from '@kb-labs/core-profiles';
 
 export interface LoadBundleOptions {
@@ -52,4 +53,4 @@ export interface ExplainBundleOptions {
 }
 
 // Re-export ProductId for CLI validation
-export type { ProductId } from '@kb-labs/core-config';
+export type { ProductId } from '@kb-labs/core-types';

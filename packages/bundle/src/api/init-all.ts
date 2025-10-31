@@ -9,8 +9,8 @@ import type {
   InitResult,
   InitWorkspaceOptions,
   UpsertLockfileOptions,
-  ProductId,
 } from '@kb-labs/core-config';
+import type { ProductId } from '@kb-labs/core-types';
 import type { InitProfileOptions } from '@kb-labs/core-profiles';
 import type { InitPolicyOptions } from '@kb-labs/core-policy';
 

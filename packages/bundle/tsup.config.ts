@@ -7,8 +7,5 @@ export default defineConfig({
     index: 'src/index.ts',
   },
   external: [/^@kb-labs\//],
-  dts: {
-    resolve: false,
-  },
   skipNodeModulesBundle: true,
 })
