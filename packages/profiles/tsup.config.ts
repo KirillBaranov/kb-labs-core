@@ -7,6 +7,5 @@ export default defineConfig({
     index: 'src/index.ts',
   },
   external: [/^@kb-labs\//, 'ajv', 'ajv-formats', 'yaml', 'picomatch'],
-  dts: false,
   skipNodeModulesBundle: true,
 })

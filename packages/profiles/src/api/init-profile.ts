@@ -14,7 +14,7 @@ import {
 } from '../constants';
 import { validateProfile } from './validate-profile';
 import type { InitResult } from '@kb-labs/core-config';
-import type { ProductId } from '@kb-labs/core-config';
+import type { ProductId } from '@kb-labs/core-types';
 
 export interface InitProfileOptions {
   cwd: string;
