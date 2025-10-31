@@ -2,50 +2,103 @@ import type { CommandModule } from '../types';
 import { loadBundle } from '@kb-labs/core-bundle';
 import type { ProductId } from '@kb-labs/core-bundle';
 import { box, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
+import { runScope, type AnalyticsEventV1, type EmitResult } from '@kb-labs/analytics-sdk-node';
+import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../analytics/events';
 
-export const run: CommandModule['run'] = async (ctx, _argv, flags) => {
+export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<number> => {
+  const startTime = Date.now();
   const cwd = (flags.cwd as string) || process.cwd();
   const profileKey = (flags['profile-key'] as string) || 'default';
   const noFail = Boolean(flags['no-fail']);
 
-  try {
-    await loadBundle({
-      cwd,
-      product: flags.product as ProductId,
-      profileKey,
-      validate: noFail ? 'warn' : true,
-    });
+  return (await runScope(
+    {
+      actor: ANALYTICS_ACTOR,
+      ctx: { workspace: cwd },
+    },
+    async (emit: (event: Partial<AnalyticsEventV1>) => Promise<EmitResult>): Promise<number> => {
+      try {
+        // Track command start
+        await emit({
+          type: ANALYTICS_EVENTS.CONFIG_VALIDATE_STARTED,
+          payload: {
+            product: flags.product as string | undefined,
+            profileKey,
+            noFail,
+          },
+        });
+        await loadBundle({
+          cwd,
+          product: flags.product as ProductId,
+          profileKey,
+          validate: noFail ? 'warn' : true,
+        });
 
-    if (flags.json) {
-      ctx.presenter.json({ ok: true, product: flags.product });
-    } else {
-      ctx.presenter.write(
-        box('Config Validation', [
-          `${safeSymbols.success} ${safeColors.bold('Valid config')} for ${flags.product}`,
-        ])
-      );
-    }
-    return 0;
-  } catch (err: any) {
-    const details = err?.details || null;
-    if (flags.json) {
-      ctx.presenter.json({ ok: false, errors: details });
-    } else {
-      const lines: string[] = [
-        `${safeSymbols.error} ${safeColors.bold('Invalid config')} for ${flags.product}`,
-      ];
-      if (Array.isArray(details)) {
-        lines.push('', safeColors.bold('Errors:'));
-        for (const e of details) {
-          const instancePath = e.instancePath || e.instance || '';
-          const msg = e.message || 'Validation error';
-          lines.push(`  - ${instancePath ? instancePath + ': ' : ''}${msg}`);
+        const totalTime = Date.now() - startTime;
+
+        if (flags.json) {
+          ctx.presenter.json({ ok: true, product: flags.product });
+        } else {
+          ctx.presenter.write(
+            box('Config Validation', [
+              `${safeSymbols.success} ${safeColors.bold('Valid config')} for ${flags.product}`,
+            ])
+          );
         }
+
+        // Track command completion
+        await emit({
+          type: ANALYTICS_EVENTS.CONFIG_VALIDATE_FINISHED,
+          payload: {
+            product: flags.product as string | undefined,
+            profileKey,
+            noFail,
+            validationOk: true,
+            durationMs: totalTime,
+            result: 'success',
+          },
+        });
+
+        return 0;
+      } catch (err: any) {
+        const totalTime = Date.now() - startTime;
+        const details = err?.details || null;
+        const errorsArray = Array.isArray(details) ? details : [];
+
+        // Track command completion with failure
+        await emit({
+          type: ANALYTICS_EVENTS.CONFIG_VALIDATE_FINISHED,
+          payload: {
+            product: flags.product as string | undefined,
+            profileKey,
+            noFail,
+            validationOk: false,
+            errorsCount: errorsArray.length,
+            durationMs: totalTime,
+            result: 'failed',
+          },
+        });
+
+        if (flags.json) {
+          ctx.presenter.json({ ok: false, errors: details });
+        } else {
+          const lines: string[] = [
+            `${safeSymbols.error} ${safeColors.bold('Invalid config')} for ${flags.product}`,
+          ];
+          if (Array.isArray(details)) {
+            lines.push('', safeColors.bold('Errors:'));
+            for (const e of details) {
+              const instancePath = e.instancePath || e.instance || '';
+              const msg = e.message || 'Validation error';
+              lines.push(`  - ${instancePath ? instancePath + ': ' : ''}${msg}`);
+            }
+          }
+          ctx.presenter.write(box('Config Validation', lines));
+        }
+        return noFail ? 0 : 1;
       }
-      ctx.presenter.write(box('Config Validation', lines));
     }
-    return noFail ? 0 : 1;
-  }
+  )) as number;
 };
 
 
