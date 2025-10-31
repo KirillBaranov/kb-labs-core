@@ -41,11 +41,19 @@ function generateDiffPreview(oldContent: string, newContent: string): string {
 
 /**
  * Find workspace config file, walking up to git root
+ * Prioritizes .kb/ location over root
  */
 async function findWorkspaceConfig(
   cwd: string
 ): Promise<{ path: string; format: 'yaml' | 'json' } | null> {
-  const filenames = ['kb-labs.config.yaml', 'kb-labs.config.yml', 'kb-labs.config.json'];
+  const filenames = [
+    '.kb/kb-labs.config.yaml',
+    '.kb/kb-labs.config.yml',
+    '.kb/kb-labs.config.json',
+    'kb-labs.config.yaml',
+    'kb-labs.config.yml',
+    'kb-labs.config.json',
+  ];
   const gitRoot = await findGitRoot(cwd);
   const stopDir = gitRoot || path.parse(cwd).root;
   
@@ -92,7 +100,8 @@ export async function initWorkspaceConfig(
   const existing = await findWorkspaceConfig(cwd);
   const format = existing?.format || opts.format || 'yaml';
   const configFileName = format === 'json' ? 'kb-labs.config.json' : 'kb-labs.config.yaml';
-  const configPath = existing?.path || path.join(cwd, configFileName);
+  // Create .kb directory if needed for new configs
+  const configPath = existing?.path || path.join(cwd, '.kb', configFileName);
   
   // Ensure we're writing within workspace
   ensureWithinWorkspace(configPath, cwd);

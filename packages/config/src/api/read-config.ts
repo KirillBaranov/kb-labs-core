@@ -71,22 +71,38 @@ export async function readConfigFile(filePath: string): Promise<ConfigFileResult
 
 /**
  * Find nearest config file walking up from startDir to git root
+ * Prioritizes .kb/kb-labs.config.* over kb-labs.config.* for backward compatibility
  */
 async function findNearestConfig(
   startDir: string,
-  filenames: string[] = ['kb-labs.config.json', 'kb-labs.config.yaml', 'kb-labs.config.yml']
+  filenames: string[] = []
 ): Promise<{ path: string | null; tried: string[] }> {
   const start = path.resolve(startDir);
   const tried: string[] = [];
   let dir = start;
 
+  // Default filenames if not provided: prioritize .kb/ location
+  const defaultFilenames = [
+    '.kb/kb-labs.config.yaml',
+    '.kb/kb-labs.config.yml',
+    '.kb/kb-labs.config.json',
+    'kb-labs.config.yaml',
+    'kb-labs.config.yml',
+    'kb-labs.config.json',
+  ];
+  const searchFilenames = filenames.length > 0 ? filenames : defaultFilenames;
+
   while (true) {
-    for (const filename of filenames) {
+    for (const filename of searchFilenames) {
       const candidate = path.join(dir, filename);
       tried.push(candidate);
       
       try {
         await fsp.access(candidate);
+        // Warn if using old location
+        if (!candidate.includes('.kb/')) {
+          console.warn('[kb-labs] DEPRECATED: Move config to .kb/kb-labs.config.yaml');
+        }
         return { path: candidate, tried };
       } catch {
         // Continue to next filename
@@ -130,8 +146,7 @@ export async function findGitRoot(startDir: string): Promise<string | null> {
  * Read workspace config with find-up to git root
  */
 export async function readWorkspaceConfig(cwd: string): Promise<ConfigFileResult | null> {
-  const filenames = ['kb-labs.config.json', 'kb-labs.config.yaml', 'kb-labs.config.yml'];
-  const { path: configPath } = await findNearestConfig(cwd, filenames);
+  const { path: configPath } = await findNearestConfig(cwd);
   
   if (!configPath) {
     return null;

@@ -177,8 +177,14 @@ function getRuntimeDefaults(product: ProductId): any {
       build: true,
     },
     release: {
-      version: '1.0.0',
-      publish: false,
+      registry: 'https://registry.npmjs.org',
+      strategy: 'semver',
+      bump: 'auto',
+      strict: true,
+      verify: ['audit', 'build', 'tests'],
+      publish: { npm: true, github: false },
+      rollback: { enabled: true, maxHistory: 5 },
+      output: { json: true, md: true, text: true },
     },
     aiReview: {
       enabled: true,
