@@ -1,0 +1,10 @@
+{
+  "extends": "@kb-labs/devkit/tsconfig/lib.json",
+  "compilerOptions": {
+    "baseUrl": "."
+  },
+  "include": [
+    "src"
+  ]
+}
+
