@@ -1,3 +1,5 @@
+import type { ProductId } from '@kb-labs/core-types';
+
 export type Diagnostic =
     | { level: "warn" | "error"; code: string; message: string; detail?: unknown }
     | { level: "info"; code: string; message: string };
@@ -24,7 +26,8 @@ export interface KBConfig {
 
 // New types for enhanced config system
 
-export type ProductId = 'devlink' | 'release' | 'aiReview' | 'aiDocs' | 'devkit';
+// Re-export ProductId from core-types for backward compatibility
+export type { ProductId };
 
 export interface MergeTrace {
   path: string;

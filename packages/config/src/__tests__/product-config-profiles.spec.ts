@@ -8,7 +8,15 @@ import { promises as fsp } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { getProductConfig } from '../api/product-config';
-import type { ProfileInfo } from '@kb-labs/core-profiles';
+
+// Local minimal ProfileInfo type to avoid circular dependency
+interface ProfileInfo {
+  name: string;
+  version: string;
+  manifestPath: string;
+  exports: Record<string, Record<string, string>>;
+  extends: string[];
+}
 
 describe('Product Config with Profiles', () => {
   let testDir: string;

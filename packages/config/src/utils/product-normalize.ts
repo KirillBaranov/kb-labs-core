@@ -3,10 +3,10 @@
  * Product ID normalization between code (camelCase) and filesystem (kebab-case)
  */
 
-import type { ProductId } from '../types/types';
+import type { ProductId } from '@kb-labs/core-types';
 
 // Re-export ProductId for convenience
-export type { ProductId } from '../types/types';
+export type { ProductId } from '@kb-labs/core-types';
 
 const FS_MAP = new Map([
   ['aiReview', 'ai-review'],

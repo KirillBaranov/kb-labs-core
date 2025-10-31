@@ -43,6 +43,7 @@ export async function getProductConfig<T>(
   let profileDefaults = {};
   if (profileInfo) {
     try {
+      // @ts-expect-error - Dynamic import to avoid circular dependency
       const mod = await import('@kb-labs/core-profiles');
       const getProductDefaults: any = (mod as any).getProductDefaults;
       profileDefaults = await getProductDefaults(profileInfo, toFsProduct(product), schema);
@@ -139,10 +140,11 @@ export async function getProductConfig<T>(
   // Update lockfile with config hash
   try {
     const configHash = computeConfigHash(merged);
-    const configHashes: Record<ProductId, any> = {} as Record<ProductId, any>;
+     
+    const configHashes: Record<string, any> = {};
     configHashes[product] = configHash;
     await updateLockfile(cwd, {
-      configHashes
+      configHashes: configHashes as Record<ProductId, any>
     });
   } catch (error) {
     // Lockfile update is optional, don't fail the config resolution

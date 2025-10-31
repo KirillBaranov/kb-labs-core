@@ -26,14 +26,15 @@
     "lint:fix": "eslint . --fix --ignore-pattern 'dist/**'"
   },
   "dependencies": {
-    "@kb-labs/profile-schemas": "workspace:*",
+    "@kb-labs/core-types": "link:../types",
+    "@kb-labs/profile-schemas": "link:../../../kb-labs-profile-schemas",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "picomatch": "^4.0.2",
     "yaml": "^2.5.1"
   },
   "devDependencies": {
-    "@kb-labs/devkit": "workspace:*",
+    "@kb-labs/devkit": "link:../../../kb-labs-devkit",
     "@types/node": "^24.3.3",
     "@types/picomatch": "^4",
     "@typescript-eslint/eslint-plugin": "^8",
