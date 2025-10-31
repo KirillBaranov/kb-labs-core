@@ -186,10 +186,10 @@ importers:
   packages/bundle:
     dependencies:
       '@kb-labs/core-config':
-        specifier: workspace:*
+        specifier: link:../config
         version: link:../config
       '@kb-labs/core-policy':
-        specifier: workspace:*
+        specifier: link:../policy
         version: link:../policy
       '@kb-labs/core-profiles':
         specifier: link:../profiles
@@ -220,16 +220,16 @@ importers:
         specifier: link:../../../kb-labs-cli/packages/core
         version: link:../../../kb-labs-cli/packages/core
       '@kb-labs/core-bundle':
-        specifier: workspace:*
+        specifier: link:../bundle
         version: link:../bundle
       '@kb-labs/core-config':
-        specifier: workspace:*
+        specifier: link:../config
         version: link:../config
       '@kb-labs/core-policy':
-        specifier: workspace:*
+        specifier: link:../policy
         version: link:../policy
       '@kb-labs/core-profiles':
-        specifier: workspace:*
+        specifier: link:../profiles
         version: link:../profiles
       '@kb-labs/profile-schemas':
         specifier: link:../../../kb-labs-profile-schemas
@@ -259,11 +259,8 @@ importers:
 
   packages/config:
     dependencies:
-      '@kb-labs/core-profiles':
-        specifier: workspace:*
-        version: link:../profiles
       '@kb-labs/profile-schemas':
-        specifier: workspace:*
+        specifier: link:../../../kb-labs-profile-schemas
         version: link:../../../kb-labs-profile-schemas
       ajv:
         specifier: ^8.17.1
@@ -312,47 +309,10 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
-  packages/core:
-    dependencies:
-      '@kb-labs/core-bundle':
-        specifier: workspace:*
-        version: link:../bundle
-      '@kb-labs/core-config':
-        specifier: workspace:*
-        version: link:../config
-      '@kb-labs/core-policy':
-        specifier: workspace:*
-        version: link:../policy
-      '@kb-labs/core-profiles':
-        specifier: workspace:*
-        version: link:../profiles
-      '@kb-labs/core-sys':
-        specifier: workspace:^
-        version: link:../sys
-      '@kb-labs/shared-cli-ui':
-        specifier: link:../../../kb-labs-shared/packages/cli-ui
-        version: link:../../../kb-labs-shared/packages/cli-ui
-    devDependencies:
-      '@kb-labs/devkit':
-        specifier: workspace:*
-        version: link:../../../kb-labs-devkit
-      '@types/node':
-        specifier: ^24.7.0
-        version: 24.9.1
-      tsup:
-        specifier: ^8
-        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
-      tsx:
-        specifier: ^4.20.6
-        version: 4.20.6
-      vitest:
-        specifier: ^3
-        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
-
   packages/policy:
     dependencies:
       '@kb-labs/core-config':
-        specifier: workspace:*
+        specifier: link:../config
         version: link:../config
       ajv:
         specifier: ^8.17.1
@@ -411,10 +371,10 @@ importers:
   packages/profiles:
     dependencies:
       '@kb-labs/core-config':
-        specifier: workspace:*
+        specifier: link:../config
         version: link:../config
       '@kb-labs/core-sys':
-        specifier: workspace:*
+        specifier: link:../sys
         version: link:../sys
       '@kb-labs/profile-schemas':
         specifier: link:../../../kb-labs-profile-schemas
