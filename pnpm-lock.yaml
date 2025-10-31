@@ -194,6 +194,9 @@ importers:
       '@kb-labs/core-profiles':
         specifier: link:../profiles
         version: link:../profiles
+      '@kb-labs/core-types':
+        specifier: link:../types
+        version: link:../types
     devDependencies:
       '@types/node':
         specifier: ^24.3.3
@@ -216,6 +219,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@kb-labs/analytics-sdk-node':
+        specifier: link:../../../kb-labs-analytics/packages/analytics-sdk-node
+        version: link:../../../kb-labs-analytics/packages/analytics-sdk-node
       '@kb-labs/cli-core':
         specifier: link:../../../kb-labs-cli/packages/core
         version: link:../../../kb-labs-cli/packages/core
@@ -259,6 +265,9 @@ importers:
 
   packages/config:
     dependencies:
+      '@kb-labs/core-types':
+        specifier: link:../types
+        version: link:../types
       '@kb-labs/profile-schemas':
         specifier: link:../../../kb-labs-profile-schemas
         version: link:../../../kb-labs-profile-schemas
@@ -376,6 +385,9 @@ importers:
       '@kb-labs/core-sys':
         specifier: link:../sys
         version: link:../sys
+      '@kb-labs/core-types':
+        specifier: link:../types
+        version: link:../types
       '@kb-labs/profile-schemas':
         specifier: link:../../../kb-labs-profile-schemas
         version: link:../../../kb-labs-profile-schemas
@@ -453,6 +465,33 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
+
+  packages/types:
+    devDependencies:
+      '@kb-labs/devkit':
+        specifier: link:../../../kb-labs-devkit
+        version: link:../../../kb-labs-devkit
+      '@types/node':
+        specifier: ^24.3.3
+        version: 24.9.1
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^8
+        version: 8.46.2(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint@9.38.0)(typescript@5.9.3)
+      '@typescript-eslint/parser':
+        specifier: ^8
+        version: 8.46.2(eslint@9.38.0)(typescript@5.9.3)
+      eslint:
+        specifier: ^9
+        version: 9.38.0
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
 
 packages:
 
