@@ -31,13 +31,14 @@
     "lint:fix": "eslint . --fix --ignore-pattern 'dist/**'"
   },
   "dependencies": {
-    "@kb-labs/cli-core": "workspace:*",
-    "@kb-labs/core-bundle": "workspace:*",
-    "@kb-labs/core-config": "workspace:*",
-    "@kb-labs/core-policy": "workspace:*",
-    "@kb-labs/core-profiles": "workspace:*",
-    "@kb-labs/profile-schemas": "workspace:*",
-    "@kb-labs/shared-cli-ui": "workspace:*",
+    "@kb-labs/analytics-sdk-node": "link:../../../kb-labs-analytics/packages/analytics-sdk-node",
+    "@kb-labs/cli-core": "link:../../../kb-labs-cli/packages/core",
+    "@kb-labs/core-bundle": "link:../bundle",
+    "@kb-labs/core-config": "link:../config",
+    "@kb-labs/core-policy": "link:../policy",
+    "@kb-labs/core-profiles": "link:../profiles",
+    "@kb-labs/profile-schemas": "link:../../../kb-labs-profile-schemas",
+    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui",
     "yaml": "^2.5.1"
   },
   "devDependencies": {
