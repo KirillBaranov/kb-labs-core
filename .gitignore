@@ -65,4 +65,4 @@ analytics/
 *.db
 
 # kb-labs
-kb-labs/DEVKIT_SYNC.json
+.kb/devkit/tmp/
