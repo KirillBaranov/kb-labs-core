@@ -1,13 +1,47 @@
 # KB Labs Core (@kb-labs/core)
 
-This is the **core library** for all KB Labs products and tools.  
-It provides essential utilities, system interfaces, and shared functionality across the KB Labs ecosystem.  
+> **Core library for all KB Labs products and tools.** Provides essential utilities, system interfaces, and shared functionality across the KB Labs ecosystem.
 
-**Goals:** Reliable core utilities, consistent APIs, and extensible architecture for all KB Labs projects.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-18.18.0+-green.svg)](https://nodejs.org/)
+[![pnpm](https://img.shields.io/badge/pnpm-9.0.0+-orange.svg)](https://pnpm.io/)
+
+## 🎯 Vision
+
+KB Labs Core is the runtime core with profiles resolver/validator and infrastructure abstractions. It provides reliable core utilities, consistent APIs, and extensible architecture for all KB Labs projects. This is the foundation of the **@kb-labs** ecosystem, enabling all other products to build on top of a stable, well-designed core.
+
+The project solves the problem of code duplication and inconsistent APIs across the KB Labs ecosystem by providing a unified foundation for configuration management, profile resolution, system interfaces, and bundle orchestration. All KB Labs products can rely on Core for consistent behavior, security constraints, and cross-platform compatibility.
+
+This project is part of the **@kb-labs** ecosystem and integrates seamlessly with other KB Labs tools including CLI, REST API, Analytics, and all AI-powered products.
 
 ## 🚀 Quick Start
 
-### Load Bundle for Your Product
+### Installation
+
+```bash
+# Install dependencies
+pnpm install
+```
+
+### Development
+
+```bash
+# Start development mode for all packages
+pnpm dev
+
+# Build all packages
+pnpm build
+
+# Run tests
+pnpm test
+
+# Lint code
+pnpm lint
+```
+
+### Basic Usage
+
+The main entry point for KB Labs Core is the bundle loader, which provides a unified interface to configuration, profiles, artifacts, and policy:
 
 ```typescript
 import { loadBundle } from '@kb-labs/core-bundle';
@@ -33,81 +67,139 @@ if (!bundle.policy.permits('aiReview.run')) {
 console.log(bundle.trace);
 ```
 
+### Configuration
+
+Core uses a 6-layer configuration system that merges values from multiple sources. See the [Configuration System](#⚙️-configuration-system) section for details.
+
+## ✨ Features
+
+- **6-Layer Configuration System**: Merges runtime defaults, profile defaults, preset defaults, workspace config, local config, and CLI overrides
+- **Profile Resolution**: Intelligent profile resolution with cycle detection, security constraints, and artifact management
+- **Bundle Orchestration**: Single entry point (`loadBundle()`) that coordinates config, profiles, artifacts, and policy
+- **System Interfaces**: Cross-platform file system operations, structured logging, and Git repository utilities
+- **Policy Engine**: Fine-grained permission system for product operations
+- **Type Safety**: Full TypeScript support with strict type checking
+- **Performance**: LRU caching with automatic invalidation and lazy loading
+
 ## 📁 Repository Structure
 
 ```
-apps/
-├── demo/                    # Example app demonstrating core functionality
-packages/
-├── config/                  # Configuration management and runtime utilities
-├── sys/                     # System interfaces (logging, filesystem, repository)
-fixtures/                    # Fixtures for snapshot/integration testing
-docs/
-└── adr/                     # Architecture Decision Records (ADRs)
+kb-labs-core/
+├── apps/                    # Example applications and demos
+│   └── demo/                # Example app demonstrating core functionality
+├── packages/                # Core packages
+│   ├── bundle/              # Bundle orchestrator and facade
+│   ├── cli/                 # CLI commands for configuration management
+│   ├── config/              # Configuration management and runtime utilities
+│   ├── policy/              # Policy engine and permission system
+│   ├── profile-toolkit/     # Profile utilities and helpers
+│   ├── profiles/            # Profile system with artifacts and defaults
+│   ├── sys/                 # System interfaces (logging, filesystem, repository)
+│   └── types/               # Shared TypeScript types
+├── docs/                    # Documentation
+│   ├── adr/                 # Architecture Decision Records
+│   ├── ADDING_PRODUCT.md    # Guide for adding new products
+│   ├── BUNDLE_OVERVIEW.md   # Bundle system architecture
+│   ├── CLI_README.md        # CLI documentation
+│   ├── CONFIG_API.md         # Configuration API reference
+│   ├── DOCUMENTATION.md      # Documentation standards
+│   └── MIGRATION_GUIDE.md    # Migration guide
+├── scripts/                 # Utility scripts
+└── src/                     # Source code
 ```
 
-## 📦 Core Packages
+### Directory Descriptions
 
-### @kb-labs/core-config
-Configuration management with layered merge:
+- **`apps/`** - Example applications demonstrating core functionality and usage patterns
+- **`packages/`** - Individual packages with their own package.json, each serving a specific purpose in the core architecture
+- **`docs/`** - Comprehensive documentation including ADRs, API references, and guides
+- **`scripts/`** - Utility scripts for development and maintenance tasks
+
+## 📦 Packages
+
+| Package | Description |
+|---------|-------------|
+| [@kb-labs/core-bundle](./packages/bundle/) | Facade orchestrating all components with single entry point (`loadBundle()`) |
+| [@kb-labs/core-cli](./packages/cli/) | CLI commands for configuration management (`kb init`, `kb config`, `kb doctor`) |
+| [@kb-labs/core-config](./packages/config/) | 6-layer configuration management with LRU caching and product normalization |
+| [@kb-labs/core-policy](./packages/policy/) | Policy engine for fine-grained permission checking |
+| [@kb-labs/core-profiles](./packages/profiles/) | Profile system with v1.0 manifest format, artifacts API, and security constraints |
+| [@kb-labs/core-sys](./packages/sys/) | System interfaces for logging, filesystem operations, and Git repository utilities |
+| [@kb-labs/core-types](./packages/types/) | Shared TypeScript types and type definitions |
+| [@kb-labs/core-profile-toolkit](./packages/profile-toolkit/) | Utilities and helpers for profile management |
+
+### Package Details
+
+**@kb-labs/core-config** provides configuration management with layered merge:
 - 6-layer configuration system (runtime → profile → preset → workspace → local → CLI)
 - Product normalization (kebab-case ↔ camelCase)
 - LRU caching with automatic invalidation
 - Find-up resolution
 
-### @kb-labs/core-profiles
-Profile system with artifacts and defaults:
+**@kb-labs/core-profiles** implements the profile system with artifacts and defaults:
 - New v1.0 manifest format
 - Artifacts API (list, read, materialize)
 - Extends resolution with cycle detection
 - Security constraints (whitelist, size limits, SHA256 verification)
 
-### @kb-labs/core-bundle
-Facade orchestrating all components:
+**@kb-labs/core-bundle** is the facade orchestrating all components:
 - Single entry point (`loadBundle()`) for complete bundle
 - Coordinates config, profiles, artifacts, and policy
 - Lazy loading with detailed trace support
 
-### @kb-labs/core-cli
-CLI commands for configuration management:
+**@kb-labs/core-cli** provides CLI commands for configuration management:
 - `kb init setup` - Initialize complete workspace
 - `kb config get` - Get product configuration
 - `kb config explain` - Explain configuration resolution
 - `kb doctor` - Health check with suggestions
 
-### @kb-labs/core-sys
-System interfaces and utilities:
+**@kb-labs/core-sys** provides system interfaces and utilities:
 - **Logging**: Structured logging with multiple sinks
 - **Filesystem**: Cross-platform file system operations
 - **Repository**: Git repository utilities and metadata
 
-## 💻 Installation
+## 🛠️ Available Scripts
 
-```bash
-pnpm install
-```
+| Script | Description |
+|--------|-------------|
+| `pnpm dev` | Start development mode for all packages |
+| `pnpm build` | Build all packages |
+| `pnpm build:all` | Build all packages recursively |
+| `pnpm build:clean` | Clean and build all packages |
+| `pnpm test` | Run all tests |
+| `pnpm test:watch` | Run tests in watch mode |
+| `pnpm test:coverage` | Run tests with coverage reporting |
+| `pnpm lint` | Lint all code |
+| `pnpm lint:fix` | Fix linting issues |
+| `pnpm format` | Format code with Prettier |
+| `pnpm type-check` | TypeScript type checking |
+| `pnpm check` | Run lint, type-check, and tests |
+| `pnpm ci` | Full CI pipeline (clean, build, check) |
+| `pnpm clean` | Clean build artifacts |
+| `pnpm clean:all` | Clean all node_modules and build artifacts |
+| `pnpm devkit:sync` | Sync DevKit configurations to workspace |
+| `pnpm devkit:check` | Check if DevKit sync is needed |
+| `pnpm devkit:force` | Force DevKit sync (overwrite existing) |
 
-## 🛠️ Development
+## 📋 Development Policies
 
-```bash
-pnpm dev         # Parallel dev mode for selected packages/apps
-pnpm build       # Build all packages
-pnpm test        # Run tests
-pnpm lint        # Lint code
-```
+- **Code Style**: ESLint + Prettier, TypeScript strict mode
+- **Testing**: Vitest with fixtures for integration testing
+- **Versioning**: SemVer with automated releases through Changesets
+- **Architecture**: Document decisions in ADRs (see `docs/adr/`)
+- **API Stability**: Core packages maintain backward compatibility
+- **Documentation**: All public APIs must be documented
+- **Cross-platform**: Ensure compatibility across different operating systems
+- **Error Handling**: Provide clear error messages and proper error types
 
-## 📚 Documentation
+## 🔧 Requirements
 
-- **[Migration Guide](./MIGRATION_GUIDE.md)** - Step-by-step guide for migrating products
-- **[Config API Reference](./docs/CONFIG_API.md)** - Complete API documentation
-- **[Bundle Overview](./docs/BUNDLE_OVERVIEW.md)** - System architecture
-- **[Adding a Product](./docs/ADDING_PRODUCT.md)** - How to add a new product
+- **Node.js**: >= 18.18.0
+- **pnpm**: >= 9.0.0
 
-## 🔍 Configuration System
+## ⚙️ Configuration System
 
-### 6 Layers of Configuration
-
-Configuration is merged from 6 layers (later layers override earlier ones):
+KB Labs Core implements a powerful 6-layer configuration system that merges values from multiple sources (later layers override earlier ones):
 
 1. **Runtime defaults** - Built-in defaults for each product
 2. **Profile defaults** - From profile manifest
@@ -147,66 +239,51 @@ products:
 }
 ```
 
-### Creating a New Core Package
+## 📚 Documentation
 
-```bash
-# Copy existing package structure
-cp -r packages/config packages/<new-package-name>
-# Update package.json, tsconfig, and imports
-```
+- [Documentation Standard](./docs/DOCUMENTATION.md) - Full documentation guidelines
+- [Contributing Guide](./CONTRIBUTING.md) - How to contribute
+- [Architecture Decisions](./docs/adr/) - ADRs for this project
 
-## 🛠️ Available Scripts
+**Guides:**
+- [Migration Guide](./docs/MIGRATION_GUIDE.md) - Step-by-step guide for migrating products
+- [Config API Reference](./docs/CONFIG_API.md) - Complete API documentation
+- [Bundle Overview](./docs/BUNDLE_OVERVIEW.md) - System architecture
+- [Adding a Product](./docs/ADDING_PRODUCT.md) - How to add a new product
 
-| Script | Description |
-|--------|-------------|
-| `pnpm dev` | Start development mode for all packages |
-| `pnpm build` | Build all packages |
-| `pnpm build:clean` | Clean and build all packages |
-| `pnpm test` | Run all tests |
-| `pnpm test:watch` | Run tests in watch mode |
-| `pnpm lint` | Lint all code |
-| `pnpm lint:fix` | Fix linting issues |
-| `pnpm type-check` | TypeScript type checking |
-| `pnpm check` | Run lint, type-check, and tests |
-| `pnpm ci` | Full CI pipeline (clean, build, check) |
-| `pnpm clean` | Clean build artifacts |
-| `pnpm clean:all` | Clean all node_modules and build artifacts |
+**Architecture:**
+- [Architecture and Repository Layout](./docs/adr/0001-architecture-and-reposity-layout.md) - Project structure
+- [Core Facade](./docs/adr/0005-core-facade.md) - Bundle orchestrator design
+- [Profiles Resolution Order](./docs/adr/0006-profiles-resolution-order-and-runtime-metadata.md) - Profile resolution logic
 
-## 📋 Development Policies
+## 🔗 Related Packages
 
-- **Code Style:** ESLint + Prettier, TypeScript strict mode
-- **Testing:** Vitest with fixtures for integration testing
-- **Versioning:** SemVer with automated releases through Changesets
-- **Architecture:** Document decisions in ADRs (see `docs/adr/`)
-- **API Stability:** Core packages maintain backward compatibility
-- **Documentation:** All public APIs must be documented
+### Dependencies
 
-## 🔧 Requirements
+- [@kb-labs/shared](https://github.com/KirillBaranov/kb-labs-shared) - Common types and utilities without side effects
+- [@kb-labs/devkit](https://github.com/KirillBaranov/kb-labs-devkit) - Bootstrap and standards (CI templates, configs, sync)
 
-- **Node.js:** >= 18.18.0
-- **pnpm:** >= 9.0.0
+### Used By
 
-## 🚧 Roadmap
+- [@kb-labs/cli](https://github.com/KirillBaranov/kb-labs-cli) - CLI wrapper providing unified CLI commands
+- [@kb-labs/rest-api](https://github.com/KirillBaranov/kb-labs-rest-api) - REST API layer
+- [@kb-labs/ai-review](https://github.com/KirillBaranov/kb-labs-ai-review) - AI Review product
+- [@kb-labs/audit](https://github.com/KirillBaranov/kb-labs-audit) - Audit framework
+- [@kb-labs/analytics](https://github.com/KirillBaranov/kb-labs-analytics) - Analytics pipeline
+- All other KB Labs products
 
-### Planned Core Packages
+### Ecosystem
 
-- **@kb-labs/core-crypto**: Cryptographic utilities and secure operations
-- **@kb-labs/core-http**: HTTP client with retry, timeout, and error handling
-- **@kb-labs/core-validation**: Schema validation and data transformation
-- **@kb-labs/core-cache**: Caching layer with multiple backends
-- **@kb-labs/core-storage**: Unified storage interface for files, databases, and cloud
-- **@kb-labs/core-events**: Event system and pub/sub functionality
-- **@kb-labs/core-metrics**: Performance monitoring and metrics collection
+- [KB Labs](https://github.com/KirillBaranov/kb-labs) - Main ecosystem repository
 
-### Future Enhancements
+## 🤝 Contributing
 
-- Plugin system for extensibility
-- Cross-platform compatibility improvements
-- Performance optimizations
-- Additional logging sinks (Sentry, DataDog, etc.)
-- Enhanced configuration validation
-- TypeScript utility types and helpers
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines and contribution process.
 
 ## 📄 License
 
 MIT © KB Labs
+
+---
+
+**See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines and contribution process.**
