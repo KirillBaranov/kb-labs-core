@@ -1,8 +1,10 @@
 # ADR-0006: Profiles: Resolution Order, System Defaults and Runtime Metadata
 
-**Date:** 2025-01-05  
-**Status:** Accepted  
-**Deciders:** KB Labs Team  
+**Date:** 2025-01-05
+**Status:** Accepted
+**Deciders:** KB Labs Team
+**Last Reviewed:** 2025-11-03
+**Tags:** [architecture, data, observability]  
 
 ## Context
 

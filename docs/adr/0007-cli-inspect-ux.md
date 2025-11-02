@@ -1,8 +1,10 @@
 # ADR-0007: Unified Inspect UX for CLI
 
-**Date:** 2025-10-30  
-**Status:** Accepted  
+**Date:** 2025-10-30
+**Status:** Accepted
 **Deciders:** KB Labs Team
+**Last Reviewed:** 2025-11-03
+**Tags:** [cli, ui/ux, observability]
 
 ## Context
 Developers need a concise, consistent way to understand the current state of profiles, product configs, and bundles without reading code or manifests. Existing commands (`doctor`, `explain`, `print`) partially cover this but lack a focused diagnostic summary with the same UX across areas.
