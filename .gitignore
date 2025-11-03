@@ -21,6 +21,8 @@ build/
 tmp/
 *.tsbuildinfo
 *.tgz
+**/src/**/*.js
+**/src/**/*.js.map
 
 # ───────────────
 # Testing
@@ -57,10 +59,8 @@ apps/*/coverage/
 packages/*/coverage/
 
 # ───────────────
-# Analytics / Sentinel / custom
+# custom
 # ───────────────
-.sentinel/
-analytics/
 *.sqlite
 *.db
 

@@ -124,7 +124,7 @@ describe('Bundle Integration Tests', () => {
       expect(rules.length).toBeGreaterThan(0);
       
       // Check artifact structure
-      const artifact = rules[0];
+      const artifact = rules[0]!;
       expect(artifact.relPath).toBeDefined();
       expect(artifact.sha256).toBeDefined();
     });
@@ -201,7 +201,7 @@ describe('Bundle Integration Tests', () => {
       expect(trace.length).toBeGreaterThan(0);
       
       // Check trace structure
-      const step = trace[0];
+      const step = trace[0]!;
       expect(step.layer).toBeDefined();
       expect(step.source).toBeDefined();
     });

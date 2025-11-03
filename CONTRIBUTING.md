@@ -37,9 +37,13 @@ Use conventional commit format:
 - `test: add integration tests for filesystem module`
 
 ### Architecture Decisions
+
 - For significant architectural changes, add an ADR in `docs/adr/`
-- Follow the existing ADR format and numbering
-- Include rationale, alternatives considered, and consequences
+- Follow the ADR template in `docs/adr/0000-template.md`
+- Include required metadata (Date, Status, Deciders, **Last Reviewed**, **Tags**)
+- **Last Reviewed** date is required and should be updated periodically
+- **Tags** are mandatory (minimum 1, maximum 5 tags from approved list)
+- See [Documentation Standard](./docs/DOCUMENTATION.md) for ADR format requirements
 
 ### Core Package Guidelines
 - **API Stability**: Maintain backward compatibility for public APIs
@@ -103,3 +107,7 @@ When adding a new core package:
 - Open an issue for questions or discussions
 - Check existing ADRs for architectural context
 - Review existing code for patterns and conventions
+
+---
+
+**See [Documentation Standard](./docs/DOCUMENTATION.md) for complete documentation guidelines.**

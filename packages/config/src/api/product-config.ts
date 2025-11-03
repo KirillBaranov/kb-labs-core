@@ -5,7 +5,7 @@
 
 import { promises as fsp } from 'node:fs';
 import path from 'node:path';
-import { KbError, ERROR_HINTS } from '../errors/kb-error';
+// Note: KbError and ERROR_HINTS are available if needed for future error handling
 import { readWorkspaceConfig } from './read-config';
 import { layeredMergeWithTrace } from '../merge/layered-merge';
 import { toFsProduct } from '../utils/product-normalize';
@@ -187,6 +187,31 @@ function getRuntimeDefaults(product: ProductId): any {
       publish: { npm: true, github: false },
       rollback: { enabled: true, maxHistory: 5 },
       output: { json: true, md: true, text: true },
+      changelog: {
+        enabled: true,
+        includeTypes: ['feat', 'fix', 'perf', 'refactor', 'revert'],
+        excludeTypes: ['chore', 'ci'],
+        ignoreAuthors: ['dependabot', 'renovate', 'github-actions[bot]', '*[bot]'],
+        collapseMerges: true,
+        collapseReverts: true,
+        preferMergeSummary: true,
+        bumpStrategy: 'independent',
+        workspace: true,
+        perPackage: true,
+        format: 'both',
+        level: 'standard',
+        locale: 'en',
+        cache: true,
+        requireAudit: true,
+        requireSignedTags: false,
+        redactPatterns: ['(?i)token=\\w+', '(?i)apikey=\\w+', '(https?://[^\\s]+@[^\\s]+)', '(gh[ps]_[A-Za-z0-9_]+)'],
+        maxBodyLength: 500,
+        ignoreSubmodules: true,
+      },
+      git: {
+        provider: 'auto',
+        autoUnshallow: false,
+      },
     },
     aiReview: {
       enabled: true,

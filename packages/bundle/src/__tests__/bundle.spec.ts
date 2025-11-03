@@ -206,8 +206,8 @@ describe('Bundle System', () => {
 
       const artifacts = await bundle.artifacts.list('rules');
       expect(artifacts).toHaveLength(1);
-      expect(artifacts[0].relPath).toBe('artifacts/ai-review/rules.yml');
-      expect(artifacts[0].sha256).toBeDefined();
+      expect(artifacts[0]!.relPath).toBe('artifacts/ai-review/rules.yml');
+      expect(artifacts[0]!.sha256).toBeDefined();
     });
 
     it('should materialize artifacts', async () => {

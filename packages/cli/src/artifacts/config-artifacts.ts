@@ -71,7 +71,7 @@ export async function detectConfigArtifacts(cwd: string): Promise<ConfigArtifact
           }
         }
       }
-    } catch (error) {
+    } catch {
       // Workspace config read failed
     }
   }

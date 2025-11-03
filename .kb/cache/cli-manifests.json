@@ -1,0 +1,527 @@
+{
+  "version": "v20.19.4",
+  "cliVersion": "0.1.0",
+  "timestamp": 1761916816240,
+  "lockfileHash": "4cd50b65a7bd7d61c6b6864a501906852ee6ac6710958f71d78c5b5d98a13f88",
+  "configHash": "05c5557936fe4fa7c83efa0cead88e1266c15b553e8ba826996f8ca6e0eec0f9",
+  "packages": {
+    "@kb-labs/core-cli": {
+      "version": "0.1.0",
+      "manifestHash": "7b1be4a5bf62a271fb6c9d8ed628a5fe1a374133ead79701476b477c15c80632",
+      "manifestPath": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-core/packages/cli/dist/cli.manifest.js",
+      "pkgJsonMtime": 1761915999281.3477,
+      "manifestMtime": 1761916686871.8809,
+      "result": {
+        "manifests": [
+          {
+            "manifestVersion": "1.0",
+            "id": "init:workspace",
+            "group": "init",
+            "describe": "Initialize workspace configuration",
+            "requires": [
+              "@kb-labs/core-config@^0.1.0"
+            ],
+            "flags": [
+              {
+                "name": "format",
+                "type": "string",
+                "default": "yaml",
+                "choices": [
+                  "yaml",
+                  "json"
+                ]
+              },
+              {
+                "name": "force",
+                "type": "boolean",
+                "alias": "f"
+              },
+              {
+                "name": "cwd",
+                "type": "string"
+              },
+              {
+                "name": "json",
+                "type": "boolean"
+              }
+            ],
+            "examples": [
+              "kb init workspace",
+              "kb init workspace --format json"
+            ],
+            "namespace": "init",
+            "package": "@kb-labs/core-cli"
+          },
+          {
+            "manifestVersion": "1.0",
+            "id": "init:profile",
+            "group": "init",
+            "describe": "Initialize or link a profile",
+            "requires": [
+              "@kb-labs/core-profiles@^0.1.0"
+            ],
+            "flags": [
+              {
+                "name": "profile-key",
+                "type": "string",
+                "default": "default"
+              },
+              {
+                "name": "profile-ref",
+                "type": "string"
+              },
+              {
+                "name": "scaffold-local-profile",
+                "type": "boolean"
+              },
+              {
+                "name": "cwd",
+                "type": "string"
+              },
+              {
+                "name": "json",
+                "type": "boolean"
+              }
+            ],
+            "examples": [
+              "kb init profile",
+              "kb init profile --scaffold-local-profile"
+            ],
+            "namespace": "init",
+            "package": "@kb-labs/core-cli"
+          },
+          {
+            "manifestVersion": "1.0",
+            "id": "init:policy",
+            "group": "init",
+            "describe": "Initialize policy configuration",
+            "requires": [
+              "@kb-labs/core-policy@^0.1.0"
+            ],
+            "flags": [
+              {
+                "name": "bundle-name",
+                "type": "string",
+                "default": "default"
+              },
+              {
+                "name": "cwd",
+                "type": "string"
+              },
+              {
+                "name": "json",
+                "type": "boolean"
+              }
+            ],
+            "examples": [
+              "kb init policy"
+            ],
+            "namespace": "init",
+            "package": "@kb-labs/core-cli"
+          },
+          {
+            "manifestVersion": "1.0",
+            "id": "init:setup",
+            "aliases": [
+              "init"
+            ],
+            "group": "init",
+            "describe": "Initialize complete KB Labs workspace",
+            "longDescription": "Setup workspace with config, profile, and policy in one command",
+            "requires": [
+              "@kb-labs/core-bundle@^0.1.0"
+            ],
+            "flags": [
+              {
+                "name": "format",
+                "type": "string",
+                "default": "yaml",
+                "choices": [
+                  "yaml",
+                  "json"
+                ]
+              },
+              {
+                "name": "products",
+                "type": "string",
+                "default": "aiReview",
+                "description": "Comma-separated product list"
+              },
+              {
+                "name": "profile-key",
+                "type": "string",
+                "default": "default"
+              },
+              {
+                "name": "profile-ref",
+                "type": "string"
+              },
+              {
+                "name": "scaffold-local-profile",
+                "type": "boolean"
+              },
+              {
+                "name": "preset-ref",
+                "type": "string"
+              },
+              {
+                "name": "policy-bundle",
+                "type": "string"
+              },
+              {
+                "name": "dry-run",
+                "type": "boolean"
+              },
+              {
+                "name": "force",
+                "type": "boolean",
+                "alias": "f"
+              },
+              {
+                "name": "yes",
+                "type": "boolean",
+                "alias": "y"
+              },
+              {
+                "name": "cwd",
+                "type": "string"
+              },
+              {
+                "name": "json",
+                "type": "boolean"
+              }
+            ],
+            "examples": [
+              "kb init",
+              "kb init setup --yes",
+              "kb init setup --products aiReview,devlink --dry-run"
+            ],
+            "namespace": "init",
+            "package": "@kb-labs/core-cli"
+          },
+          {
+            "manifestVersion": "1.0",
+            "id": "config:get",
+            "group": "config",
+            "describe": "Get product configuration",
+            "requires": [
+              "@kb-labs/core-bundle@^0.1.0"
+            ],
+            "flags": [
+              {
+                "name": "product",
+                "type": "string",
+                "description": "Product ID",
+                "required": true
+              },
+              {
+                "name": "profile-key",
+                "type": "string",
+                "default": "default"
+              },
+              {
+                "name": "cwd",
+                "type": "string"
+              },
+              {
+                "name": "json",
+                "type": "boolean"
+              },
+              {
+                "name": "yaml",
+                "type": "boolean"
+              }
+            ],
+            "examples": [
+              "kb config get --product aiReview",
+              "kb config get --product devlink --json"
+            ],
+            "namespace": "config",
+            "package": "@kb-labs/core-cli"
+          },
+          {
+            "manifestVersion": "1.0",
+            "id": "config:inspect",
+            "group": "config",
+            "describe": "Inspect product configuration (summary + validation)",
+            "requires": [
+              "@kb-labs/core-bundle@^0.1.0"
+            ],
+            "flags": [
+              {
+                "name": "product",
+                "type": "string",
+                "required": true
+              },
+              {
+                "name": "profile-key",
+                "type": "string",
+                "default": "default"
+              },
+              {
+                "name": "cwd",
+                "type": "string"
+              },
+              {
+                "name": "json",
+                "type": "boolean"
+              }
+            ],
+            "examples": [
+              "kb config inspect --product aiReview"
+            ],
+            "namespace": "config",
+            "package": "@kb-labs/core-cli"
+          },
+          {
+            "manifestVersion": "1.0",
+            "id": "config:validate",
+            "group": "config",
+            "describe": "Validate product configuration against schemas",
+            "requires": [
+              "@kb-labs/core-bundle@^0.1.0"
+            ],
+            "flags": [
+              {
+                "name": "product",
+                "type": "string",
+                "description": "Product ID",
+                "required": true
+              },
+              {
+                "name": "profile-key",
+                "type": "string",
+                "default": "default"
+              },
+              {
+                "name": "no-fail",
+                "type": "boolean",
+                "description": "Warn instead of failing"
+              },
+              {
+                "name": "cwd",
+                "type": "string"
+              },
+              {
+                "name": "json",
+                "type": "boolean"
+              }
+            ],
+            "examples": [
+              "kb config validate --product aiReview",
+              "kb config validate --product devlink --no-fail"
+            ],
+            "namespace": "config",
+            "package": "@kb-labs/core-cli"
+          },
+          {
+            "manifestVersion": "1.0",
+            "id": "config:explain",
+            "group": "config",
+            "describe": "Explain configuration resolution",
+            "requires": [
+              "@kb-labs/core-bundle@^0.1.0"
+            ],
+            "flags": [
+              {
+                "name": "product",
+                "type": "string",
+                "required": true
+              },
+              {
+                "name": "profile-key",
+                "type": "string",
+                "default": "default"
+              },
+              {
+                "name": "cwd",
+                "type": "string"
+              },
+              {
+                "name": "json",
+                "type": "boolean"
+              }
+            ],
+            "examples": [
+              "kb config explain --product aiReview"
+            ],
+            "namespace": "config",
+            "package": "@kb-labs/core-cli"
+          },
+          {
+            "manifestVersion": "1.0",
+            "id": "config:doctor",
+            "aliases": [
+              "doctor"
+            ],
+            "group": "config",
+            "describe": "Check configuration health and get suggestions",
+            "flags": [
+              {
+                "name": "cwd",
+                "type": "string"
+              },
+              {
+                "name": "json",
+                "type": "boolean"
+              },
+              {
+                "name": "fix",
+                "type": "boolean",
+                "description": "Auto-fix issues"
+              }
+            ],
+            "examples": [
+              "kb config doctor",
+              "kb doctor",
+              "kb doctor --fix"
+            ],
+            "namespace": "config",
+            "package": "@kb-labs/core-cli"
+          },
+          {
+            "manifestVersion": "1.0",
+            "id": "bundle:print",
+            "group": "bundle",
+            "describe": "Print complete bundle for product",
+            "requires": [
+              "@kb-labs/core-bundle@^0.1.0"
+            ],
+            "flags": [
+              {
+                "name": "product",
+                "type": "string",
+                "required": true
+              },
+              {
+                "name": "profile-key",
+                "type": "string",
+                "default": "default"
+              },
+              {
+                "name": "cwd",
+                "type": "string"
+              },
+              {
+                "name": "json",
+                "type": "boolean"
+              },
+              {
+                "name": "with-trace",
+                "type": "boolean"
+              }
+            ],
+            "examples": [
+              "kb bundle print --product aiReview",
+              "kb bundle print --product devlink --with-trace"
+            ],
+            "namespace": "bundle",
+            "package": "@kb-labs/core-cli"
+          },
+          {
+            "manifestVersion": "1.0",
+            "id": "bundle:inspect",
+            "group": "bundle",
+            "describe": "Inspect bundle (profile + config + artifacts + trace)",
+            "requires": [
+              "@kb-labs/core-bundle@^0.1.0"
+            ],
+            "flags": [
+              {
+                "name": "product",
+                "type": "string",
+                "required": true
+              },
+              {
+                "name": "profile-key",
+                "type": "string",
+                "default": "default"
+              },
+              {
+                "name": "trace",
+                "type": "boolean"
+              },
+              {
+                "name": "cwd",
+                "type": "string"
+              },
+              {
+                "name": "json",
+                "type": "boolean"
+              }
+            ],
+            "examples": [
+              "kb bundle inspect --product aiReview --trace"
+            ],
+            "namespace": "bundle",
+            "package": "@kb-labs/core-cli"
+          },
+          {
+            "manifestVersion": "1.0",
+            "id": "profiles:resolve",
+            "group": "profiles",
+            "describe": "Resolve and display profile configuration",
+            "requires": [
+              "@kb-labs/core-profiles@^0.1.0"
+            ],
+            "flags": [
+              {
+                "name": "profile-key",
+                "type": "string",
+                "default": "default"
+              },
+              {
+                "name": "cwd",
+                "type": "string"
+              },
+              {
+                "name": "json",
+                "type": "boolean"
+              }
+            ],
+            "examples": [
+              "kb profiles resolve",
+              "kb profiles resolve --profile-key production"
+            ],
+            "namespace": "profiles",
+            "package": "@kb-labs/core-cli"
+          },
+          {
+            "manifestVersion": "1.0",
+            "id": "profiles:validate",
+            "group": "profiles",
+            "describe": "Validate profile manifest (legacy and v1.0)",
+            "requires": [
+              "@kb-labs/core-profiles@^0.1.0"
+            ],
+            "flags": [
+              {
+                "name": "profile-key",
+                "type": "string",
+                "default": "default"
+              },
+              {
+                "name": "cwd",
+                "type": "string"
+              },
+              {
+                "name": "json",
+                "type": "boolean"
+              }
+            ],
+            "examples": [
+              "kb profiles validate",
+              "kb profiles validate --profile-key production --json"
+            ],
+            "namespace": "profiles",
+            "package": "@kb-labs/core-cli"
+          }
+        ],
+        "source": "workspace",
+        "packageName": "@kb-labs/core-cli",
+        "manifestPath": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-core/packages/cli/dist/cli.manifest.js",
+        "pkgRoot": "/Users/kirillbaranov/Desktop/kb-labs/kb-labs-core/packages/cli"
+      }
+    }
+  }
+}

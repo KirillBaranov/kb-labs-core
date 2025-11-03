@@ -1,7 +1,7 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import type { ProductId } from '../types';
-import { review as reviewSchema, docs as docsSchema, tests as testsSchema, assistant as assistantSchema, devlink as devlinkSchema, mind as mindSchema } from '@kb-labs/profile-schemas';
+import { review as reviewSchema, docs as docsSchema, tests as testsSchema, assistant as assistantSchema, devlink as devlinkSchema } from '@kb-labs/profile-schemas';
 
 export type ValidationResult = { ok: boolean; errors: any[] | null };
 

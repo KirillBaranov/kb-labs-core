@@ -3,8 +3,7 @@
  */
 
 import { 
-  MultiCLISuggestions, 
-  type CommandSuggestion 
+  MultiCLISuggestions
 } from '@kb-labs/shared-cli-ui';
 import { commands } from './cli.manifest.js';
 

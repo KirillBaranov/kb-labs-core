@@ -10,7 +10,7 @@ import type { ConfigArtifacts } from '../artifacts/config-artifacts';
  */
 export function generateConfigSuggestions(
   artifacts: ConfigArtifacts,
-  context: any
+  _context: any
 ): CommandSuggestion[] {
   const suggestions: CommandSuggestion[] = [];
 

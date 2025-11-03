@@ -5,7 +5,7 @@
 
 import { promises as fsp } from 'node:fs';
 import path from 'node:path';
-import { KbError, ERROR_HINTS } from '../errors/kb-error';
+// Note: KbError and ERROR_HINTS are available if needed for future error handling
 import { computeConfigHash } from '../hash/config-hash';
 import { toFsProduct } from '../utils/product-normalize';
 import type { ProductId } from '../types';

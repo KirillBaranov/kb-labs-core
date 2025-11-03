@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { loadBundle } from '../../api/load-bundle';
+import { loadBundle } from '../index';
 
 describe('bundle: loadBundle validation option', () => {
   it('warns when validate is warn and config invalid', async () => {
