@@ -252,7 +252,7 @@ products:
 - [Adding a Product](./docs/ADDING_PRODUCT.md) - How to add a new product
 
 **Architecture:**
-- [Architecture and Repository Layout](./docs/adr/0001-architecture-and-reposity-layout.md) - Project structure
+- [Architecture and Repository Layout](./docs/adr/0001-architecture-and-repository-layout.md) - Project structure
 - [Core Facade](./docs/adr/0005-core-facade.md) - Bundle orchestrator design
 - [Profiles Resolution Order](./docs/adr/0006-profiles-resolution-order-and-runtime-metadata.md) - Profile resolution logic
 
