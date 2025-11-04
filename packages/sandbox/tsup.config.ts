@@ -1,12 +1,12 @@
-import { defineConfig } from 'tsup';
+import { defineConfig } from 'tsup'
+import nodePreset from '@kb-labs/devkit/tsup/node.js'
 
 export default defineConfig({
-  entry: ['src/index.ts'],
-  format: ['esm'],
-  dts: true,
-  sourcemap: true,
-  clean: true,
-  splitting: false,
-  treeshake: true,
-});
+  ...nodePreset,
+  entry: {
+    index: 'src/index.ts',
+  },
+  external: [/^@kb-labs\//],
+  skipNodeModulesBundle: true,
+})
 

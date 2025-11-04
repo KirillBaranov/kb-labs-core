@@ -1,14 +1,29 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vitest/config'
+import nodePreset from '@kb-labs/devkit/vitest/node.js'
 
 export default defineConfig({
+  ...nodePreset,
   test: {
-    globals: true,
-    environment: 'node',
+    ...nodePreset.test,
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: ['**/*.test.ts', '**/*.spec.ts', '**/dist/**', '**/node_modules/**'],
+      ...(nodePreset.test?.coverage || {}),
+      exclude: [
+        '**/dist/**',
+        '**/fixtures/**',
+        '**/__tests__/**',
+        '**/*.spec.*',
+        '**/*.test.*',
+        // non-source and config files
+        'eslint.config.js',
+        '**/vitest.config.ts',
+        '**/tsup.config.ts',
+        '**/tsconfig*.json',
+        // barrel files / types
+        '**/index.ts',
+        '**/types.ts',
+        '**/types/**',
+      ],
     },
   },
-});
+})
 
