@@ -1,8 +1,8 @@
-# Как работает система кросс-плагинных вызовов
+# How the Cross-Plugin Invocation System Works
 
-## Полный Flow работы
+## Complete Flow Overview
 
-### 1. Входная точка (CLI или REST)
+### 1. Entry Point (CLI or REST)
 
 #### CLI:
 ```typescript
@@ -11,24 +11,24 @@ export async function executeCommand(
   command: CliCommandDecl,
   manifest: ManifestV2,
   ...
-  registry?: PluginRegistry  // ← Передается реестр плагинов
+  registry?: PluginRegistry  // ← Plugin registry is passed
 ) {
-  // 1. Генерируем root traceId
+  // 1. Generate root traceId
   const traceId = createId();
   
-  // 2. Создаем execution context
+  // 2. Create execution context
   const execCtx = {
     requestId: createId(),
     pluginId: manifest.id,
-    traceId,  // ← traceId в контексте
+    traceId,  // ← traceId in context
     ...
   };
   
-  // 3. Вызываем runtime.execute с registry
+  // 3. Call runtime.execute with registry
   const result = await runtimeExecute(
     { handler, input, manifest, perms },
     execCtx,
-    registry  // ← Передаем registry
+    registry  // ← Pass registry
   );
 }
 ```
@@ -41,51 +41,51 @@ export async function executeRoute(
   manifest: ManifestV2,
   request: FastifyRequest,
   ...
-  registry?: PluginRegistry  // ← Передается реестр плагинов
+  registry?: PluginRegistry  // ← Plugin registry is passed
 ) {
-  // 1. Извлекаем или генерируем traceId
+  // 1. Extract or generate traceId
   const traceId = request.headers['x-trace-id'] || createId();
   
-  // 2. Создаем execution context
+  // 2. Create execution context
   const execCtx = {
     requestId: request.id || createId(),
     pluginId: manifest.id,
-    traceId,  // ← traceId в контексте
+    traceId,  // ← traceId in context
     ...
   };
   
-  // 3. Вызываем runtime.execute с registry
+  // 3. Call runtime.execute with registry
   const result = await runtimeExecute(
     { handler, input, manifest, perms },
     execCtx,
-    registry  // ← Передаем registry
+    registry  // ← Pass registry
   );
 }
 ```
 
-### 2. Инициализация в execute.ts
+### 2. Initialization in execute.ts
 
 ```typescript
 // plugin-runtime/src/execute.ts
 export async function execute(
   args: ExecuteInput,
   ctx: ExecutionContext,
-  registry?: PluginRegistry  // ← Опциональный registry
+  registry?: PluginRegistry  // ← Optional registry
 ) {
-  // 1. Генерируем/наследуем traceId
+  // 1. Generate/inherit traceId
   const traceId = ctx.traceId || createId();
   
-  // 2. Генерируем spanId для текущего выполнения
+  // 2. Generate spanId for current execution
   const spanId = ctx.spanId || createId();
   
-  // 3. Инициализируем chain limits (защита от рекурсии)
+  // 3. Initialize chain limits (recursion protection)
   const chainLimits: ChainLimits = {
     maxDepth: 8,
     maxFanOut: 16,
     maxChainTime: perms.quotas?.timeoutMs || 30000,
   };
   
-  // 4. Инициализируем chain state (отслеживание глубины)
+  // 4. Initialize chain state (depth tracking)
   const chainState: InvokeContext = {
     depth: 0,
     fanOut: 0,
@@ -93,18 +93,18 @@ export async function execute(
     remainingMs: perms.quotas?.timeoutMs || 30000,
   };
   
-  // 5. Функция для расчета остаточного времени
+  // 5. Function to calculate remaining time
   const remainingMs = (): number => {
     const elapsed = Date.now() - startedAt;
     return Math.max(0, initialTimeout - elapsed);
   };
   
-  // 6. ⭐ ИНИЦИАЛИЗИРУЕМ БРОКЕРЫ (если registry предоставлен)
+  // 6. ⭐ INITIALIZE BROKERS (if registry is provided)
   let invokeBroker: InvokeBroker | undefined;
   let artifactBroker: ArtifactBroker | undefined;
   
   if (registry) {
-    // Создаем InvokeBroker для кросс-плагинных вызовов
+    // Create InvokeBroker for cross-plugin invocations
     invokeBroker = new InvokeBrokerImpl(
       registry,
       args.manifest,
@@ -113,7 +113,7 @@ export async function execute(
       chainState
     );
     
-    // Создаем ArtifactBroker для управления артефактами
+    // Create ArtifactBroker for artifact management
     artifactBroker = new ArtifactBrokerImpl(
       args.manifest,
       ctx,
@@ -121,7 +121,7 @@ export async function execute(
     );
   }
   
-  // 7. Обновляем контекст с trace info
+  // 7. Update context with trace info
   const updatedCtx: ExecutionContext = {
     ...ctx,
     traceId,
@@ -132,9 +132,9 @@ export async function execute(
     remainingMs,
   };
   
-  // 8. Проверяем capabilities, валидируем input/output...
+  // 8. Check capabilities, validate input/output...
   
-  // 9. Запускаем handler в песочнице
+  // 9. Run handler in sandbox
   const runner = nodeSubprocRunner(devMode);
   const res = await runner.run({
     ctx: updatedCtx,
@@ -142,50 +142,50 @@ export async function execute(
     handler: args.handler,
     input: args.input,
     manifest: args.manifest,
-    invokeBroker,      // ← Передаем брокеры в runner
-    artifactBroker,    // ← Передаем брокеры в runner
+    invokeBroker,      // ← Pass brokers to runner
+    artifactBroker,    // ← Pass brokers to runner
   });
 }
 ```
 
-### 3. Runner создает изолированную песочницу
+### 3. Runner creates isolated sandbox
 
 ```typescript
 // plugin-runtime/src/sandbox/node-subproc.ts
 export function createInProcessRunner(): SandboxRunner {
   return {
     async run(args) {
-      // 1. Загружаем handler модуль
+      // 1. Load handler module
       const handlerModule = await import(handlerPath);
       const handlerFn = handlerModule[handlerRef.export];
       
-      // 2. Фильтруем env по разрешениям
+      // 2. Filter env by permissions
       const env = pickEnv(perms.env, process.env);
       
-      // 3. ⭐ СТРОИМ RUNTIME с брокерами
+      // 3. ⭐ BUILD RUNTIME with brokers
       const runtime = buildRuntime(
         perms,
         ctx,
         env,
         args.manifest,
-        args.invokeBroker,    // ← Передаем InvokeBroker
-        args.artifactBroker  // ← Передаем ArtifactBroker
+        args.invokeBroker,    // ← Pass InvokeBroker
+        args.artifactBroker  // ← Pass ArtifactBroker
       );
       
-      // 4. Вызываем handler с runtime context
+      // 4. Call handler with runtime context
       const result = await handlerFn(input, {
         requestId: ctx.requestId,
         pluginId: ctx.pluginId,
-        traceId: ctx.traceId,      // ← traceId доступен
-        spanId: ctx.spanId,        // ← spanId доступен
+        traceId: ctx.traceId,      // ← traceId available
+        spanId: ctx.spanId,        // ← spanId available
         parentSpanId: ctx.parentSpanId,
         runtime: {
           fetch,
           fs,
           env,
           log,
-          invoke: runtime.invoke,           // ← invoke API доступен
-          artifacts: runtime.artifacts,    // ← artifacts API доступен
+          invoke: runtime.invoke,           // ← invoke API available
+          artifacts: runtime.artifacts,    // ← artifacts API available
         },
       });
       
@@ -195,7 +195,7 @@ export function createInProcessRunner(): SandboxRunner {
 }
 ```
 
-### 4. buildRuntime создает API для handler
+### 4. buildRuntime creates API for handler
 
 ```typescript
 // plugin-runtime/src/sandbox/child/runtime.ts
@@ -204,16 +204,16 @@ export function buildRuntime(
   ctx: ExecutionContext,
   env: NodeJS.ProcessEnv,
   manifest: ManifestV2,
-  invokeBroker?: InvokeBroker,      // ← Опциональный InvokeBroker
-  artifactBroker?: ArtifactBroker   // ← Опциональный ArtifactBroker
+  invokeBroker?: InvokeBroker,      // ← Optional InvokeBroker
+  artifactBroker?: ArtifactBroker   // ← Optional ArtifactBroker
 ) {
-  // Создаем стандартные API (fetch, fs, env, log)
+  // Create standard APIs (fetch, fs, env, log)
   const fetch = createWhitelistedFetch(perms.net);
   const fs = createFsShim(perms.fs, ctx.workdir, ctx.outdir, ctx);
   const envAccessor = createEnvAccessor(perms.env?.allow, env);
   const log = (level, msg, meta) => { /* IPC logging */ };
   
-  // ⭐ СОЗДАЕМ INVOKE API
+  // ⭐ CREATE INVOKE API
   const invoke = async <T = unknown>(
     request: InvokeRequest
   ): Promise<InvokeResult<T>> => {
@@ -223,7 +223,7 @@ export function buildRuntime(
     return invokeBroker.invoke<T>(request);
   };
   
-  // ⭐ СОЗДАЕМ ARTIFACTS API
+  // ⭐ CREATE ARTIFACTS API
   const artifacts = {
     read: async (request: ArtifactReadRequest): Promise<Buffer | object> => {
       if (!artifactBroker) {
@@ -244,21 +244,21 @@ export function buildRuntime(
     fs,
     env: envAccessor,
     log,
-    invoke,      // ← Доступен в handler
-    artifacts,   // ← Доступен в handler
+    invoke,      // ← Available in handler
+    artifacts,   // ← Available in handler
   };
 }
 ```
 
-### 5. Handler использует API
+### 5. Handler uses API
 
 ```typescript
-// Пример: mind-cli/src/cli/pack-handler.ts
+// Example: mind-cli/src/cli/pack-handler.ts
 export async function run(input, ctx) {
-  // 1. Выполняем основную логику
+  // 1. Execute main logic
   const result = await buildPack({ ... });
   
-  // 2. ⭐ ЗАПИСЫВАЕМ АРТЕФАКТ через artifacts API
+  // 2. ⭐ WRITE ARTIFACT via artifacts API
   if (ctx.runtime.artifacts) {
     const artifactResult = await ctx.runtime.artifacts.write({
       to: 'self',
@@ -269,7 +269,7 @@ export async function run(input, ctx) {
     });
     packPath = artifactResult.path;
   } else {
-    // Fallback на прямой FS (для обратной совместимости)
+    // Fallback to direct FS (for backward compatibility)
     await ctx.runtime.fs.writeFile(path, result.markdown);
   }
   
@@ -277,19 +277,19 @@ export async function run(input, ctx) {
 }
 ```
 
-### 6. InvokeBroker обрабатывает кросс-плагинные вызовы
+### 6. InvokeBroker handles cross-plugin invocations
 
 ```typescript
 // plugin-runtime/src/invoke/broker.ts
 export class InvokeBroker {
   async invoke<T = unknown>(request: InvokeRequest): Promise<InvokeResult<T>> {
-    // 1. Нормализуем target: @pluginId@version:METHOD /path
+    // 1. Normalize target: @pluginId@version:METHOD /path
     const resolved = this.resolveTarget(request.target);
     
-    // 2. Проверяем chain limits (depth, fanOut, visited)
+    // 2. Check chain limits (depth, fanOut, visited)
     this.checkChainLimits(resolved.pluginId);
     
-    // 3. ⭐ ПРОВЕРЯЕМ ПРАВА на вызов
+    // 3. ⭐ CHECK PERMISSIONS for invocation
     const permissionCheck = resolveInvokeDecision(
       this.callerManifest.permissions?.invoke,
       { pluginId, method, path }
@@ -299,23 +299,23 @@ export class InvokeBroker {
       throw toErrorEnvelope(E_PLUGIN_INVOKE_DENIED, ...);
     }
     
-    // 4. Рассчитываем остаточный таймаут
+    // 4. Calculate remaining timeout
     const remainingMs = Math.min(
       this.chainState.remainingMs,
       targetManifest.quotas.timeoutMs
     );
     
-    // 5. Создаем новый изолированный контекст для цели
+    // 5. Create new isolated context for target
     const targetCtx: ExecutionContext = {
       ...this.callerCtx,
       traceId: request.session?.traceId || this.callerCtx.traceId,
       spanId: createId(),
-      parentSpanId: this.callerCtx.spanId,  // ← Цепочка span
+      parentSpanId: this.callerCtx.spanId,  // ← Span chain
       depth: this.chainState.depth + 1,
       remainingMs: () => remainingMs,
     };
     
-    // 6. ⭐ ВЫЗЫВАЕМ ЦЕЛЕВОЙ ПЛАГИН через runtime.execute
+    // 6. ⭐ INVOKE TARGET PLUGIN via runtime.execute
     const result = await runtimeExecute(
       {
         handler: resolved.handlerRef,
@@ -324,7 +324,7 @@ export class InvokeBroker {
         perms: targetManifest.permissions,
       },
       targetCtx,
-      this.registry  // ← Передаем registry дальше
+      this.registry  // ← Pass registry further
     );
     
     return { ok: true, data: result.data };
@@ -332,28 +332,28 @@ export class InvokeBroker {
 }
 ```
 
-### 7. ArtifactBroker управляет артефактами
+### 7. ArtifactBroker manages artifacts
 
 ```typescript
 // plugin-runtime/src/artifacts/broker.ts
 export class ArtifactBroker {
   async write(request: ArtifactWriteRequest): Promise<{ path: string; meta: ArtifactMeta }> {
-    // 1. ⭐ ПРОВЕРЯЕМ ПРАВА на запись
+    // 1. ⭐ CHECK PERMISSIONS for write
     const permissionCheck = this.checkWritePermission(request);
     if (!permissionCheck.allow) {
       throw toErrorEnvelope(E_ARTIFACT_WRITE_DENIED, ...);
     }
     
-    // 2. Преобразуем логический путь в физический
-    // Логический: '.kb/mind/pack/latest.md'
-    // Физический: '.artifacts/@kb-labs/mind/.kb/mind/pack/latest.md'
+    // 2. Convert logical path to physical
+    // Logical: '.kb/mind/pack/latest.md'
+    // Physical: '.artifacts/@kb-labs/mind/.kb/mind/pack/latest.md'
     const physicalPath = this.resolvePath(request.to, request.path);
     
-    // 3. Атомарная запись: temp → rename
+    // 3. Atomic write: temp → rename
     const tmpPath = `${physicalPath}.${Date.now()}.part`;
     await fs.writeFile(tmpPath, data);
     
-    // 4. Вычисляем метаданные (sha256, size, contentType)
+    // 4. Calculate metadata (sha256, size, contentType)
     const meta: ArtifactMeta = {
       owner: this.callerCtx.pluginId,
       size: buffer.length,
@@ -363,10 +363,10 @@ export class ArtifactBroker {
       updatedAt: Date.now(),
     };
     
-    // 5. Сохраняем метаданные
+    // 5. Save metadata
     await fs.writeFile(`${tmpPath}.meta.json`, JSON.stringify(meta));
     
-    // 6. Атомарный rename
+    // 6. Atomic rename
     await fs.rename(tmpPath, physicalPath);
     await fs.rename(`${tmpPath}.meta.json`, `${physicalPath}.meta.json`);
     
@@ -374,19 +374,19 @@ export class ArtifactBroker {
   }
   
   async read(request: ArtifactReadRequest): Promise<Buffer | object> {
-    // 1. ⭐ ПРОВЕРЯЕМ ПРАВА на чтение
+    // 1. ⭐ CHECK PERMISSIONS for read
     const permissionCheck = this.checkReadPermission(request);
     if (!permissionCheck.allow) {
       throw toErrorEnvelope(E_ARTIFACT_READ_DENIED, ...);
     }
     
-    // 2. Преобразуем логический путь в физический
+    // 2. Convert logical path to physical
     const physicalPath = this.resolvePath(request.from, request.path);
     
-    // 3. Читаем данные
+    // 3. Read data
     const data = await fs.readFile(physicalPath);
     
-    // 4. Проверяем contentType если указан accept
+    // 4. Check contentType if accept is specified
     const meta = await this.readMeta(physicalPath);
     if (request.accept && !request.accept.includes(meta.contentType)) {
       throw toErrorEnvelope(E_ARTIFACT_READ_DENIED, ...);
@@ -397,80 +397,80 @@ export class ArtifactBroker {
 }
 ```
 
-## Ключевые моменты
+## Key Points
 
-### 1. Условная инициализация брокеров
-- Брокеры создаются **только если передан `registry`**
-- Если `registry` не передан → брокеры `undefined` → API недоступны
-- Это позволяет работать в режиме без кросс-плагинных вызовов
+### 1. Conditional broker initialization
+- Brokers are created **only if `registry` is passed**
+- If `registry` is not passed → brokers are `undefined` → APIs are unavailable
+- This allows operation in mode without cross-plugin invocations
 
-### 2. Трассировка
-- `traceId` генерируется на корневом запросе (CLI/REST)
-- Каждый `execute()` создает новый `spanId`
-- При `invoke()` создается новый `spanId` с `parentSpanId = caller.spanId`
-- Все события аналитики включают `traceId`, `spanId`, `parentSpanId`, `depth`
+### 2. Tracing
+- `traceId` is generated on root request (CLI/REST)
+- Each `execute()` creates a new `spanId`
+- On `invoke()` a new `spanId` is created with `parentSpanId = caller.spanId`
+- All analytics events include `traceId`, `spanId`, `parentSpanId`, `depth`
 
-### 3. Защита цепочек
+### 3. Chain protection
 - `ChainLimits`: maxDepth=8, maxFanOut=16, maxChainTime
 - `InvokeContext`: depth, fanOut, visited[], remainingMs
-- При превышении лимитов → `E_PLUGIN_CHAIN_TIMEOUT`
+- On exceeding limits → `E_PLUGIN_CHAIN_TIMEOUT`
 
-### 4. Изоляция
-- Каждый `invoke()` запускается в новой песочнице
-- Новый `workdir`/`outdir` для каждого вызова
-- Quotas рассчитываются как `min(caller.remainingMs, target.quotas.timeoutMs)`
+### 4. Isolation
+- Each `invoke()` runs in a new sandbox
+- New `workdir`/`outdir` for each invocation
+- Quotas calculated as `min(caller.remainingMs, target.quotas.timeoutMs)`
 
-### 5. Разрешения
+### 5. Permissions
 - **Invoke**: deny → routes allow → plugins allow → default deny
-- **Artifacts**: проверка ACL перед каждым read/write
-- Прямой FS доступ к `.artifacts/**` блокируется
+- **Artifacts**: ACL check before each read/write
+- Direct FS access to `.artifacts/**` is blocked
 
-### 6. Обратная совместимость
-- Handlers проверяют наличие `ctx.runtime.artifacts` перед использованием
-- Если API недоступно → fallback на прямой FS
-- Это позволяет работать без registry
+### 6. Backward compatibility
+- Handlers check for `ctx.runtime.artifacts` before using
+- If API is unavailable → fallback to direct FS
+- This allows operation without registry
 
-## Пример полного flow
+## Complete flow example
 
 ```
 1. CLI: kb mind pack -i "demo"
    ↓
 2. plugin-adapter-cli: executeCommand()
-   - Генерирует traceId
-   - Создает execCtx
-   - Вызывает runtimeExecute(..., registry)
+   - Generates traceId
+   - Creates execCtx
+   - Calls runtimeExecute(..., registry)
    ↓
 3. plugin-runtime: execute()
-   - Генерирует spanId
-   - Инициализирует InvokeBroker и ArtifactBroker (если registry)
-   - Обновляет ctx с trace info
+   - Generates spanId
+   - Initializes InvokeBroker and ArtifactBroker (if registry)
+   - Updates ctx with trace info
    ↓
 4. node-subproc: run()
-   - Загружает handler
-   - Вызывает buildRuntime(..., invokeBroker, artifactBroker)
+   - Loads handler
+   - Calls buildRuntime(..., invokeBroker, artifactBroker)
    ↓
 5. buildRuntime()
-   - Создает invoke() и artifacts API
-   - Возвращает runtime объект
+   - Creates invoke() and artifacts API
+   - Returns runtime object
    ↓
 6. pack-handler.ts: run()
-   - Выполняет buildPack()
-   - Вызывает ctx.runtime.artifacts.write()
+   - Executes buildPack()
+   - Calls ctx.runtime.artifacts.write()
    ↓
 7. ArtifactBroker.write()
-   - Проверяет права (permissions.artifacts.write)
-   - Записывает атомарно (temp → rename)
-   - Сохраняет метаданные (.meta.json)
+   - Checks permissions (permissions.artifacts.write)
+   - Writes atomically (temp → rename)
+   - Saves metadata (.meta.json)
    ↓
-8. Возврат результата через всю цепочку
+8. Return result through entire chain
 ```
 
-## Важные детали
+## Important Details
 
-1. **Registry опционален**: Если не передан → брокеры не создаются → API недоступны
-2. **Брокеры создаются в execute.ts**: Передаются в runner → buildRuntime → handler
-3. **Трассировка автоматическая**: traceId/spanId генерируются автоматически
-4. **Защита цепочек встроена**: InvokeBroker проверяет лимиты перед каждым вызовом
-5. **Разрешения проверяются динамически**: При каждом invoke/artifact.read/write
-6. **Изоляция гарантирована**: Каждый invoke в новой песочнице
+1. **Registry is optional**: If not passed → brokers are not created → APIs are unavailable
+2. **Brokers are created in execute.ts**: Passed to runner → buildRuntime → handler
+3. **Tracing is automatic**: traceId/spanId are generated automatically
+4. **Chain protection is built-in**: InvokeBroker checks limits before each invocation
+5. **Permissions are checked dynamically**: On each invoke/artifact.read/write
+6. **Isolation is guaranteed**: Each invoke in a new sandbox
 
