@@ -1,5 +1,5 @@
 {
-  "name": "@kb-labs/core",
+  "name": "kb-labs-core",
   "version": "0.1.0",
   "private": true,
   "description": "Core utilities and system interfaces for KB Labs ecosystem",
@@ -36,20 +36,25 @@
     "packages/*"
   ],
   "scripts": {
-    "// ——— devkit": "────────────────────────────────────────",
+    "// \u2014\u2014\u2014 devkit": "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
     "devkit:sync": "node scripts/devkit-sync.mjs",
+    "predevkit:sync": "pnpm devkit:paths",
+    "devkit:paths": "pnpm exec kb-devkit-paths",
     "devkit:sync:ci": "node scripts/devkit-sync.mjs --ci-only",
+    "predevkit:sync:ci": "pnpm devkit:paths",
     "devkit:check": "node scripts/devkit-sync.mjs --check",
+    "predevkit:check": "pnpm devkit:paths",
     "devkit:force": "node scripts/devkit-sync.mjs --force",
+    "predevkit:force": "pnpm devkit:paths",
     "devkit:help": "node scripts/devkit-sync.mjs --help",
     "postinstall": "pnpm -s devkit:sync || true",
-    "// ——— core": "────────────────────────────────────────",
+    "// \u2014\u2014\u2014 core": "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
     "clean": "rimraf dist",
     "build": "pnpm clean && tsup --config tsup.config.ts",
     "build:all": "pnpm -r run build",
     "build:clean": "pnpm -r run clean && pnpm -r run build",
     "dev": "pnpm -r --parallel run dev",
-    "// ——— quality": "────────────────────────────────────────",
+    "// \u2014\u2014\u2014 quality": "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
     "lint": "pnpm -r run lint",
     "lint:fix": "pnpm -r run lint:fix",
     "format": "prettier --write .",
@@ -57,10 +62,10 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "type-check": "tsc -b tsconfig.tools.json",
-    "// ——— ci/qa": "────────────────────────────────────────",
+    "// \u2014\u2014\u2014 ci/qa": "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
     "check": "pnpm lint && pnpm type-check && pnpm test -- --run",
     "ci": "pnpm clean && pnpm build && pnpm check",
-    "// ——— cleanup": "────────────────────────────────────────",
+    "// \u2014\u2014\u2014 cleanup": "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
     "clean:all": "rimraf node_modules packages/*/node_modules apps/*/node_modules dist"
   },
   "lint-staged": {
@@ -94,7 +99,18 @@
     "@kb-labs/core-config": "link:packages/config",
     "@kb-labs/core-policy": "link:packages/policy",
     "@kb-labs/core-sys": "link:packages/sys",
+    "@kb-labs/workflow-constants": "link:packages/workflow-constants",
+    "@kb-labs/workflow-contracts": "link:packages/workflow-contracts",
+    "@kb-labs/workflow-engine": "link:packages/workflow-engine",
+    "@kb-labs/workflow-artifacts": "link:packages/workflow-artifacts",
+    "@kb-labs/workflow-runtime": "link:packages/workflow-runtime",
     "@kb-labs/shared-cli-ui": "link:../kb-labs-shared/packages/cli-ui",
-    "zod": "^4.1.5"
+    "zod": "^4.1.5",
+    "@kb-labs/core-cli": "link:packages/cli-core",
+    "@kb-labs/core-cli-adapters": "link:packages/cli-adapters",
+    "@kb-labs/profile-schemas": "link:../kb-labs-profile-schemas/packages/profile-schemas",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.8.0"
   }
 }

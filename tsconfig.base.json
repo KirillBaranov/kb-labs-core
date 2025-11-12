@@ -1,24 +1,9 @@
 {
-  "extends": "@kb-labs/devkit/tsconfig/base.json",
+  "extends": [
+    "@kb-labs/devkit/tsconfig/base.json",
+    "./tsconfig.paths.json"
+  ],
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@kb-labs/core-config": [
-        "packages/config/src"
-      ],
-      "@kb-labs/core-sys": [
-        "packages/sys/src"
-      ],
-      "@kb-labs/core-profiles": [
-        "packages/profiles/src"
-      ],
-      
-      "@kb-labs/core-policy": [
-        "packages/policy/src"
-      ],
-      "@kb-labs/core-bundle": [
-        "packages/bundle/src"
-      ]
-    }
+    "baseUrl": "."
   }
 }

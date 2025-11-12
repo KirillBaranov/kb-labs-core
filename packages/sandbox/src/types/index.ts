@@ -14,15 +14,25 @@ export interface HandlerRef {
 }
 
 /**
+ * Log stream callback for real-time log output
+ */
+export type LogStreamCallback = (line: string, level: 'info' | 'warn' | 'error' | 'debug') => void;
+
+/**
  * Execution context - runtime information for handler execution
  */
 export interface ExecutionContext {
+  /** Context schema version (semver) */
+  version?: string;
+  
   /** Unique request identifier */
   requestId: string;
   /** Working directory (root of execution) */
   workdir: string;
   /** Output directory (for artifacts) */
   outdir?: string;
+  /** Plugin root directory (for module resolution) - REQUIRED */
+  pluginRoot: string;
   /** Plugin identifier */
   pluginId?: string;
   /** Plugin version */
@@ -33,12 +43,47 @@ export interface ExecutionContext {
   };
   /** Debug mode flag */
   debug?: boolean;
+  /** Debug level (verbose, inspect, profile) */
+  debugLevel?: 'verbose' | 'inspect' | 'profile';
+  /** Debug format (ai, human) */
+  debugFormat?: 'ai' | 'human';
+  /** JSON mode flag */
+  jsonMode?: boolean;
   /** Distributed trace ID */
   traceId?: string;
   /** Current span ID */
   spanId?: string;
   /** Parent span ID */
   parentSpanId?: string;
+  /** Log stream callback for real-time output (when debug is enabled) */
+  onLog?: LogStreamCallback;
+  
+  /** Adapter-specific context (typed) */
+  adapterContext?: import('./adapter-context.js').HandlerContext;
+  
+  /** Adapter metadata */
+  adapterMeta?: import('./adapter-context.js').AdapterMetadata;
+  
+  /** Abort signal for cancellation */
+  signal?: AbortSignal;
+  
+  /** Resource tracker for cleanup */
+  resources?: import('../cleanup/resource-tracker.js').ResourceTracker;
+  
+  /** Extension point for future capabilities */
+  extensions?: Record<string, unknown>;
+  
+  /** Lifecycle hooks (optional, for observability) */
+  hooks?: import('./lifecycle-hooks.js').LifecycleHooks;
+  
+  /** Dry-run mode */
+  dryRun?: boolean;
+  
+  /** Analytics emitter (only in inprocess mode) */
+  analytics?: (event: Partial<any>) => Promise<any>;
+  
+  /** Remaining timeout in milliseconds (only in inprocess mode) */
+  remainingMs?: () => number;
 }
 
 /**
