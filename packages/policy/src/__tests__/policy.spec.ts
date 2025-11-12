@@ -18,8 +18,9 @@ describe('Policy System', () => {
       
       expect(result.source).toBe('default');
       expect(result.policy.rules).toHaveLength(1);
-      expect(result.policy.rules[0].action).toBe('*');
-      expect(result.policy.rules[0].allow).toEqual(['*']);
+      const firstRule = result.policy.rules[0]!;
+      expect(firstRule.action).toBe('*');
+      expect(firstRule.allow).toEqual(['*']);
     });
 
     it('should use workspace overrides when provided', async () => {

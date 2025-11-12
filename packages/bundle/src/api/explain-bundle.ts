@@ -11,19 +11,26 @@ import {
   readWorkspaceConfig,
 } from '@kb-labs/core-config';
 import type { ProductId } from '@kb-labs/core-types';
-import { 
+import {
   loadProfile,
   extractProfileInfo,
   normalizeManifest
 } from '@kb-labs/core-profiles';
 import { KbError, ERROR_HINTS } from '@kb-labs/core-config';
+import { resolveWorkspaceRoot } from '@kb-labs/core-workspace';
 import type { ExplainBundleOptions } from '../types/types';
 
 /**
  * Explain bundle configuration (trace only)
  */
 export async function explainBundle(opts: ExplainBundleOptions): Promise<MergeTrace[]> {
-  const { cwd, product, cli, profileKey = 'default' } = opts;
+  const { cwd: requestedCwd, product, cli, profileKey = 'default' } = opts;
+
+  const workspaceResolution = await resolveWorkspaceRoot({
+    cwd: requestedCwd,
+    startDir: requestedCwd ?? process.cwd(),
+  });
+  const cwd = workspaceResolution.rootDir;
   
   // Read workspace config
   const workspaceConfig = await readWorkspaceConfig(cwd);

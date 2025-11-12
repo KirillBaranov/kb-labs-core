@@ -43,7 +43,6 @@ export async function getProductConfig<T>(
   let profileDefaults = {};
   if (profileInfo) {
     try {
-      // @ts-expect-error - Dynamic import to avoid circular dependency
       const mod = await import('@kb-labs/core-profiles');
       const getProductDefaults: any = (mod as any).getProductDefaults;
       profileDefaults = await getProductDefaults(profileInfo, toFsProduct(product), schema);
@@ -224,6 +223,11 @@ function getRuntimeDefaults(product: ProductId): any {
     devkit: {
       sync: true,
       check: true,
+    },
+    analytics: {
+      enabled: true,
+      sinks: [],
+      buffer: {},
     },
   };
   

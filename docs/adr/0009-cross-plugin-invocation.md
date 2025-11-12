@@ -1,6 +1,6 @@
 # ADR-0009: Cross-Plugin Agent Invocation
 
-**Date:** 2025-01-XX  
+**Date:** 2025-01-04  
 **Status:** Accepted  
 **Deciders:** KB Labs Team  
 **Tags:** [architecture, plugins, security]

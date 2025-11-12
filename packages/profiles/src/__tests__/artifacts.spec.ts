@@ -15,6 +15,19 @@ import {
   materializeArtifacts,
   clearCaches 
 } from '../index';
+import type { ProfileManifest } from '../types/types';
+
+function createManifest(overrides: Partial<ProfileManifest> = {}): ProfileManifest {
+  const { exports: overrideExports, defaults: overrideDefaults, ...rest } = overrides;
+  return {
+    schemaVersion: '1.0',
+    name: 'test-profile',
+    version: '1.0.0',
+    exports: (overrideExports ?? {}) as ProfileManifest['exports'],
+    defaults: (overrideDefaults ?? {}) as ProfileManifest['defaults'],
+    ...rest,
+  };
+}
 
 describe('Artifacts System', () => {
   let testDir: string;
@@ -34,19 +47,16 @@ describe('Artifacts System', () => {
 
   describe('Profile Manifest Normalization', () => {
     it('should normalize new format manifest', () => {
-      const manifest = {
-        schemaVersion: '1.0',
-        name: 'test-profile',
-        version: '1.0.0',
+      const manifest = createManifest({
         exports: {
           'ai-review': {
             rules: 'artifacts/ai-review/rules.yml'
           }
-        },
+        } as ProfileManifest['exports'],
         defaults: {
           'ai-review': { $ref: './defaults/ai-review.json' }
-        }
-      };
+        } as ProfileManifest['defaults'],
+      });
 
       const normalized = normalizeManifest(manifest);
       expect(normalized.schemaVersion).toBe('1.0');
@@ -81,17 +91,13 @@ describe('Artifacts System', () => {
   describe('Artifact Listing', () => {
     it('should list artifacts with security constraints', async () => {
       // Create profile manifest
-      const manifest = {
-        schemaVersion: '1.0',
-        name: 'test-profile',
-        version: '1.0.0',
+      const manifest = createManifest({
         exports: {
           'ai-review': {
             rules: 'artifacts/ai-review/rules.yml'
           }
-        },
-        defaults: {}
-      };
+        } as ProfileManifest['exports'],
+      });
 
       // Create artifact file
       const artifactsDir = path.join(profileDir, 'artifacts', 'ai-review');
@@ -106,23 +112,20 @@ describe('Artifacts System', () => {
       });
 
       expect(artifacts).toHaveLength(1);
-      expect(artifacts[0].relPath).toBe('artifacts/ai-review/rules.yml');
-      expect(artifacts[0].sha256).toBeDefined();
-      expect(artifacts[0].size).toBeGreaterThan(0);
+      const artifact = artifacts[0]!;
+      expect(artifact.relPath).toBe('artifacts/ai-review/rules.yml');
+      expect(artifact.sha256).toBeDefined();
+      expect(artifact.size).toBeGreaterThan(0);
     });
 
     it('should reject files outside profile root', async () => {
-      const manifest = {
-        schemaVersion: '1.0',
-        name: 'test-profile',
-        version: '1.0.0',
+      const manifest = createManifest({
         exports: {
           'ai-review': {
-            rules: '../../../etc/passwd' // Attempted escape
+            rules: '../../../etc/passwd'
           }
-        },
-        defaults: {}
-      };
+        } as ProfileManifest['exports'],
+      });
 
       const profileInfo = extractProfileInfo(manifest, path.join(profileDir, 'profile.json'));
 
@@ -136,17 +139,13 @@ describe('Artifacts System', () => {
     });
 
     it('should reject files with disallowed extensions', async () => {
-      const manifest = {
-        schemaVersion: '1.0',
-        name: 'test-profile',
-        version: '1.0.0',
+      const manifest = createManifest({
         exports: {
           'ai-review': {
-            rules: 'artifacts/ai-review/rules.exe' // Disallowed extension
+            rules: 'artifacts/ai-review/rules.exe'
           }
-        },
-        defaults: {}
-      };
+        } as ProfileManifest['exports'],
+      });
 
       // Create the file
       const artifactsDir = path.join(profileDir, 'artifacts', 'ai-review');
@@ -167,13 +166,9 @@ describe('Artifacts System', () => {
 
   describe('Artifact Reading', () => {
     it('should read artifact with SHA256 verification', async () => {
-      const manifest = {
-        schemaVersion: '1.0',
-        name: 'test-profile',
-        version: '1.0.0',
-        exports: {},
-        defaults: {}
-      };
+      const manifest = createManifest({
+        exports: {} as ProfileManifest['exports'],
+      });
 
       // Create artifact file
       const artifactPath = path.join(profileDir, 'rules.yml');
@@ -190,13 +185,9 @@ describe('Artifacts System', () => {
     });
 
     it('should reject paths that escape profile root', async () => {
-      const manifest = {
-        schemaVersion: '1.0',
-        name: 'test-profile',
-        version: '1.0.0',
-        exports: {},
-        defaults: {}
-      };
+      const manifest = createManifest({
+        exports: {} as ProfileManifest['exports'],
+      });
 
       const profileInfo = extractProfileInfo(manifest, path.join(profileDir, 'profile.json'));
 
@@ -208,17 +199,13 @@ describe('Artifacts System', () => {
 
   describe('Artifact Materialization', () => {
     it('should materialize artifacts idempotently', async () => {
-      const manifest = {
-        schemaVersion: '1.0',
-        name: 'test-profile',
-        version: '1.0.0',
+      const manifest = createManifest({
         exports: {
           'ai-review': {
             rules: 'artifacts/ai-review/rules.yml'
           }
-        },
-        defaults: {}
-      };
+        } as ProfileManifest['exports'],
+      });
 
       // Create artifact file
       const artifactsDir = path.join(profileDir, 'artifacts', 'ai-review');

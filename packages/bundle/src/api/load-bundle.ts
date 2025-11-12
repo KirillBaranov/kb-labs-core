@@ -5,7 +5,7 @@
 
 import { promises as fsp } from 'node:fs';
 import path from 'node:path';
-import { 
+import {
   getProductConfig, 
   toFsProduct, 
   readWorkspaceConfig,
@@ -13,7 +13,7 @@ import {
   validateProductConfig,
 } from '@kb-labs/core-config';
 import type { ProductId } from '@kb-labs/core-types';
-import { 
+import {
   loadProfile, 
   extractProfileInfo, 
   normalizeManifest,
@@ -23,19 +23,26 @@ import {
   readArtifactJson,
   clearCaches as clearProfileCaches
 } from '@kb-labs/core-profiles';
-import { 
+import {
   resolvePolicy, 
   createPermitsFunction 
 } from '@kb-labs/core-policy';
 import { KbError, ERROR_HINTS } from '@kb-labs/core-config';
+import { resolveWorkspaceRoot } from '@kb-labs/core-workspace';
 import type { LoadBundleOptions, Bundle } from '../types/types';
 
 /**
  * Load bundle with config, profile, artifacts, and policy
  */
 export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bundle<T>> {
-  const { cwd, product, profileKey = 'default', cli, writeFinalConfig, validate } = opts;
+  const { cwd: requestedCwd, product, profileKey = 'default', cli, writeFinalConfig, validate } = opts;
   const fsProduct = toFsProduct(product);
+
+  const workspaceResolution = await resolveWorkspaceRoot({
+    cwd: requestedCwd,
+    startDir: requestedCwd ?? process.cwd(),
+  });
+  const cwd = workspaceResolution.rootDir;
 
   // 1. Read workspace config
   const workspaceConfig = await readWorkspaceConfig(cwd);

@@ -12,7 +12,7 @@ Single entry point for loading complete bundle with config, profile, artifacts, 
 function loadBundle(opts: LoadBundleOptions): Promise<Bundle>
 
 interface LoadBundleOptions {
-  cwd: string;
+  cwd?: string;
   product: ProductId;
   profileKey?: string;        // Default: 'default'
   cli?: Record<string, any>;   // Optional CLI overrides
@@ -27,7 +27,6 @@ interface LoadBundleOptions {
 import { loadBundle } from '@kb-labs/core-bundle';
 
 const bundle = await loadBundle({
-  cwd: process.cwd(),
   product: 'aiReview',
   profileKey: 'default',
   cli: { debug: true }
@@ -50,6 +49,8 @@ for (const step of bundle.trace) {
   console.log(`${step.layer}: ${step.source}`);
 }
 ```
+
+When `cwd` is omitted, `loadBundle` resolves the workspace root automatically by consulting `KB_LABS_WORKSPACE_ROOT`/`KB_LABS_REPO_ROOT` or the nearest `.kb/kb-labs.config.json` ancestor. Provide `cwd` explicitly to override this behaviour (e.g., for multi-workspace testing).
 
 ## Bundle Interface
 
@@ -305,7 +306,7 @@ enum ConfigErrorCodes {
 
 ```typescript
 try {
-  const bundle = await loadBundle({ cwd, product: 'aiReview' });
+  const bundle = await loadBundle({ product: 'aiReview' });
 } catch (error) {
   if (error instanceof KbError) {
     console.error(`Error: ${error.message}`);
@@ -384,7 +385,7 @@ type ProductId =
 
 ```typescript
 interface LoadBundleOptions {
-  cwd: string;
+  cwd?: string;
   product: ProductId;
   profileKey?: string;
   cli?: Record<string, unknown>;
@@ -416,7 +417,6 @@ async function runProduct() {
   try {
     // Load bundle
     const bundle = await loadBundle({
-      cwd: process.cwd(),
       product: 'aiReview',
       profileKey: 'default',
       cli: { debug: false }

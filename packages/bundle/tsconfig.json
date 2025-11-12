@@ -1,10 +1,6 @@
 {
-  "extends": "@kb-labs/devkit/tsconfig/lib.json",
-  "compilerOptions": {
-    "baseUrl": "."
-  },
+  "extends": "../../tsconfig.base.json",
   "include": [
-    "src",
-    "__tests__"
+    "src"
   ]
 }

@@ -397,6 +397,6 @@ See [ADDING_PRODUCT.md](./docs/ADDING_PRODUCT.md) for details.
 
 For issues or questions:
 - See [CONFIG_API.md](./docs/CONFIG_API.md) for full API docs
-- Run `kb doctor` to check configuration health
+- Run `kb config doctor` to check configuration health
 - Check trace output for debugging
 

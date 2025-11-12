@@ -8,7 +8,10 @@ import type { MergeTrace } from '@kb-labs/core-config';
 import type { ArtifactMetadata } from '@kb-labs/core-profiles';
 
 export interface LoadBundleOptions {
-  cwd: string;
+  /**
+   * Explicit workspace root. If omitted, the resolver will derive it.
+   */
+  cwd?: string;
   product: ProductId;
   profileKey?: string;
   cli?: Record<string, unknown>;
@@ -46,7 +49,10 @@ export interface Bundle<T = any> {
 }
 
 export interface ExplainBundleOptions {
-  cwd: string;
+  /**
+   * Explicit workspace root. If omitted, the resolver will derive it.
+   */
+  cwd?: string;
   product: ProductId;
   profileKey?: string;
   cli?: Record<string, unknown>;

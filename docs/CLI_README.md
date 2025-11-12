@@ -115,9 +115,9 @@ kb config validate --product devlink --no-fail --json
 Check configuration health and get suggestions.
 
 ```bash
-kb doctor
-kb doctor --json
-kb doctor --fix              # Auto-fix issues
+kb config doctor
+kb config doctor --json
+kb config doctor --fix              # Auto-fix issues
 ```
 
 **Options:**
@@ -201,7 +201,7 @@ kb profiles inspect --profile-key production --json
 kb init setup --products aiReview,devlink --yes
 
 # Check configuration
-kb doctor
+kb config doctor
 
 # Get product config
 kb config get --product aiReview
@@ -221,7 +221,7 @@ kb bundle print --product aiReview --with-trace
 
 ```bash
 # Check health and get suggestions
-kb doctor
+kb config doctor
 
 # If issues found, follow suggestions
 kb init profile

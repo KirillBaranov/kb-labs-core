@@ -120,7 +120,7 @@ kb-labs-core/
 | Package | Description |
 |---------|-------------|
 | [@kb-labs/core-bundle](./packages/bundle/) | Facade orchestrating all components with single entry point (`loadBundle()`) |
-| [@kb-labs/core-cli](./packages/cli/) | CLI commands for configuration management (`kb init`, `kb config`, `kb doctor`) |
+| [@kb-labs/core-cli](./packages/cli/) | CLI commands for configuration management (`kb init`, `kb config`, `kb config doctor`) |
 | [@kb-labs/core-config](./packages/config/) | 6-layer configuration management with LRU caching and product normalization |
 | [@kb-labs/core-policy](./packages/policy/) | Policy engine for fine-grained permission checking |
 | [@kb-labs/core-profiles](./packages/profiles/) | Profile system with v1.0 manifest format, artifacts API, and security constraints |
@@ -151,7 +151,7 @@ kb-labs-core/
 - `kb init setup` - Initialize complete workspace
 - `kb config get` - Get product configuration
 - `kb config explain` - Explain configuration resolution
-- `kb doctor` - Health check with suggestions
+- `kb config doctor` - Configuration health check with suggestions
 
 **@kb-labs/core-sys** provides system interfaces and utilities:
 - **Logging**: Structured logging with multiple sinks

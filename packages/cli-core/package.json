@@ -1,0 +1,56 @@
+{
+  "name": "@kb-labs/core-cli",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Core command framework extracted from kb-labs-cli",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./public": {
+      "import": "./dist/public.js",
+      "types": "./dist/public.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "tsup --config tsup.config.ts",
+    "dev": "tsup --config tsup.config.ts --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui",
+    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
+    "@kb-labs/plugin-adapter-rest": "link:../../../kb-labs-plugin/packages/adapters/rest",
+    "@kb-labs/analytics-sdk-node": "link:../../../kb-labs-analytics/packages/analytics-sdk-node",
+    "colorette": "^2.0.20",
+    "semver": "^7.6.3",
+    "chokidar": "^4.0.3",
+    "glob": "^11.0.0",
+    "yaml": "^2.8.0",
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "@kb-labs/devkit": "link:../../../kb-labs-devkit",
+    "@types/node": "^24.3.3",
+    "tsup": "^8.5.0",
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.4",
+    "@types/picomatch": "^4",
+    "@types/semver": "^7.5.8",
+    "cpy-cli": "^4.2.0",
+    "rimraf": "^6.0.1"
+  }
+}
