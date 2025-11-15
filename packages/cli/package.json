@@ -38,7 +38,6 @@
     "@kb-labs/core-policy": "link:../policy",
     "@kb-labs/core-profiles": "link:../profiles",
     "@kb-labs/core-workspace": "link:../core",
-    "@kb-labs/profile-schemas": "link:../../../kb-labs-profile-schemas",
     "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui",
     "glob": "^11.0.3",
     "yaml": "^2.8.0"

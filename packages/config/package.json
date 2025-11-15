@@ -27,7 +27,6 @@
   },
   "dependencies": {
     "@kb-labs/core-types": "link:../types",
-    "@kb-labs/profile-schemas": "link:../../../kb-labs-profile-schemas",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "picomatch": "^4.0.2",

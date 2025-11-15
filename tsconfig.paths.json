@@ -3,41 +3,53 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@kb-labs/ai-review-analytics": [
-        "../kb-labs-ai-review/packages/analytics/src/index.ts"
+      "@kb-labs/ai-docs-contracts": [
+        "../kb-labs-ai-docs/packages/ai-docs-contracts/src/index.ts"
       ],
-      "@kb-labs/ai-review-analytics/*": [
-        "../kb-labs-ai-review/packages/analytics/src/*"
+      "@kb-labs/ai-docs-contracts/*": [
+        "../kb-labs-ai-docs/packages/ai-docs-contracts/src/*"
       ],
-      "@kb-labs/ai-review-cli": [
-        "../kb-labs-ai-review/packages/cli/src/index.ts"
+      "@kb-labs/ai-docs-plugin": [
+        "../kb-labs-ai-docs/packages/ai-docs-plugin/src/index.ts"
       ],
-      "@kb-labs/ai-review-cli/*": [
-        "../kb-labs-ai-review/packages/cli/src/*"
+      "@kb-labs/ai-docs-plugin/*": [
+        "../kb-labs-ai-docs/packages/ai-docs-plugin/src/*"
+      ],
+      "@kb-labs/ai-review-contracts": [
+        "../kb-labs-ai-review/packages/ai-review-contracts/src/index.ts"
+      ],
+      "@kb-labs/ai-review-contracts/*": [
+        "../kb-labs-ai-review/packages/ai-review-contracts/src/*"
       ],
       "@kb-labs/ai-review-core": [
-        "../kb-labs-ai-review/packages/core/src/index.ts"
+        "../kb-labs-ai-review/packages/ai-review-core/src/index.ts"
       ],
       "@kb-labs/ai-review-core/*": [
-        "../kb-labs-ai-review/packages/core/src/*"
+        "../kb-labs-ai-review/packages/ai-review-core/src/*"
       ],
-      "@kb-labs/ai-review-provider-local": [
-        "../kb-labs-ai-review/packages/providers/local/src/index.ts"
+      "@kb-labs/ai-review-plugin": [
+        "../kb-labs-ai-review/packages/ai-review-plugin/src/index.ts"
       ],
-      "@kb-labs/ai-review-provider-local/*": [
-        "../kb-labs-ai-review/packages/providers/local/src/*"
+      "@kb-labs/ai-review-plugin/*": [
+        "../kb-labs-ai-review/packages/ai-review-plugin/src/*"
       ],
-      "@kb-labs/ai-review-provider-mock": [
-        "../kb-labs-ai-review/packages/providers/mock/src/index.ts"
+      "@kb-labs/ai-review-providers": [
+        "../kb-labs-ai-review/packages/ai-review-providers/src/index.ts"
       ],
-      "@kb-labs/ai-review-provider-mock/*": [
-        "../kb-labs-ai-review/packages/providers/mock/src/*"
+      "@kb-labs/ai-review-providers/*": [
+        "../kb-labs-ai-review/packages/ai-review-providers/src/*"
       ],
-      "@kb-labs/ai-review-provider-types": [
-        "../kb-labs-ai-review/packages/providers/types/src/index.ts"
+      "@kb-labs/ai-tests-contracts": [
+        "../kb-labs-ai-tests/packages/contracts/src/index.ts"
       ],
-      "@kb-labs/ai-review-provider-types/*": [
-        "../kb-labs-ai-review/packages/providers/types/src/*"
+      "@kb-labs/ai-tests-contracts/*": [
+        "../kb-labs-ai-tests/packages/contracts/src/*"
+      ],
+      "@kb-labs/ai-tests-plugin": [
+        "../kb-labs-ai-tests/packages/plugin-cli/src/index.ts"
+      ],
+      "@kb-labs/ai-tests-plugin/*": [
+        "../kb-labs-ai-tests/packages/plugin-cli/src/*"
       ],
       "@kb-labs/analytics-adapters": [
         "../kb-labs-analytics/packages/analytics-adapters/src/index.ts"
@@ -64,10 +76,10 @@
         "../kb-labs-analytics/packages/analytics-sdk-node/src/*"
       ],
       "@kb-labs/api-contracts": [
-        "../kb-labs-api-contracts/packages/api-contracts/src/index.ts"
+        "../kb-labs-rest-api/packages/api-contracts/src/index.ts"
       ],
       "@kb-labs/api-contracts/*": [
-        "../kb-labs-api-contracts/packages/api-contracts/src/*"
+        "../kb-labs-rest-api/packages/api-contracts/src/*"
       ],
       "@kb-labs/audit-checks": [
         "../kb-labs-audit/packages/audit-checks/src/index.ts"
@@ -80,6 +92,12 @@
       ],
       "@kb-labs/audit-cli/*": [
         "../kb-labs-audit/packages/audit-cli/src/*"
+      ],
+      "@kb-labs/audit-contracts": [
+        "../kb-labs-audit/packages/audit-contracts/src/index.ts"
+      ],
+      "@kb-labs/audit-contracts/*": [
+        "../kb-labs-audit/packages/audit-contracts/src/*"
       ],
       "@kb-labs/audit-core": [
         "../kb-labs-audit/packages/audit-core/src/index.ts"
@@ -128,6 +146,9 @@
       ],
       "@kb-labs/cli-runtime/*": [
         "../kb-labs-cli/packages/cli-runtime/src/*"
+      ],
+      "@kb-labs/core": [
+        "src/index.ts"
       ],
       "@kb-labs/core-bundle": [
         "packages/bundle/src/index.ts"
@@ -183,11 +204,20 @@
       "@kb-labs/core-workspace/*": [
         "packages/core/src/*"
       ],
+      "@kb-labs/core/*": [
+        "src/*"
+      ],
       "@kb-labs/data-client": [
         "../kb-labs-studio/packages/data-client/src/index.ts"
       ],
       "@kb-labs/data-client/*": [
         "../kb-labs-studio/packages/data-client/src/*"
+      ],
+      "@kb-labs/devlink-contracts": [
+        "../kb-labs-devlink/packages/contracts/src/index.ts"
+      ],
+      "@kb-labs/devlink-contracts/*": [
+        "../kb-labs-devlink/packages/contracts/src/*"
       ],
       "@kb-labs/devlink-core": [
         "../kb-labs-devlink/packages/core/src/index.ts"
@@ -206,6 +236,12 @@
       ],
       "@kb-labs/mind-cli/*": [
         "../kb-labs-mind/packages/mind-cli/src/*"
+      ],
+      "@kb-labs/mind-contracts": [
+        "../kb-labs-mind/packages/contracts/src/index.ts"
+      ],
+      "@kb-labs/mind-contracts/*": [
+        "../kb-labs-mind/packages/contracts/src/*"
       ],
       "@kb-labs/mind-core": [
         "../kb-labs-mind/packages/mind-core/src/index.ts"
@@ -291,35 +327,11 @@
       "@kb-labs/plugin-template-cli/*": [
         "../kb-labs-plugin-template/packages/plugin-cli/src/*"
       ],
-      "@kb-labs/profile-examples": [
-        "../kb-labs-profile-schemas/packages/profile-examples/src/index.ts"
+      "@kb-labs/plugin-template-contracts": [
+        "../kb-labs-plugin-template/packages/contracts/src/index.ts"
       ],
-      "@kb-labs/profile-examples/*": [
-        "../kb-labs-profile-schemas/packages/profile-examples/src/*"
-      ],
-      "@kb-labs/profile-fixtures": [
-        "../kb-labs-profile-schemas/packages/profile-fixtures/src/index.ts"
-      ],
-      "@kb-labs/profile-fixtures/*": [
-        "../kb-labs-profile-schemas/packages/profile-fixtures/src/*"
-      ],
-      "@kb-labs/profile-presets-backend-core": [
-        "../kb-labs-profile-schemas/packages/profile-presets-backend-core/src/index.ts"
-      ],
-      "@kb-labs/profile-presets-backend-core/*": [
-        "../kb-labs-profile-schemas/packages/profile-presets-backend-core/src/*"
-      ],
-      "@kb-labs/profile-presets-io": [
-        "../kb-labs-profile-schemas/packages/profile-presets-io/src/index.ts"
-      ],
-      "@kb-labs/profile-presets-io/*": [
-        "../kb-labs-profile-schemas/packages/profile-presets-io/src/*"
-      ],
-      "@kb-labs/profile-presets-web-core": [
-        "../kb-labs-profile-schemas/packages/profile-presets-web-core/src/index.ts"
-      ],
-      "@kb-labs/profile-presets-web-core/*": [
-        "../kb-labs-profile-schemas/packages/profile-presets-web-core/src/*"
+      "@kb-labs/plugin-template-contracts/*": [
+        "../kb-labs-plugin-template/packages/contracts/src/*"
       ],
       "@kb-labs/profile-toolkit": [
         "packages/profile-toolkit/src/index.ts"
@@ -363,6 +375,18 @@
       "@kb-labs/sandbox/*": [
         "packages/sandbox/src/*"
       ],
+      "@kb-labs/setup-engine": [
+        "../kb-labs-setup-engine/packages/setup-engine/src/index.ts"
+      ],
+      "@kb-labs/setup-engine/*": [
+        "../kb-labs-setup-engine/packages/setup-engine/src/*"
+      ],
+      "@kb-labs/setup-operations": [
+        "../kb-labs-setup-engine/packages/setup-operations/src/index.ts"
+      ],
+      "@kb-labs/setup-operations/*": [
+        "../kb-labs-setup-engine/packages/setup-operations/src/*"
+      ],
       "@kb-labs/shared-boundaries": [
         "../kb-labs-shared/packages/boundaries/src/index.ts"
       ],
@@ -404,30 +428,6 @@
       ],
       "@kb-labs/shared-textops/*": [
         "../kb-labs-shared/packages/textops/src/*"
-      ],
-      "@kb-labs/tox-adapters": [
-        "../kb-labs-tox/packages/tox-adapters/src/index.ts"
-      ],
-      "@kb-labs/tox-adapters/*": [
-        "../kb-labs-tox/packages/tox-adapters/src/*"
-      ],
-      "@kb-labs/tox-cli": [
-        "../kb-labs-tox/packages/tox-cli/src/index.ts"
-      ],
-      "@kb-labs/tox-cli/*": [
-        "../kb-labs-tox/packages/tox-cli/src/*"
-      ],
-      "@kb-labs/tox-codec-json": [
-        "../kb-labs-tox/packages/tox-codec-json/src/index.ts"
-      ],
-      "@kb-labs/tox-codec-json/*": [
-        "../kb-labs-tox/packages/tox-codec-json/src/*"
-      ],
-      "@kb-labs/tox-core": [
-        "../kb-labs-tox/packages/tox-core/src/index.ts"
-      ],
-      "@kb-labs/tox-core/*": [
-        "../kb-labs-tox/packages/tox-core/src/*"
       ],
       "@kb-labs/ui-core": [
         "../kb-labs-studio/packages/ui-core/src/index.ts"

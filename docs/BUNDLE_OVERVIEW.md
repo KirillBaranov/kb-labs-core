@@ -131,6 +131,8 @@ Profiles use a new `profile.json` format with schema versioning:
 }
 ```
 
+> ⚠️ **Schema validation временно отключена.** Пакет `@kb-labs/profile-schemas` удалён из монорепы. `validateProfile()` и продуктовые валидаторы пока выполняют только минимальные проверки (`schemaVersion === "1.0"`); полноценный валидатор появится вместе с новым registry.
+
 ### Profile Resolution
 
 Profiles can be referenced in several ways:

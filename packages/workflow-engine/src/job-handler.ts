@@ -33,6 +33,7 @@ import {
   type JobRunnerPresenterEvent,
   type PluginContext,
   type PluginEventEnvelope,
+  OperationTracker,
 } from '@kb-labs/plugin-runtime'
 import type { RedisEventBridge } from './events/redis-event-bridge'
 
@@ -522,20 +523,27 @@ export class WorkflowJobHandler implements JobHandler {
       onEvent: (event) => this.forwardPresenterEvent(request, event),
     })
 
-    return createPluginContext('workflow', {
+    const analyticsEmitter = createNoopAnalyticsEmitter();
+    const operationTracker = new OperationTracker();
+
+    const pluginContext = createPluginContext('workflow', {
       requestId: `${request.context.runId}:${request.context.jobId}:${request.context.stepId}`,
       pluginId: resolution.manifest.id,
       pluginVersion: resolution.manifest.version,
       presenter,
+      analytics: analyticsEmitter,
       events: createNoopEventBridge(),
-      analytics: createNoopAnalyticsEmitter(),
+      capabilities: request.context.job.grantedCapabilities,
       metadata: {
         runId: request.context.runId,
         jobId: request.context.jobId,
         stepId: request.context.stepId,
         attempt: request.context.attempt,
       },
+      getTrackedOperations: () => operationTracker.toArray(),
     })
+
+    return pluginContext;
   }
 
   private forwardPresenterEvent(

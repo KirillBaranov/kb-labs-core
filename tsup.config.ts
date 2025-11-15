@@ -6,6 +6,6 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
   },
-  external: ['ajv', 'ajv-formats', 'yaml', 'picomatch', '@kb-labs/profile-schemas', '@kb-labs/profile-schemas/*'],
+  external: ['ajv', 'ajv-formats', 'yaml', 'picomatch'],
   tsconfig: 'tsconfig.base.json'
 })

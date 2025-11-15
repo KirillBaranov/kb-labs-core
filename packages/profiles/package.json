@@ -29,7 +29,6 @@
     "@kb-labs/core-config": "link:../config",
     "@kb-labs/core-types": "link:../types",
     "@kb-labs/core-sys": "link:../sys",
-    "@kb-labs/profile-schemas": "link:../../../kb-labs-profile-schemas",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "glob": "^10.3.10",

@@ -26,9 +26,6 @@ importers:
       '@kb-labs/core-sys':
         specifier: link:packages/sys
         version: link:packages/sys
-      '@kb-labs/profile-schemas':
-        specifier: link:../kb-labs-profile-schemas/packages/profile-schemas
-        version: link:../kb-labs-profile-schemas/packages/profile-schemas
       '@kb-labs/shared-cli-ui':
         specifier: link:../kb-labs-shared/packages/cli-ui
         version: link:../kb-labs-shared/packages/cli-ui
@@ -134,61 +131,6 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
 
-  ../kb-labs-profile-schemas:
-    dependencies:
-      '@types/json-schema':
-        specifier: ^7.0.15
-        version: 7.0.15
-      ajv:
-        specifier: ^8.17.1
-        version: 8.17.1
-      ajv-formats:
-        specifier: ^3.0.1
-        version: 3.0.1(ajv@8.17.1)
-    devDependencies:
-      '@kb-labs/devkit':
-        specifier: link:../kb-labs-devkit
-        version: link:../kb-labs-devkit
-      '@types/node':
-        specifier: ^24.3.3
-        version: 24.9.1
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^8
-        version: 8.46.2(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint@9.38.0)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^8
-        version: 8.46.2(eslint@9.38.0)(typescript@5.9.3)
-      '@vitest/coverage-v8':
-        specifier: ^3
-        version: 3.2.4(vitest@3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6)))
-      '@vue/eslint-config-typescript':
-        specifier: ^14.6.0
-        version: 14.6.0(eslint-plugin-vue@10.5.1(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint@9.38.0)(vue-eslint-parser@10.2.0(eslint@9.38.0)))(eslint@9.38.0)(typescript@5.9.3)
-      eslint:
-        specifier: ^9
-        version: 9.38.0
-      eslint-plugin-vue:
-        specifier: ^10.5.0
-        version: 10.5.1(@typescript-eslint/parser@8.46.2(eslint@9.38.0)(typescript@5.9.3))(eslint@9.38.0)(vue-eslint-parser@10.2.0(eslint@9.38.0))
-      prettier:
-        specifier: ^3
-        version: 3.6.2
-      rimraf:
-        specifier: ^6
-        version: 6.0.1
-      tsup:
-        specifier: ^8
-        version: 8.5.0(postcss@8.5.6)(tsx@4.20.6)(typescript@5.9.3)(yaml@2.8.1)
-      tsx:
-        specifier: ^4.20.6
-        version: 4.20.6
-      typescript:
-        specifier: ^5
-        version: 5.9.3
-      vitest:
-        specifier: ^3.2.4
-        version: 3.2.4(@types/node@24.9.1)(jsdom@27.0.1(postcss@8.5.6))
-
   apps/demo:
     devDependencies:
       '@typescript-eslint/eslint-plugin':
@@ -276,9 +218,6 @@ importers:
       '@kb-labs/core-workspace':
         specifier: link:../core
         version: link:../core
-      '@kb-labs/profile-schemas':
-        specifier: link:../../../kb-labs-profile-schemas
-        version: link:../../../kb-labs-profile-schemas
       '@kb-labs/shared-cli-ui':
         specifier: link:../../../kb-labs-shared/packages/cli-ui
         version: link:../../../kb-labs-shared/packages/cli-ui
@@ -420,9 +359,6 @@ importers:
       '@kb-labs/core-types':
         specifier: link:../types
         version: link:../types
-      '@kb-labs/profile-schemas':
-        specifier: link:../../../kb-labs-profile-schemas
-        version: link:../../../kb-labs-profile-schemas
       ajv:
         specifier: ^8.17.1
         version: 8.17.1
@@ -537,9 +473,6 @@ importers:
 
   packages/profile-toolkit:
     dependencies:
-      '@kb-labs/profile-schemas':
-        specifier: link:../../../kb-labs-profile-schemas
-        version: link:../../../kb-labs-profile-schemas
       ajv:
         specifier: ^8.17.1
         version: 8.17.1
@@ -574,9 +507,6 @@ importers:
       '@kb-labs/core-types':
         specifier: link:../types
         version: link:../types
-      '@kb-labs/profile-schemas':
-        specifier: link:../../../kb-labs-profile-schemas
-        version: link:../../../kb-labs-profile-schemas
       ajv:
         specifier: ^8.17.1
         version: 8.17.1

@@ -7,7 +7,7 @@ import { validateProfile as validateProfileInternal } from "../validator";
 import type { RawProfile, ValidateResult } from "../types";
 
 /**
- * Validate a profile using Ajv + @kb-labs/profile-schemas
+ * Validate a profile (schema validation temporarily disabled)
  * 
  * @param profile - Raw profile data to validate
  * @returns Validation result with ok flag and errors array

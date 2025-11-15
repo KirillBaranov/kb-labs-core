@@ -61,3 +61,9 @@ export {
   ExtendResolutionError,
   SchemaValidationError
 } from '@kb-labs/core-profiles';
+
+export {
+  resolveWorkspaceRoot,
+  type ResolveWorkspaceRootOptions,
+  type WorkspaceRootResolution,
+} from '@kb-labs/core-workspace';

@@ -2,4 +2,3 @@ packages:
   - 'packages/*'
   - 'apps/*'
   - '../kb-labs-devkit'
-  - '../kb-labs-profile-schemas'

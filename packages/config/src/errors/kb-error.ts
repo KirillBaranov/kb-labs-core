@@ -38,7 +38,7 @@ export const ERROR_HINTS = {
   ERR_PRESET_NOT_RESOLVED: 'Install the required preset package or check network connectivity',
   ERR_PROFILE_INCOMPATIBLE: 'Profile version is incompatible with current system',
   ERR_PROFILE_NOT_DEFINED: 'Add profiles.default to .kb/kb-labs.config.yaml',
-  ERR_PROFILE_RESOLVE_FAILED: 'pnpm add -D @kb-labs/profile-...',
+  ERR_PROFILE_RESOLVE_FAILED: 'Profile registry unavailable. Use workspace-defined profiles or follow the new registry guide.',
   ERR_PROFILE_INVALID_FORMAT: 'Recreate profile with: kb init profile --scaffold-local-profile',
   ERR_ARTIFACT_LIMIT_EXCEEDED: 'Remove or split large artifacts, or reduce artifact count',
   ERR_FORBIDDEN: 'Add role in policy.overrides or use preset...',
