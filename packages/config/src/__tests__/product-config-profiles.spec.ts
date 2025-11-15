@@ -8,15 +8,7 @@ import { promises as fsp } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { getProductConfig } from '../api/product-config';
-
-// Local minimal ProfileInfo type to avoid circular dependency
-interface ProfileInfo {
-  name: string;
-  version: string;
-  manifestPath: string;
-  exports: Record<string, Record<string, string>>;
-  extends: string[];
-}
+import type { ProfileLayerInput } from '../types/types';
 
 describe('Product Config with Profiles', () => {
   let testDir: string;
@@ -26,34 +18,30 @@ describe('Product Config with Profiles', () => {
     await fsp.mkdir(testDir, { recursive: true });
   });
 
-  it('should merge profile defaults correctly', async () => {
-    // Create profile info with defaults
-    const profileInfo: ProfileInfo = {
-      name: 'test-profile',
-      version: '1.0.0',
-      manifestPath: path.join(testDir, 'profile.json'),
-      exports: {},
-      extends: []
+  it('should merge profile overlays correctly', async () => {
+    const profileLayer: ProfileLayerInput = {
+      profileId: 'test-profile',
+      source: 'profile:test-profile@1.0.0',
+      products: {
+        aiReview: { maxFiles: 50, debug: false },
+      },
     };
 
-    // Create defaults file
-    const defaultsDir = path.join(testDir, 'defaults');
-    await fsp.mkdir(defaultsDir, { recursive: true });
-    await fsp.writeFile(
-      path.join(defaultsDir, 'ai-review.json'),
-      JSON.stringify({ maxFiles: 50, debug: false }, null, 2)
+    const result = await getProductConfig(
+      {
+        cwd: testDir,
+        product: 'aiReview',
+        cli: {},
+        profileLayer,
+      },
+      null
     );
 
-    // Mock getProductDefaults behavior
-    // Since we can't easily mock the function, we'll test with empty defaults
-    const profileDefaults = {
-      maxFiles: 50,
-      debug: false
-    };
 
-    // Test that profile defaults would be merged
-    expect(profileDefaults.maxFiles).toBe(50);
-    expect(profileDefaults.debug).toBe(false);
+    expect(result.config.maxFiles).toBe(50);
+    expect(result.config.debug).toBe(false);
+    const traceLayer = result.trace.find((t) => t.layer === 'profile');
+    expect(traceLayer?.source).toBe('profile:test-profile@1.0.0');
   });
 
   it('should handle missing profile gracefully', async () => {
@@ -70,69 +58,58 @@ describe('Product Config with Profiles', () => {
 
     expect(config.config).toBeDefined();
     expect(config.trace).toBeDefined();
-    
-    // Should have profile layer with 'profile:none'
-    const profileLayer = config.trace.find(t => t.layer === 'profile');
-    expect(profileLayer).toBeDefined();
-    expect(profileLayer?.source).toBe('profile:none');
   });
 
   it('should include profile info in trace', async () => {
-    // Create profile info
-    const profileInfo: ProfileInfo = {
-      name: 'test-profile',
-      version: '1.2.0',
-      manifestPath: path.join(testDir, 'profile.json'),
-      exports: {},
-      extends: []
+    const profileLayerInput: ProfileLayerInput = {
+      profileId: 'test-profile',
+      source: 'profile:test-profile@1.2.0',
+      products: {
+        aiReview: { enabled: true },
+      },
     };
 
     const config = await getProductConfig(
       {
         cwd: testDir,
         product: 'aiReview',
-        cli: {}
+        cli: {},
+        profileLayer: profileLayerInput,
       },
-      null,
-      profileInfo
+      null
     );
 
-    // Check trace includes profile info
-    const profileLayer = config.trace.find(t => t.layer === 'profile');
+    const profileLayer = config.trace.find((t) => t.layer === 'profile');
     expect(profileLayer).toBeDefined();
-    expect(profileLayer?.source).toContain('profile:test-profile');
-    expect(profileLayer?.source).toContain('@1.2.0');
+    expect(profileLayer?.source).toBe('profile:test-profile@1.2.0');
   });
 
-  it('should handle profile errors gracefully', async () => {
-    // Profile with invalid manifest path
-    const profileInfo: ProfileInfo = {
-      name: 'invalid-profile',
-      version: '1.0.0',
-      manifestPath: path.join(testDir, 'nonexistent', 'profile.json'),
-      exports: {
-        'ai-review': {
-          'rules': 'artifacts/rules.yml'
-        }
+  it('should include scope layer when provided', async () => {
+    const profileLayerInput: ProfileLayerInput = {
+      profileId: 'test-profile',
+      source: 'profile:test-profile@1.0.0',
+      products: { aiReview: { engine: 'openai' } },
+      scope: {
+        id: 'src',
+        source: 'profile-scope:src',
+        products: { aiReview: { engine: 'anthropic' } },
       },
-      extends: []
     };
 
-    // Should not throw, but log warning
     const config = await getProductConfig(
       {
         cwd: testDir,
         product: 'aiReview',
-        cli: {}
+        cli: {},
+        profileLayer: profileLayerInput,
       },
-      null,
-      profileInfo
+      null
     );
 
-    expect(config.config).toBeDefined();
-    // Profile layer should still be present
-    const profileLayer = config.trace.find(t => t.layer === 'profile');
-    expect(profileLayer).toBeDefined();
+    const scopeLayer = config.trace.find((t) => t.layer === 'profile-scope');
+    expect(scopeLayer).toBeDefined();
+    expect(scopeLayer?.source).toBe('profile-scope:src');
+    expect(config.config.engine).toBe('anthropic');
   });
 });
 

@@ -40,11 +40,23 @@ export interface MergeTrace {
   version?: string;
 }
 
+export interface ProfileLayerInput {
+  profileId: string;
+  source: string;
+  products?: Record<string, unknown>;
+  scope?: {
+    id: string;
+    source: string;
+    products?: Record<string, unknown>;
+  };
+}
+
 export interface ResolveOptions {
   cwd: string;
   product: ProductId;
   cli?: Record<string, unknown>;
   writeFinal?: boolean;
+  profileLayer?: ProfileLayerInput;
 }
 
 export interface ConfigLayer {

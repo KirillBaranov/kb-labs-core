@@ -1,6 +1,5 @@
 import type { CommandModule } from '../types';
-import { readWorkspaceConfig } from '@kb-labs/core-config';
-import { loadProfile, extractProfileInfo } from '@kb-labs/core-profiles';
+import { readProfilesSection, resolveProfile } from '@kb-labs/core-config';
 import { box, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
 import { runScope, type AnalyticsEventV1, type EmitResult } from '@kb-labs/analytics-sdk-node';
 import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../analytics/events';
@@ -8,7 +7,7 @@ import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../analytics/events';
 export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<number> => {
   const startTime = Date.now();
   const cwd = (flags.cwd as string) || process.cwd();
-  const profileKey = (flags['profile-key'] as string) || 'default';
+  const profileId = flags.profile as string | undefined;
 
   return (await runScope(
     {
@@ -21,44 +20,79 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
         await emit({
           type: ANALYTICS_EVENTS.PROFILES_INSPECT_STARTED,
           payload: {
-            profileKey,
+            profileId,
           },
         });
-        const ws = await readWorkspaceConfig(cwd);
-        const profiles = (ws?.data as any)?.profiles || {};
-        const profileRef = profiles[profileKey];
-        if (!profileRef) {
+
+        const profilesSection = await readProfilesSection(cwd);
+        const availableProfiles = profilesSection.profiles.map((p) => p.id);
+
+        if (!profileId) {
           const totalTime = Date.now() - startTime;
           await emit({
             type: ANALYTICS_EVENTS.PROFILES_INSPECT_FINISHED,
-            payload: {
-              profileKey,
-              durationMs: totalTime,
-              result: 'failed',
-              error: `Profile key "${profileKey}" not found`,
-            },
+          payload: {
+            profileId: undefined,
+            durationMs: totalTime,
+            result: 'failed',
+            error: 'No profile specified. Use --profile=<id>',
+          },
           });
 
-          const msg = `Profile key "${profileKey}" not found`;
-          return flags.json ? (ctx.presenter.json({ ok: false, error: msg, available: Object.keys(profiles) }), 1)
-                            : (ctx.presenter.error(msg), 1);
+          const msg = `No profile specified. Available profiles: ${availableProfiles.join(', ') || 'none'}`;
+          return flags.json
+            ? (ctx.presenter.json({ ok: false, error: msg, available: availableProfiles }), 1)
+            : (ctx.presenter.error(msg), 1);
         }
 
-        const loaded = await loadProfile({ cwd, name: profileRef });
-        const info = extractProfileInfo(loaded.profile as any, loaded.meta.pathAbs);
+        if (!availableProfiles.includes(profileId)) {
+          const totalTime = Date.now() - startTime;
+          await emit({
+            type: ANALYTICS_EVENTS.PROFILES_INSPECT_FINISHED,
+          payload: {
+            profileId,
+            durationMs: totalTime,
+            result: 'failed',
+            error: `Profile "${profileId}" not found`,
+          },
+          });
+
+          const msg = `Profile "${profileId}" not found. Available: ${availableProfiles.join(', ') || 'none'}`;
+          return flags.json
+            ? (ctx.presenter.json({ ok: false, error: msg, available: availableProfiles }), 1)
+            : (ctx.presenter.error(msg), 1);
+        }
+
+        const bundleProfile = await resolveProfile({ cwd, profileId });
 
         const totalTime = Date.now() - startTime;
 
         if (flags.json) {
-          ctx.presenter.json({ ok: true, profileKey, profileRef, info });
+          ctx.presenter.json({
+            ok: true,
+            profileId: bundleProfile.id,
+            label: bundleProfile.label,
+            source: bundleProfile.source,
+            version: bundleProfile.version,
+            products: Object.keys(bundleProfile.products || {}),
+            scopes: bundleProfile.scopes.map((s) => ({
+              id: s.id,
+              label: s.label,
+              isDefault: s.isDefault,
+            })),
+            trace: bundleProfile.trace,
+          });
         } else {
           const lines: string[] = [
-            `${safeSymbols.info} ${safeColors.bold(`${info.name}@${info.version}`)} (${profileKey})`,
-            `schema: v1.0`,
-            `path: ${loaded.meta.pathAbs}`,
-            `overlays: ${info.overlays?.length ? info.overlays.join(', ') : 'none'}`,
-            `products: ${Object.keys(info.exports).join(', ') || 'none'}`,
-          ];
+            `${safeSymbols.info} ${safeColors.bold(bundleProfile.label || bundleProfile.id)}${bundleProfile.version ? `@${bundleProfile.version}` : ''} (${bundleProfile.id})`,
+            `source: ${bundleProfile.source}`,
+            bundleProfile.version ? `version: ${bundleProfile.version}` : '',
+            `products: ${Object.keys(bundleProfile.products || {}).join(', ') || 'none'}`,
+            `scopes: ${bundleProfile.scopes.map((s) => s.id).join(', ') || 'none'}`,
+            bundleProfile.trace?.extends
+              ? `extends: ${bundleProfile.trace.extends.join(' → ')}`
+              : '',
+          ].filter(Boolean);
 
           ctx.presenter.write(box('Profile Inspect', lines));
         }
@@ -67,12 +101,11 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
         await emit({
           type: ANALYTICS_EVENTS.PROFILES_INSPECT_FINISHED,
           payload: {
-            profileKey,
-            profileRef,
-            profileName: info.name,
-            profileVersion: info.version,
-            overlaysCount: info.overlays?.length || 0,
-            productsCount: Object.keys(info.exports || {}).length,
+            profileId: bundleProfile.id,
+            profileName: bundleProfile.label || bundleProfile.id,
+            profileVersion: bundleProfile.version || 'unknown',
+            productsCount: Object.keys(bundleProfile.products || {}).length,
+            scopesCount: bundleProfile.scopes.length,
             durationMs: totalTime,
             result: 'success',
           },
@@ -86,15 +119,16 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
         await emit({
           type: ANALYTICS_EVENTS.PROFILES_INSPECT_FINISHED,
           payload: {
-            profileKey,
+            profileId: profileId || undefined,
             durationMs: totalTime,
             result: 'error',
             error: err?.message || String(err),
           },
         });
 
-        return flags.json ? (ctx.presenter.json({ ok: false, error: err?.message || String(err) }), 1)
-                          : (ctx.presenter.error(err?.message || String(err)), 1);
+        return flags.json
+          ? (ctx.presenter.json({ ok: false, error: err?.message || String(err) }), 1)
+          : (ctx.presenter.error(err?.message || String(err)), 1);
       }
     }
   )) as number;

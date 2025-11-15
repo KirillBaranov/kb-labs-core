@@ -83,28 +83,83 @@ export function toFsProduct(product: ProductId): string {
 }
 ```
 
-### 4. Create Profile with Product Exports
+### 4. Define Product Profile Overlay (Profiles v2)
 
-**File:** `.kb/profiles/<profile-name>/profile.json` (in workspace)
+**File:** `kb.config.json` or `kb-labs.config.yaml` (in workspace)
+
+Define your product's profile overlay structure in the `profiles[]` array:
 
 ```json
 {
-  "$schema": "https://schemas.kb-labs.dev/profile/profile.schema.json",
-  "schemaVersion": "1.0",
-  "name": "node-ts-lib",
-  "version": "1.2.0",
-  "exports": {
-    "mind": {
-      "presets": "artifacts/mind/presets/**",
-      "templates": "artifacts/mind/templates/**",
-      "configs": "artifacts/mind/configs/*.json"
+  "profiles": [
+    {
+      "id": "default",
+      "label": "Default Profile",
+      "products": {
+        "mind": {
+          "indexer": {
+            "enabled": true,
+            "maxFiles": 10000,
+            "cacheDir": ".kb/mind/cache"
+          },
+          "query": {
+            "cacheMode": "local",
+            "timeout": 5000
+          }
+        }
+      },
+      "scopes": [
+        {
+          "id": "root",
+          "include": ["**/*"],
+          "default": true
+        }
+      ]
     }
-  },
-  "defaults": {
-    "mind": {
-      "$ref": "./defaults/mind.json"
-    }
-  }
+  ]
+}
+```
+
+**TypeScript Contract** (in your product package):
+
+```typescript
+// contracts/mind-profile.ts
+import { z } from 'zod';
+
+export const MindProfileOverlaySchema = z.object({
+  indexer: z.object({
+    enabled: z.boolean().optional(),
+    maxFiles: z.number().optional(),
+    cacheDir: z.string().optional(),
+  }).optional(),
+  query: z.object({
+    cacheMode: z.enum(['local', 'remote']).optional(),
+    timeout: z.number().optional(),
+  }).optional(),
+});
+
+export type MindProfileOverlay = z.infer<typeof MindProfileOverlaySchema>;
+```
+
+**Reading from Bundle**:
+
+```typescript
+import { loadBundle } from '@kb-labs/core-bundle';
+import { MindProfileOverlaySchema } from './contracts/mind-profile';
+
+const bundle = await loadBundle({
+  cwd: process.cwd(),
+  product: 'mind',
+  profileId: 'default', // optional
+});
+
+// Access profile overlay
+const profileOverlay = bundle.profile?.products?.mind;
+if (profileOverlay) {
+  const validated = MindProfileOverlaySchema.parse(profileOverlay);
+  // Use validated overlay
+} else {
+  // Use defaults, log warning if needed
 }
 ```
 
@@ -171,58 +226,75 @@ const map: Record<ProductId, string> = {
 };
 ```
 
-### Step 4: Create Profile
+### Step 4: Define Profile Overlay (Profiles v2)
+
+**File:** `kb.config.json` or `kb-labs.config.yaml`
 
 ```json
 {
-  "schemaVersion": "1.0",
-  "name": "node-ts-lib",
-  "version": "1.2.0",
-  "exports": {
-    "mind": {
-      "indexer-configs": "artifacts/mind/indexer/*.json",
-      "query-presets": "artifacts/mind/presets/**",
-      "pack-templates": "artifacts/mind/templates/**"
+  "profiles": [
+    {
+      "id": "default",
+      "label": "Default Profile",
+      "products": {
+        "mind": {
+          "indexer": {
+            "enabled": true,
+            "maxFiles": 10000,
+            "cacheDir": ".kb/mind/cache"
+          },
+          "query": {
+            "cacheMode": "local",
+            "timeout": 5000
+          }
+        }
+      },
+      "scopes": [
+        {
+          "id": "root",
+          "include": ["**/*"],
+          "default": true
+        }
+      ]
     }
-  },
-  "defaults": {
-    "mind": {
-      "$ref": "./defaults/mind.json"
-    }
-  }
+  ]
 }
 ```
 
-**File:** `.kb/profiles/node-ts-lib/defaults/mind.json`
-
-```json
-{
-  "indexer": {
-    "enabled": true,
-    "watch": true
-  },
-  "query": {
-    "cacheTTL": 60
-  }
-}
-```
+**Note**: With Profiles v2, profile overlays are defined directly in `kb.config.json`. The old `.kb/profiles/` structure is deprecated.
 
 ### Step 5: Test Integration
 
 ```typescript
 // In your product code
 import { loadBundle } from '@kb-labs/core-bundle';
+import { MindProfileOverlaySchema } from './contracts/mind-profile';
 
 const bundle = await loadBundle({
   cwd: process.cwd(),
   product: 'mind',
-  profileKey: 'default'
+  profileId: 'default' // optional, uses default scope if available
 });
 
+// Access merged config (includes profile overlay)
 const config = bundle.config as MindConfig;
-console.log(config.indexer.maxFiles); // 10000 (from runtime defaults)
-console.log(config.indexer.enabled);  // true (from profile defaults or merged)
+console.log(config.indexer.maxFiles); // 10000 (from profile overlay or runtime defaults)
+console.log(config.indexer.enabled);  // true (from profile overlay or runtime defaults)
 
+// Access profile information
+if (bundle.profile) {
+  console.log('Profile ID:', bundle.profile.id);
+  console.log('Active Scope:', bundle.profile.activeScope?.id);
+  
+  // Validate and use profile overlay
+  const profileOverlay = bundle.profile.products?.mind;
+  if (profileOverlay) {
+    const validated = MindProfileOverlaySchema.parse(profileOverlay);
+    // Use validated overlay
+  }
+}
+
+// Access artifacts (if defined in profile)
 const presets = await bundle.artifacts.list('query-presets');
 await bundle.artifacts.materialize(['query-presets']);
 ```
@@ -232,17 +304,28 @@ await bundle.artifacts.materialize(['query-presets']);
 - [ ] Added ProductId to union type
 - [ ] Added runtime defaults
 - [ ] Added file system mapping
-- [ ] Created profile with product exports
-- [ ] Created defaults file
+- [ ] Defined ProductProfileOverlay TypeScript type and Zod schema
+- [ ] Created profile overlay in `kb.config.json` (Profiles v2)
 - [ ] (Optional) Added policy actions
-- [ ] Tested with `loadBundle()`
+- [ ] Tested with `loadBundle()` and profile overlay validation
 - [ ] Updated documentation
 
 ## Notes
 
-- Runtime defaults provide base values when no other configuration exists
-- File system mapping controls where config files are stored
-- Profile exports define which artifacts are available
-- Profile defaults provide product-specific configuration
-- All products automatically benefit from the 6-layer merge system
+- **Runtime defaults**: Provide base values when no other configuration exists
+- **File system mapping**: Controls where config files are stored
+- **Profile overlays (Profiles v2)**: Product-specific configuration in `profiles[].products.<productId>`
+- **Per-scope products**: Different configurations per scope (e.g., different engines for frontend vs backend)
+- **Type safety**: Define Zod schema for profile overlay validation
+- **Merge order**: runtime → profile → profile-scope → preset → workspace → local → CLI
+- **Legacy profiles**: The old `.kb/profiles/` structure is deprecated; use `profiles[]` in `kb.config.json` instead
+
+## Profiles v2 Migration
+
+If you have existing profiles using the old `.kb/profiles/` structure:
+
+1. Move profile defaults to `profiles[].products.<productId>` in `kb.config.json`
+2. Update `loadBundle()` calls to use `profileId` instead of `profileKey`
+3. Access profile overlay via `bundle.profile.products.<productId>` and validate with Zod schema
+4. See [ADR-0010](./adr/0010-profiles-v2-architecture.md) for full migration guide
 

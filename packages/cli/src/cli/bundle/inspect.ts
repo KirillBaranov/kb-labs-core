@@ -7,7 +7,8 @@ import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../analytics/events';
 export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<number> => {
   const startTime = Date.now();
   const cwd = (flags.cwd as string) || process.cwd();
-  const profileKey = (flags['profile-key'] as string) || 'default';
+  const profileId = flags.profile as string | undefined;
+  const scopeId = flags.scope as string | undefined;
   const product = flags.product as ProductId;
 
   return (await runScope(
@@ -37,11 +38,12 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           type: ANALYTICS_EVENTS.BUNDLE_INSPECT_STARTED,
           payload: {
             product,
-            profileKey,
+            profileId,
+            scopeId,
             trace: !!flags.trace,
           },
         });
-        const bundle = await loadBundle({ cwd, product, profileKey });
+        const bundle = await loadBundle({ cwd, product, profileId, scopeId });
         const trace = (flags.trace as boolean) ? bundle.trace : undefined;
 
         const totalTime = Date.now() - startTime;
@@ -49,8 +51,14 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
         if (flags.json) {
           ctx.presenter.json({ ok: true, product, profile: bundle.profile, artifacts: bundle.artifacts.summary, trace });
         } else {
+          const profileSummary = bundle.profile
+            ? `${bundle.profile.name ?? bundle.profile.id}${bundle.profile.version ? '@' + bundle.profile.version : ''}`
+            : 'none';
           const lines: string[] = [
-            `${safeSymbols.info} ${safeColors.bold(`Bundle for ${product}`)} (profile: ${bundle.profile.name}@${bundle.profile.version})`,
+            `${safeSymbols.info} ${safeColors.bold(`Bundle for ${product}`)} (profile: ${profileSummary})`,
+            bundle.profile?.activeScopeId
+              ? `scope: ${bundle.profile.activeScopeId} (${bundle.profile.scopeSelection?.strategy ?? 'auto'})`
+              : 'scope: n/a',
             `artifacts keys: ${Object.keys(bundle.artifacts.summary).join(', ') || 'none'}`,
           ];
           ctx.presenter.write(box('Bundle Inspect', lines));
@@ -61,7 +69,8 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           type: ANALYTICS_EVENTS.BUNDLE_INSPECT_FINISHED,
           payload: {
             product,
-            profileKey,
+            profileId: bundle.profile?.id,
+            scopeId: bundle.profile?.activeScopeId,
             trace: !!flags.trace,
             artifactsCount: Object.keys(bundle.artifacts.summary).length,
             durationMs: totalTime,
@@ -78,7 +87,7 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           type: ANALYTICS_EVENTS.BUNDLE_INSPECT_FINISHED,
           payload: {
             product,
-            profileKey,
+            profileId: profileId || undefined,
             durationMs: totalTime,
             result: 'error',
             error: err?.message || String(err),

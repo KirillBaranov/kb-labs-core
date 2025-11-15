@@ -4,7 +4,7 @@
  */
 
 import type { ProductId } from '@kb-labs/core-types';
-import type { MergeTrace } from '@kb-labs/core-config';
+import type { MergeTrace, BundleProfile } from '@kb-labs/core-config';
 import type { ArtifactMetadata } from '@kb-labs/core-profiles';
 
 export interface LoadBundleOptions {
@@ -13,7 +13,14 @@ export interface LoadBundleOptions {
    */
   cwd?: string;
   product: ProductId;
-  profileKey?: string;
+  /**
+   * Preferred profile identifier (Profiles v2). Falls back to default selection.
+   */
+  profileId?: string;
+  /**
+   * Optional explicit scope identifier (within the resolved profile).
+   */
+  scopeId?: string;
   cli?: Record<string, unknown>;
   writeFinalConfig?: boolean;
   validate?: boolean | 'warn';
@@ -22,12 +29,7 @@ export interface LoadBundleOptions {
 export interface Bundle<T = any> {
   product: ProductId;
   config: T;
-  profile: {
-    key: string;
-    name: string;
-    version: string;
-    overlays?: string[];
-  };
+  profile: BundleProfile | null;
   artifacts: {
     summary: Record<string, string[]>; // kebab-case keys from exports
     list(key: string): Promise<Array<{ relPath: string; sha256: string }>>;
@@ -54,7 +56,8 @@ export interface ExplainBundleOptions {
    */
   cwd?: string;
   product: ProductId;
-  profileKey?: string;
+  profileId?: string;
+  scopeId?: string;
   cli?: Record<string, unknown>;
 }
 

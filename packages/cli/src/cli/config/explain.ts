@@ -20,13 +20,15 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           type: ANALYTICS_EVENTS.CONFIG_EXPLAIN_STARTED,
           payload: {
             product: flags.product as string | undefined,
-            profileKey: (flags['profile-key'] as string) || 'default',
+            profileId: flags.profile as string | undefined,
+            scopeId: flags.scope as string | undefined,
           },
         });
         const trace = await explainBundle({
           cwd,
           product: flags.product as any,
-          profileKey: (flags['profile-key'] as string) || 'default',
+          profileId: flags.profile as string | undefined,
+          scopeId: flags.scope as string | undefined,
         });
         
         const totalTime = Date.now() - startTime;
@@ -45,7 +47,8 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           type: ANALYTICS_EVENTS.CONFIG_EXPLAIN_FINISHED,
           payload: {
             product: flags.product as string | undefined,
-            profileKey: (flags['profile-key'] as string) || 'default',
+            profileId: flags.profile as string | undefined,
+            scopeId: flags.scope as string | undefined,
             traceStepsCount: trace.length,
             durationMs: totalTime,
             result: 'success',
@@ -61,7 +64,7 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           type: ANALYTICS_EVENTS.CONFIG_EXPLAIN_FINISHED,
           payload: {
             product: flags.product as string | undefined,
-            profileKey: (flags['profile-key'] as string) || 'default',
+            profileId: flags.profile as string | undefined,
             durationMs: totalTime,
             result: 'error',
             error: String(e),

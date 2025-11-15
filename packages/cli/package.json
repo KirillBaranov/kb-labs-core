@@ -9,10 +9,14 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./manifest": {
+      "import": "./dist/manifest.v2.js",
+      "types": "./dist/manifest.v2.d.ts"
     }
   },
   "kb": {
-    "commandsManifest": "./dist/cli.manifest.js"
+    "manifest": "./dist/manifest.v2.js"
   },
   "files": [
     "dist",
@@ -38,6 +42,7 @@
     "@kb-labs/core-policy": "link:../policy",
     "@kb-labs/core-profiles": "link:../profiles",
     "@kb-labs/core-workspace": "link:../core",
+    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
     "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui",
     "glob": "^11.0.3",
     "yaml": "^2.8.0"

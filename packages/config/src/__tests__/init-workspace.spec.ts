@@ -25,17 +25,15 @@ describe('initWorkspaceConfig', () => {
     const result = await initWorkspaceConfig({
       cwd: tmpDir,
       format: 'yaml',
-      profiles: { default: 'node-ts-lib' },
       products: ['aiReview'],
     });
     
     expect(result.created).toHaveLength(1);
-    expect(result.created[0]).toMatch(/kb-labs\.config\.yaml$/);
+    expect(result.created[0]).toMatch(/\.kb\/kb-labs\.config\.yaml$/);
     
-    const configPath = path.join(tmpDir, 'kb-labs.config.yaml');
+    const configPath = path.join(tmpDir, '.kb', 'kb-labs.config.yaml');
     const content = await fs.readFile(configPath, 'utf-8');
     expect(content).toContain('schemaVersion: "1.0"');
-    expect(content).toContain('node-ts-lib');
     expect(content).toContain('aiReview');
   });
   
@@ -43,18 +41,16 @@ describe('initWorkspaceConfig', () => {
     const result = await initWorkspaceConfig({
       cwd: tmpDir,
       format: 'json',
-      profiles: { default: 'node-ts-lib' },
       products: ['aiReview'],
     });
     
     expect(result.created).toHaveLength(1);
-    expect(result.created[0]).toMatch(/kb-labs\.config\.json$/);
+    expect(result.created[0]).toMatch(/\.kb\/kb-labs\.config\.json$/);
     
-    const configPath = path.join(tmpDir, 'kb-labs.config.json');
+    const configPath = path.join(tmpDir, '.kb', 'kb-labs.config.json');
     const content = await fs.readFile(configPath, 'utf-8');
     const parsed = JSON.parse(content);
     expect(parsed.schemaVersion).toBe('1.0');
-    expect(parsed.profiles.default).toBe('node-ts-lib');
     expect(parsed.products).toHaveProperty('aiReview');
   });
   
@@ -63,7 +59,6 @@ describe('initWorkspaceConfig', () => {
     await initWorkspaceConfig({
       cwd: tmpDir,
       format: 'yaml',
-      profiles: { default: 'node-ts-lib' },
       products: ['aiReview'],
     });
     
@@ -71,7 +66,6 @@ describe('initWorkspaceConfig', () => {
     const result2 = await initWorkspaceConfig({
       cwd: tmpDir,
       format: 'yaml',
-      profiles: { default: 'node-ts-lib' },
       products: ['aiReview'],
     });
     
@@ -82,15 +76,15 @@ describe('initWorkspaceConfig', () => {
   
   it('detects conflicts without --force', async () => {
     // Create initial config
-    const configPath = path.join(tmpDir, 'kb-labs.config.yaml');
-    await fs.writeFile(configPath, 'schemaVersion: "1.0"\nprofiles: {}\n', 'utf-8');
+    const configPath = path.join(tmpDir, '.kb', 'kb-labs.config.yaml');
+    await fs.mkdir(path.dirname(configPath), { recursive: true });
+    await fs.writeFile(configPath, 'schemaVersion: "1.0"\nproducts:\n  aiReview: {}\n', 'utf-8');
     
     // Try to overwrite with different content
     const result = await initWorkspaceConfig({
       cwd: tmpDir,
       format: 'yaml',
-      profiles: { default: 'different-profile' },
-      products: ['aiReview'],
+      products: ['aiReview', 'aiDocs'],
       force: false,
     });
     
@@ -103,7 +97,6 @@ describe('initWorkspaceConfig', () => {
     const result = await initWorkspaceConfig({
       cwd: tmpDir,
       format: 'yaml',
-      profiles: { default: 'node-ts-lib' },
       products: ['aiReview'],
       dryRun: true,
     });
@@ -111,8 +104,20 @@ describe('initWorkspaceConfig', () => {
     expect(result.actions.length).toBeGreaterThan(0);
     
     // File should not actually be created
-    const configPath = path.join(tmpDir, 'kb-labs.config.yaml');
+    const configPath = path.join(tmpDir, '.kb', 'kb-labs.config.yaml');
     await expect(fs.access(configPath)).rejects.toThrow();
+  });
+
+  it('warns when deprecated profiles option is provided', async () => {
+    const result = await initWorkspaceConfig({
+      cwd: tmpDir,
+      format: 'yaml',
+      // @ts-expect-error - profiles is deprecated, testing warning
+      profiles: { default: 'legacy' },
+    });
+
+    expect(result.warnings.length).toBeGreaterThan(0);
+    expect(result.warnings.some(w => w.includes('profiles option is deprecated'))).toBe(true);
   });
 });
 

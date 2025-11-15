@@ -25,13 +25,29 @@ describe('Bundle System', () => {
   });
 
   describe('loadBundle', () => {
-    it('should load bundle with basic configuration', async () => {
-      // Create workspace config
+    it('should load bundle with basic configuration (Profiles v2)', async () => {
+      // Create workspace config with Profiles v2
       const workspaceConfig = {
         schemaVersion: '1.0',
-        profiles: {
-          default: 'node-ts-lib@1.2.0'
-        },
+        profiles: [
+          {
+            id: 'default',
+            label: 'Default Profile',
+            products: {
+              aiReview: {
+                enabled: true,
+                rules: ['security', 'performance']
+              }
+            },
+            scopes: [
+              {
+                id: 'root',
+                include: ['**/*'],
+                default: true
+              }
+            ]
+          }
+        ],
         products: {
           'ai-review': {
             enabled: true,
@@ -40,81 +56,33 @@ describe('Bundle System', () => {
         }
       };
       await fsp.writeFile(
-        path.join(testDir, 'kb-labs.config.json'),
+        path.join(testDir, 'kb.config.json'),
         JSON.stringify(workspaceConfig, null, 2)
-      );
-
-      // Create profile directory
-      const profileDir = path.join(testDir, '.kb', 'profiles', 'node-ts-lib');
-      await fsp.mkdir(profileDir, { recursive: true });
-
-      const profileManifest = {
-        schemaVersion: '1.0',
-        name: 'node-ts-lib',
-        version: '1.2.0',
-        exports: {
-          'ai-review': {
-            rules: 'artifacts/ai-review/rules.yml'
-          }
-        },
-        defaults: {}
-      };
-      await fsp.writeFile(
-        path.join(profileDir, 'profile.json'),
-        JSON.stringify(profileManifest, null, 2)
-      );
-
-      // Create artifact
-      const artifactsDir = path.join(profileDir, 'artifacts', 'ai-review');
-      await fsp.mkdir(artifactsDir, { recursive: true });
-      await fsp.writeFile(
-        path.join(artifactsDir, 'rules.yml'),
-        'rules:\n  - security\n  - performance'
       );
 
       const bundle = await loadBundle({
         cwd: testDir,
-        product: 'aiReview'
+        product: 'aiReview',
+        profileId: 'default'
       });
 
       expect(bundle.product).toBe('aiReview');
-      expect(bundle.profile.key).toBe('default');
-      expect(bundle.profile.name).toBe('node-ts-lib');
-      expect(bundle.profile.version).toBe('1.2.0');
-      expect(bundle.artifacts.summary['ai-review']).toBeDefined();
+      expect(bundle.profile).toBeDefined();
+      expect(bundle.profile.id).toBe('default');
+      expect(bundle.profile.label).toBe('Default Profile');
+      expect(bundle.profile.source).toBe('workspace');
+      expect(bundle.artifacts.summary).toBeDefined();
       expect(bundle.policy.permits).toBeDefined();
       expect(bundle.trace).toBeDefined();
     });
 
-    it('should throw error for missing profile', async () => {
+    it('should throw error for missing profile (Profiles v2)', async () => {
       const workspaceConfig = {
         schemaVersion: '1.0',
-        profiles: {
-          default: 'missing-profile@1.0.0'
-        }
+        profiles: []
       };
       await fsp.writeFile(
-        path.join(testDir, 'kb-labs.config.json'),
-        JSON.stringify(workspaceConfig, null, 2)
-      );
-
-      await expect(
-        loadBundle({
-          cwd: testDir,
-          product: 'aiReview'
-        })
-      ).rejects.toThrow('ERR_PROFILE_RESOLVE_FAILED');
-    });
-
-    it('should throw error for missing profile key', async () => {
-      const workspaceConfig = {
-        schemaVersion: '1.0',
-        profiles: {
-          default: 'node-ts-lib@1.2.0'
-        }
-      };
-      await fsp.writeFile(
-        path.join(testDir, 'kb-labs.config.json'),
+        path.join(testDir, 'kb.config.json'),
         JSON.stringify(workspaceConfig, null, 2)
       );
 
@@ -122,7 +90,31 @@ describe('Bundle System', () => {
         loadBundle({
           cwd: testDir,
           product: 'aiReview',
-          profileKey: 'missing'
+          profileId: 'missing'
+        })
+      ).rejects.toThrow('ERR_PROFILE_NOT_DEFINED');
+    });
+
+    it('should throw error for missing profile id (Profiles v2)', async () => {
+      const workspaceConfig = {
+        schemaVersion: '1.0',
+        profiles: [
+          {
+            id: 'default',
+            scopes: [{ id: 'root', include: ['**/*'], default: true }]
+          }
+        ]
+      };
+      await fsp.writeFile(
+        path.join(testDir, 'kb.config.json'),
+        JSON.stringify(workspaceConfig, null, 2)
+      );
+
+      await expect(
+        loadBundle({
+          cwd: testDir,
+          product: 'aiReview',
+          profileId: 'missing'
         })
       ).rejects.toThrow('ERR_PROFILE_NOT_DEFINED');
     });
@@ -138,21 +130,25 @@ describe('Bundle System', () => {
   });
 
   describe('explainBundle', () => {
-    it('should explain bundle configuration', async () => {
+    it('should explain bundle configuration (Profiles v2)', async () => {
       const workspaceConfig = {
         schemaVersion: '1.0',
-        profiles: {
-          default: 'node-ts-lib@1.2.0'
-        }
+        profiles: [
+          {
+            id: 'default',
+            scopes: [{ id: 'root', include: ['**/*'], default: true }]
+          }
+        ]
       };
       await fsp.writeFile(
-        path.join(testDir, 'kb-labs.config.json'),
+        path.join(testDir, 'kb.config.json'),
         JSON.stringify(workspaceConfig, null, 2)
       );
 
       const trace = await explainBundle({
         cwd: testDir,
-        product: 'aiReview'
+        product: 'aiReview',
+        profileId: 'default'
       });
 
       expect(Array.isArray(trace)).toBe(true);

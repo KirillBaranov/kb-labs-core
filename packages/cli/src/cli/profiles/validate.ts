@@ -1,6 +1,5 @@
 import type { CommandModule } from '../types';
-import { readWorkspaceConfig } from '@kb-labs/core-config';
-import { loadProfile, validateProfile as validateProfileApi } from '@kb-labs/core-profiles';
+import { readProfilesSection, resolveProfile, ProfileV2Schema } from '@kb-labs/core-config';
 import { box, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
 import { runScope, type AnalyticsEventV1, type EmitResult } from '@kb-labs/analytics-sdk-node';
 import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../analytics/events';
@@ -8,7 +7,7 @@ import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../analytics/events';
 export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<number> => {
   const startTime = Date.now();
   const cwd = (flags.cwd as string) || process.cwd();
-  const profileKey = (flags['profile-key'] as string) || 'default';
+  const profileId = flags.profile as string | undefined;
 
   return (await runScope(
     {
@@ -21,73 +20,114 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
         await emit({
           type: ANALYTICS_EVENTS.PROFILES_VALIDATE_STARTED,
           payload: {
-            profileKey,
+            profileId,
           },
         });
-        const ws = await readWorkspaceConfig(cwd);
-        if (!ws?.data) {
+
+        const profilesSection = await readProfilesSection(cwd);
+        const availableProfiles = profilesSection.profiles.map((p) => p.id);
+
+        if (!profileId) {
           const totalTime = Date.now() - startTime;
           await emit({
             type: ANALYTICS_EVENTS.PROFILES_VALIDATE_FINISHED,
-            payload: {
-              profileKey,
-              durationMs: totalTime,
-              result: 'failed',
-              error: 'No workspace configuration found',
-            },
+          payload: {
+            profileId: undefined,
+            durationMs: totalTime,
+            result: 'failed',
+            error: 'No profile specified',
+          },
           });
 
-          const msg = 'No workspace configuration found';
-          if (flags.json) { ctx.presenter.json({ ok: false, error: msg }); return 1; }
+          const msg = `No profile specified. Available profiles: ${availableProfiles.join(', ') || 'none'}`;
+          if (flags.json) {
+            ctx.presenter.json({ ok: false, error: msg, available: availableProfiles });
+            return 1;
+          }
           ctx.presenter.error(msg);
           return 1;
         }
 
-        const profiles = (ws.data as any).profiles || {};
-        const profileRef = profiles[profileKey];
-        if (!profileRef) {
+        if (!availableProfiles.includes(profileId)) {
           const totalTime = Date.now() - startTime;
           await emit({
             type: ANALYTICS_EVENTS.PROFILES_VALIDATE_FINISHED,
-            payload: {
-              profileKey,
-              durationMs: totalTime,
-              result: 'failed',
-              error: `Profile key "${profileKey}" not found`,
-            },
+          payload: {
+            profileId,
+            durationMs: totalTime,
+            result: 'failed',
+            error: `Profile "${profileId}" not found`,
+          },
           });
 
-          const msg = `Profile key "${profileKey}" not found`;
-          if (flags.json) { ctx.presenter.json({ ok: false, error: msg, available: Object.keys(profiles) }); return 1; }
+          const msg = `Profile "${profileId}" not found. Available: ${availableProfiles.join(', ') || 'none'}`;
+          if (flags.json) {
+            ctx.presenter.json({ ok: false, error: msg, available: availableProfiles });
+            return 1;
+          }
           ctx.presenter.error(msg);
           return 1;
         }
 
-        // Load profile manifest and validate
-        const loaded = await loadProfile({ cwd, name: profileRef });
-        const validation = validateProfileApi(loaded.profile as any);
+        // Find profile in section and validate with Zod
+        const profile = profilesSection.profiles.find((p) => p.id === profileId);
+        if (!profile) {
+          const totalTime = Date.now() - startTime;
+          await emit({
+            type: ANALYTICS_EVENTS.PROFILES_VALIDATE_FINISHED,
+            payload: {
+              profileKey: profileId,
+              durationMs: totalTime,
+              result: 'failed',
+              error: 'Profile not found in section',
+            },
+          });
+
+          const msg = `Profile "${profileId}" not found in profiles section`;
+          if (flags.json) {
+            ctx.presenter.json({ ok: false, error: msg });
+            return 1;
+          }
+          ctx.presenter.error(msg);
+          return 1;
+        }
+
+        // Validate with Zod schema
+        const validation = ProfileV2Schema.safeParse(profile);
+        const isValid = validation.success;
+        const errors = !validation.success
+          ? validation.error.issues.map((e) => ({
+              path: e.path.join('.'),
+              message: e.message,
+            }))
+          : null;
 
         const totalTime = Date.now() - startTime;
 
         if (flags.json) {
-          ctx.presenter.json({ ok: validation.ok, errors: validation.errors || null, profileKey, profileRef });
+          ctx.presenter.json({
+            ok: isValid,
+            errors,
+            profileId: profile.id,
+            source: profilesSection.sourcePath,
+          });
         } else {
-          if (validation.ok) {
+          if (isValid) {
             ctx.presenter.write(
               box('Profile Validation', [
-                `${safeSymbols.success} ${safeColors.bold('Valid profile')} for key ${profileKey} (${profileRef})`
+                `${safeSymbols.success} ${safeColors.bold('Valid profile')} "${profileId}" (Profiles v2)`,
+                `source: ${profilesSection.sourcePath || 'unknown'}`,
               ])
             );
           } else {
             const lines: string[] = [
-              `${safeSymbols.error} ${safeColors.bold('Invalid profile')} for key ${profileKey} (${profileRef})`,
+              `${safeSymbols.error} ${safeColors.bold('Invalid profile')} "${profileId}" (Profiles v2)`,
+              `source: ${profilesSection.sourcePath || 'unknown'}`,
             ];
-            if (Array.isArray(validation.errors)) {
+            if (errors && errors.length > 0) {
               lines.push('', safeColors.bold('Errors:'));
-              for (const e of validation.errors) {
-                const path = (e as any).instancePath || '';
-                const msg = (e as any).message || 'Validation error';
-                lines.push(`  - ${path ? path + ': ' : ''}${msg}`);
+              for (const e of errors) {
+                lines.push(`  - ${e.path ? e.path + ': ' : ''}${e.message}`);
               }
             }
             ctx.presenter.write(box('Profile Validation', lines));
@@ -98,16 +138,15 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
         await emit({
           type: ANALYTICS_EVENTS.PROFILES_VALIDATE_FINISHED,
           payload: {
-            profileKey,
-            profileRef,
-            validationOk: validation.ok,
-            errorsCount: Array.isArray(validation.errors) ? validation.errors.length : 0,
+            profileId: profile.id,
+            validationOk: isValid,
+            errorsCount: errors?.length || 0,
             durationMs: totalTime,
-            result: validation.ok ? 'success' : 'failed',
+            result: isValid ? 'success' : 'failed',
           },
         });
 
-        return validation.ok ? 0 : 1;
+        return isValid ? 0 : 1;
       } catch (err: any) {
         const totalTime = Date.now() - startTime;
 
@@ -115,7 +154,7 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
         await emit({
           type: ANALYTICS_EVENTS.PROFILES_VALIDATE_FINISHED,
           payload: {
-            profileKey,
+            profileId: profileId || undefined,
             durationMs: totalTime,
             result: 'error',
             error: err?.message || String(err),

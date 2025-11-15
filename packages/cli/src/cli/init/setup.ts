@@ -23,9 +23,6 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           payload: {
             format: (flags.format as string) || 'yaml',
             products: flags.products ? (flags.products as string).split(',') : ['aiReview'],
-            profileKey: (flags['profile-key'] as string) || 'default',
-            profileRef: flags['profile-ref'] as string | undefined,
-            scaffoldLocalProfile: !!flags['scaffold-local-profile'],
             presetRef: flags['preset-ref'] as string | undefined,
             policyBundle: flags['policy-bundle'] as string | undefined,
             dryRun: !!flags['dry-run'],
@@ -37,9 +34,6 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           cwd,
           format: (flags.format as 'yaml' | 'json') || 'yaml',
           products: flags.products ? (flags.products as string).split(',') as any[] : ['aiReview'],
-          profileKey: (flags['profile-key'] as string) || 'default',
-          profileRef: flags['profile-ref'] as string | undefined,
-          scaffoldLocalProfile: !!flags['scaffold-local-profile'],
           presetRef: flags['preset-ref'] as string | undefined,
           policyBundle: flags['policy-bundle'] as string | undefined,
           dryRun: !!flags['dry-run'],
@@ -66,7 +60,6 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           payload: {
             format: (flags.format as string) || 'yaml',
             productsCount: flags.products ? (flags.products as string).split(',').length : 1,
-            profileKey: (flags['profile-key'] as string) || 'default',
             dryRun: !!flags['dry-run'],
             force: !!flags.force,
             created: result.stats.created,
@@ -87,7 +80,6 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           payload: {
             format: (flags.format as string) || 'yaml',
             productsCount: flags.products ? (flags.products as string).split(',').length : 1,
-            profileKey: (flags['profile-key'] as string) || 'default',
             dryRun: !!flags['dry-run'],
             force: !!flags.force,
             durationMs: totalTime,

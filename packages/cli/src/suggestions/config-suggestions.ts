@@ -29,9 +29,9 @@ export function generateConfigSuggestions(
   if (artifacts.missingProfiles.length > 0) {
     suggestions.push({
       id: 'CONFIG_INIT_PROFILE',
-      command: 'kb init profile',
-      args: ['--scaffold-local-profile'],
-      description: `Initialize missing profiles: ${artifacts.missingProfiles.join(', ')}`,
+      command: 'kb init setup',
+      args: ['--yes'],
+      description: `Add profiles[] entries in kb.config.json for: ${artifacts.missingProfiles.join(', ')}`,
       impact: 'safe',
       when: 'PROFILE_MISSING',
       available: true

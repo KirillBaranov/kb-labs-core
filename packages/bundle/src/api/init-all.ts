@@ -11,17 +11,13 @@ import type {
   UpsertLockfileOptions,
 } from '@kb-labs/core-config';
 import type { ProductId } from '@kb-labs/core-types';
-import type { InitProfileOptions } from '@kb-labs/core-profiles';
 import type { InitPolicyOptions } from '@kb-labs/core-policy';
 
 export interface InitAllOptions {
   cwd: string;
   format?: 'yaml' | 'json';
   products?: ProductId[];
-  profileKey?: string;
-  profileRef?: string;
   presetRef?: string | null;
-  scaffoldLocalProfile?: boolean;
   policyBundle?: string | null;
   dryRun?: boolean;
   force?: boolean;
@@ -121,12 +117,10 @@ async function updateGitignore(cwd: string, dryRun: boolean): Promise<InitResult
 export async function initAll(opts: InitAllOptions): Promise<InitAllResult> {
   const cwd = path.resolve(opts.cwd);
   const products = opts.products || ['aiReview'];
-  const profileKey = opts.profileKey || 'default';
   const format = opts.format || 'yaml';
   
   // Import all init functions
   const { initWorkspaceConfig, upsertLockfile } = await import('@kb-labs/core-config');
-  const { initProfile } = await import('@kb-labs/core-profiles');
   const { initPolicy } = await import('@kb-labs/core-policy');
   
   // Step 1: Init workspace config
@@ -134,11 +128,6 @@ export async function initAll(opts: InitAllOptions): Promise<InitAllResult> {
     cwd,
     format,
     presetRef: opts.presetRef,
-    profiles: opts.scaffoldLocalProfile 
-      ? { [profileKey]: `./.kb/profiles/${opts.profileRef || 'node-ts-lib'}` }
-      : opts.profileRef 
-      ? { [profileKey]: opts.profileRef }
-      : undefined,
     products,
     dryRun: opts.dryRun,
     force: opts.force,
@@ -146,18 +135,14 @@ export async function initAll(opts: InitAllOptions): Promise<InitAllResult> {
   
   const workspaceResult = await initWorkspaceConfig(workspaceOpts);
   
-  // Step 2: Init profile
-  const profileOpts: InitProfileOptions = {
-    cwd,
-    profileKey,
-    profileRef: opts.profileRef,
-    createLocalScaffold: opts.scaffoldLocalProfile,
-    products,
-    dryRun: opts.dryRun,
-    force: opts.force,
+  // Step 2: Profile scaffolding has been removed (Profiles v2 handles config-only setup)
+  const profileResult: InitResult = {
+    actions: [],
+    created: [],
+    updated: [],
+    skipped: [],
+    warnings: [],
   };
-  
-  const profileResult = await initProfile(profileOpts);
   
   // Step 3: Init policy
   const policyOpts: InitPolicyOptions = {
@@ -177,9 +162,6 @@ export async function initAll(opts: InitAllOptions): Promise<InitAllResult> {
   const lockfileOpts: UpsertLockfileOptions = {
     cwd,
     presetRef: opts.presetRef,
-    profileRef: opts.scaffoldLocalProfile 
-      ? `./.kb/profiles/${opts.profileRef || 'node-ts-lib'}`
-      : opts.profileRef,
     policyBundle: opts.policyBundle,
     dryRun: opts.dryRun,
   };

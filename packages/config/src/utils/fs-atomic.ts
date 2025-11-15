@@ -21,9 +21,10 @@ export async function writeFileAtomic(
   try {
     // Ensure parent directory exists
     await fs.mkdir(dirname(path), { recursive: true });
+    await fs.mkdir(dirname(tmp), { recursive: true });
     
     // Write to temp file
-    await fs.writeFile(tmp, data, 'utf-8');
+    await fs.writeFile(tmp, data);
     
     // Atomic rename
     await fs.rename(tmp, path);

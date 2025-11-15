@@ -5,7 +5,8 @@
 
 import { promises as fsp } from 'node:fs';
 import { join } from 'path';
-import { readWorkspaceConfig } from '@kb-labs/core-config';
+import { stat } from 'node:fs/promises';
+import { readWorkspaceConfig, readProfilesSection, KbError } from '@kb-labs/core-config';
 
 export interface ConfigArtifacts {
   missingWorkspaceConfig: boolean;
@@ -42,37 +43,42 @@ export async function detectConfigArtifacts(cwd: string): Promise<ConfigArtifact
   const lockPath = join(cwd, '.kb', 'lock.json');
   try {
     await fsp.access(lockPath);
-    // TODO: Check if lockfile is outdated
+    // Check if lockfile is outdated by comparing with config files
+    try {
+      const lockfileStat = await stat(lockPath);
+      const configFiles = ['kb.config.json', 'kb-labs.config.json', 'kb-labs.config.yaml'];
+      const configPaths = configFiles.map(f => join(cwd, f));
+      
+      for (const configPath of configPaths) {
+        try {
+          const configStat = await stat(configPath);
+          // If config file is newer than lockfile, lockfile might be outdated
+          if (configStat.mtime > lockfileStat.mtime) {
+            artifacts.outdatedLockfile = true;
+            break;
+          }
+        } catch {
+          // Config file doesn't exist, skip
+        }
+      }
+    } catch {
+      // Can't stat lockfile, assume it's not outdated
+    }
   } catch {
     artifacts.missingLockfile = true;
   }
   
-  // Check profiles if workspace config exists
-  if (!artifacts.missingWorkspaceConfig) {
-    try {
-      const workspaceConfig = await readWorkspaceConfig(cwd);
-      if (workspaceConfig?.data) {
-        const profiles = (workspaceConfig.data as any).profiles || {};
-        for (const [key, ref] of Object.entries(profiles)) {
-          const profilePath = join(cwd, '.kb', 'profiles', key, 'profile.json');
-          try {
-            await fsp.access(profilePath);
-            // Try to read and parse profile.json to validate
-            const content = await fsp.readFile(profilePath, 'utf-8');
-            JSON.parse(content);
-          } catch {
-            if (typeof ref === 'string' && ref.startsWith('./')) {
-              // Local path
-              artifacts.missingProfiles.push(key);
-            } else {
-              // npm package
-              artifacts.missingProfiles.push(key);
-            }
-          }
-        }
-      }
-    } catch {
-      // Workspace config read failed
+  try {
+    const profilesResult = await readProfilesSection(cwd);
+    const definedProfiles = profilesResult.profiles.length;
+    const hasKbConfig = !!profilesResult.sourcePath;
+
+    if (!hasKbConfig || definedProfiles === 0) {
+      artifacts.missingProfiles.push('default');
+    }
+  } catch (error) {
+    if (error instanceof KbError && error.code === 'ERR_PROFILE_INVALID_FORMAT') {
+      artifacts.invalidProfiles.push('kb.config');
     }
   }
   
@@ -90,11 +96,17 @@ export function getCleanupSuggestions(artifacts: ConfigArtifacts): string[] {
   }
   
   if (artifacts.missingProfiles.length > 0) {
-    suggestions.push('Run "kb init profile" to set up missing profiles');
+    suggestions.push(
+      `Add profiles[] entries in kb.config.json (missing: ${artifacts.missingProfiles.join(', ')})`
+    );
   }
   
   if (artifacts.missingLockfile) {
     suggestions.push('Run "kb init setup" to create lockfile');
+  }
+  
+  if (artifacts.outdatedLockfile) {
+    suggestions.push('Run "kb init setup" to update lockfile');
   }
   
   if (artifacts.invalidProfiles.length > 0) {

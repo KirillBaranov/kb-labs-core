@@ -212,6 +212,9 @@ describe('ERROR_HINTS', () => {
       'ERR_PROFILE_INCOMPATIBLE',
       'ERR_PROFILE_NOT_DEFINED',
       'ERR_PROFILE_RESOLVE_FAILED',
+      'ERR_PROFILE_EXTENDS_FAILED',
+      'ERR_PROFILE_SCOPE_NOT_FOUND',
+      'ERR_PROFILE_SCOPE_CONFLICT',
       'ERR_PROFILE_INVALID_FORMAT',
       'ERR_ARTIFACT_LIMIT_EXCEEDED',
       'ERR_FORBIDDEN',
@@ -231,23 +234,19 @@ describe('ERROR_HINTS', () => {
     expect(ERROR_HINTS.ERR_PATH_OUTSIDE_WORKSPACE).toContain('workspace');
     expect(ERROR_HINTS.ERR_PRESET_NOT_RESOLVED).toContain('preset');
     expect(ERROR_HINTS.ERR_PROFILE_INCOMPATIBLE).toContain('incompatible');
-    expect(ERROR_HINTS.ERR_PROFILE_NOT_DEFINED).toContain('profiles.default');
-    expect(ERROR_HINTS.ERR_PROFILE_RESOLVE_FAILED).toContain('pnpm add');
-    expect(ERROR_HINTS.ERR_PROFILE_INVALID_FORMAT).toContain('kb init profile');
+    expect(ERROR_HINTS.ERR_PROFILE_NOT_DEFINED).toContain('profiles[]');
+    expect(ERROR_HINTS.ERR_PROFILE_RESOLVE_FAILED).toContain('profiles[]');
+    expect(ERROR_HINTS.ERR_PROFILE_EXTENDS_FAILED).toContain('extends');
+    expect(ERROR_HINTS.ERR_PROFILE_INVALID_FORMAT).toContain('kb.config.json');
+    expect(ERROR_HINTS.ERR_PROFILE_SCOPE_NOT_FOUND).toContain('--scope');
+    expect(ERROR_HINTS.ERR_PROFILE_SCOPE_CONFLICT).toContain('--scope');
     expect(ERROR_HINTS.ERR_ARTIFACT_LIMIT_EXCEEDED).toContain('artifacts');
     expect(ERROR_HINTS.ERR_FORBIDDEN).toContain('policy');
   });
 
   it('should be readonly', () => {
-    // TypeScript should prevent this, but let's verify runtime behavior
     const originalValue = ERROR_HINTS.ERR_CONFIG_NOT_FOUND;
-    
-    // Try to modify (this won't actually modify the const object)
     (ERROR_HINTS as any).ERR_CONFIG_NOT_FOUND = 'Modified';
-    
-    // The original should still be there because it's a const object
-    // But in JavaScript, const objects can still have their properties modified
-    // So we'll just verify the original value exists
     expect(originalValue).toBe('Create kb-labs.config.yaml or run: kb init');
   });
 });

@@ -21,22 +21,6 @@ export const initCommands: CommandManifest[] = [
   },
   {
     manifestVersion: '1.0',
-    id: 'init:profile',
-    group: 'init',
-    describe: 'Initialize or link a profile',
-    requires: ['@kb-labs/core-profiles@^0.1.0'],
-    flags: [
-      { name: 'profile-key', type: 'string', default: 'default' },
-      { name: 'profile-ref', type: 'string' },
-      { name: 'scaffold-local-profile', type: 'boolean' },
-      { name: 'cwd', type: 'string' },
-      { name: 'json', type: 'boolean' }
-    ],
-    examples: ['kb init profile', 'kb init profile --scaffold-local-profile'],
-    loader: async () => import('../cli/init/profile'),
-  },
-  {
-    manifestVersion: '1.0',
     id: 'init:policy',
     group: 'init',
     describe: 'Initialize policy configuration',
@@ -60,9 +44,6 @@ export const initCommands: CommandManifest[] = [
     flags: [
       { name: 'format', type: 'string', choices: ['yaml', 'json'], default: 'yaml' },
       { name: 'products', type: 'string', description: 'Comma-separated product list', default: 'aiReview' },
-      { name: 'profile-key', type: 'string', default: 'default' },
-      { name: 'profile-ref', type: 'string' },
-      { name: 'scaffold-local-profile', type: 'boolean' },
       { name: 'preset-ref', type: 'string' },
       { name: 'policy-bundle', type: 'string' },
       { name: 'dry-run', type: 'boolean' },

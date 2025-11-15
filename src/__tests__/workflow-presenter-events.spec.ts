@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { WorkflowJobHandler } from '../../packages/workflow-engine/src/job-handler'
+import { WorkflowJobHandler } from '@kb-labs/workflow-engine'
 import type { StepExecutionRequest } from '@kb-labs/workflow-runtime'
 import type { JobRunnerPresenterEvent } from '@kb-labs/plugin-runtime'
 

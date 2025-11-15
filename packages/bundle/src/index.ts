@@ -4,6 +4,23 @@
  */
 
 export * from './types/types';
+export {
+  ProfileV2Schema,
+  ProfilesV2Schema,
+  BundleProfileSchema,
+  ScopeV2Schema,
+  ResolvedScopeSchema,
+  ProfileMetaSchema,
+  ProfileTraceSchema,
+  BundleProfileSourceSchema,
+  type ProfileV2,
+  type ScopeV2,
+  type BundleProfile,
+  type ResolvedScope,
+  type ProfileMeta,
+  type ProfileTrace,
+  type BundleProfileSource,
+} from '@kb-labs/core-config';
 export * from './api/load-bundle';
 export * from './api/explain-bundle';
 

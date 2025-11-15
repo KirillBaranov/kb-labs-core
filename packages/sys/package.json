@@ -1,6 +1,7 @@
 {
   "name": "@kb-labs/core-sys",
   "version": "0.1.0",
+  "description": "Core system utilities for KB Labs, including file system operations and path resolution",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

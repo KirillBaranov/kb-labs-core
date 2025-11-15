@@ -1,6 +1,7 @@
 {
   "name": "@kb-labs/core-profiles",
   "version": "0.1.0",
+  "description": "Profiles v2 system for KB Labs, providing environment-based configuration profiles with scopes",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

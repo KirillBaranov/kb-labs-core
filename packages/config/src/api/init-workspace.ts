@@ -96,6 +96,12 @@ export async function initWorkspaceConfig(
     warnings: [],
   };
   
+  if (opts.profiles && Object.keys(opts.profiles).length > 0) {
+    result.warnings.push(
+      'profiles option is deprecated. Define profiles[] inside kb.config.json (Profiles v2).'
+    );
+  }
+  
   // Find existing config
   const existing = await findWorkspaceConfig(cwd);
   const format = existing?.format || opts.format || 'yaml';
@@ -109,7 +115,6 @@ export async function initWorkspaceConfig(
   // Build new config structure
   const newConfig: any = {
     schemaVersion: '1.0',
-    profiles: opts.profiles || {},
     products: {},
   };
   
@@ -141,20 +146,6 @@ export async function initWorkspaceConfig(
       if (!existingData.schemaVersion) {
         existingData.schemaVersion = '1.0';
         modified = true;
-      }
-      
-      // Merge profiles
-      if (opts.profiles) {
-        if (!existingData.profiles) {
-          existingData.profiles = {};
-          modified = true;
-        }
-        for (const [key, value] of Object.entries(opts.profiles)) {
-          if (!existingData.profiles[key]) {
-            existingData.profiles[key] = value;
-            modified = true;
-          }
-        }
       }
       
       // Merge products

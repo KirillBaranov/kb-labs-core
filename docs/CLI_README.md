@@ -21,7 +21,6 @@ kb init setup --dry-run                # Preview changes
 - `--products` - Comma-separated product list
 - `--profile-key` - Profile key (default: default)
 - `--profile-ref` - Profile reference
-- `--scaffold-local-profile` - Create local profile scaffold
 - `--preset-ref` - Org preset reference
 - `--policy-bundle` - Policy bundle name
 - `--dry-run` - Preview without making changes
@@ -34,15 +33,6 @@ Initialize workspace configuration file.
 ```bash
 kb init workspace
 kb init workspace --format json --force
-```
-
-#### `kb init profile`
-Initialize or link a profile.
-
-```bash
-kb init profile
-kb init profile --scaffold-local-profile
-kb init profile --profile-ref node-ts-lib@^1.0.0
 ```
 
 #### `kb init policy`
@@ -224,8 +214,8 @@ kb bundle print --product aiReview --with-trace
 kb config doctor
 
 # If issues found, follow suggestions
-kb init profile
 kb init workspace
+kb init setup --yes
 ```
 
 ## Integration with CLI suggestions

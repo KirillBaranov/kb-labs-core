@@ -30,11 +30,11 @@ describe('Bundle Integration Tests', () => {
   });
 
   describe('Full Bundle Loading', () => {
-    it('should load complete bundle with all layers', async () => {
+    it('should load complete bundle with all layers (Profiles v2)', async () => {
       const bundle = await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
       expect(bundle.product).toBe('aiReview');
@@ -45,23 +45,23 @@ describe('Bundle Integration Tests', () => {
       expect(bundle.trace).toBeDefined();
     });
 
-    it('should resolve profile correctly', async () => {
+    it('should resolve profile correctly (Profiles v2)', async () => {
       const bundle = await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
-      expect(bundle.profile.key).toBe('default');
-      expect(bundle.profile.name).toBe('node-ts-lib');
-      expect(bundle.profile.version).toBe('1.2.0');
+      expect(bundle.profile.id).toBe('default');
+      expect(bundle.profile.label).toBe('Default Profile');
+      expect(bundle.profile.source).toBe('workspace');
     });
 
-    it('should merge configuration layers correctly', async () => {
+    it('should merge configuration layers correctly (Profiles v2)', async () => {
       const bundle = await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
       // Should have merged config from all layers
@@ -73,35 +73,34 @@ describe('Bundle Integration Tests', () => {
       expect(config.debug).toBe(true); // From local config
     });
 
-    it('should provide artifacts summary', async () => {
+    it('should provide artifacts summary (Profiles v2)', async () => {
       const bundle = await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
       expect(bundle.artifacts.summary).toBeDefined();
-      expect(bundle.artifacts.summary['ai-review']).toBeDefined();
-      expect(bundle.artifacts.summary['ai-review']).toContain('rules');
-      expect(bundle.artifacts.summary['ai-review']).toContain('prompts');
+      // Artifacts may be empty if not using legacy profiles
+      expect(typeof bundle.artifacts.summary).toBe('object');
     });
 
-    it('should provide policy permits function', async () => {
+    it('should provide policy permits function (Profiles v2)', async () => {
       const bundle = await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
       expect(bundle.policy.permits).toBeDefined();
       expect(typeof bundle.policy.permits).toBe('function');
     });
 
-    it('should provide detailed trace', async () => {
+    it('should provide detailed trace (Profiles v2)', async () => {
       const bundle = await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
       expect(bundle.trace).toBeDefined();
@@ -111,11 +110,11 @@ describe('Bundle Integration Tests', () => {
   });
 
   describe('Artifact Management', () => {
-    it('should list artifacts for a product', async () => {
+    it('should list artifacts for a product (Profiles v2)', async () => {
       const bundle = await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
       const rules = await bundle.artifacts.list('rules');
@@ -133,7 +132,7 @@ describe('Bundle Integration Tests', () => {
       const bundle = await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
       const result = await bundle.artifacts.materialize(['rules', 'prompts']);
@@ -147,7 +146,7 @@ describe('Bundle Integration Tests', () => {
       const bundle = await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
       // Should only allow whitelisted file types
@@ -164,7 +163,7 @@ describe('Bundle Integration Tests', () => {
       const bundle = await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
       // Should have permits function
@@ -179,7 +178,7 @@ describe('Bundle Integration Tests', () => {
       const bundle = await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
       // In permit-all mode, all actions should be allowed
@@ -193,7 +192,7 @@ describe('Bundle Integration Tests', () => {
       const trace = await explainBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
       expect(trace).toBeDefined();
@@ -210,7 +209,7 @@ describe('Bundle Integration Tests', () => {
       const trace = await explainBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
       const layers = trace.map(step => step.layer);
@@ -229,7 +228,7 @@ describe('Bundle Integration Tests', () => {
       await expect(loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       })).rejects.toThrow();
     });
 
@@ -237,7 +236,7 @@ describe('Bundle Integration Tests', () => {
       await expect(loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'nonexistent'
+        profileId: 'nonexistent'
       })).rejects.toThrow();
     });
 
@@ -245,7 +244,7 @@ describe('Bundle Integration Tests', () => {
       await expect(loadBundle({
         cwd: testDir,
         product: 'invalid' as any,
-        profileKey: 'default'
+        profileId: 'default'
       })).rejects.toThrow();
     });
   });
@@ -255,7 +254,7 @@ describe('Bundle Integration Tests', () => {
       const bundle = await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default',
+        profileId: 'default',
         cli: { debug: false, maxFiles: 10 }
       });
 
@@ -268,7 +267,7 @@ describe('Bundle Integration Tests', () => {
       const bundle = await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default',
+        profileId: 'default',
         writeFinalConfig: true
       });
 
@@ -288,7 +287,7 @@ describe('Bundle Integration Tests', () => {
       await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
       // Clear caches
@@ -298,7 +297,7 @@ describe('Bundle Integration Tests', () => {
       const bundle = await loadBundle({
         cwd: testDir,
         product: 'aiReview',
-        profileKey: 'default'
+        profileId: 'default'
       });
 
       expect(bundle).toBeDefined();

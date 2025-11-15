@@ -1,11 +1,12 @@
 import type { CommandModule } from '../types';
-import { loadProfile, normalizeManifest, extractProfileInfo } from '@kb-labs/core-profiles';
+import { readProfilesSection, resolveProfile } from '@kb-labs/core-config';
 import { runScope, type AnalyticsEventV1, type EmitResult } from '@kb-labs/analytics-sdk-node';
 import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../analytics/events';
 
 export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<number> => {
   const startTime = Date.now();
   const cwd = (flags.cwd as string) || process.cwd();
+  const profileId = flags.profile as string | undefined;
 
   return (await runScope(
     {
@@ -18,50 +19,71 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
         await emit({
           type: ANALYTICS_EVENTS.PROFILES_RESOLVE_STARTED,
           payload: {
-            profileKey: (flags['profile-key'] as string) || 'default',
+            profileId,
           },
         });
-        const profile = await loadProfile({ 
-          cwd,
-          name: (flags['profile-key'] as string) || 'default'
-        });
-        
-        const manifest = normalizeManifest(profile.profile);
-        const profileInfo = extractProfileInfo(manifest, profile.meta.pathAbs);
-        
+
+        if (!profileId) {
+          const profilesSection = await readProfilesSection(cwd);
+          const availableProfiles = profilesSection.profiles.map((p) => p.id);
+          const msg = `No profile specified. Available profiles: ${availableProfiles.join(', ') || 'none'}`;
+          ctx.presenter.error(msg);
+          return 1;
+        }
+
+        const bundleProfile = await resolveProfile({ cwd, profileId });
+
         const totalTime = Date.now() - startTime;
 
         if (flags.json) {
           ctx.presenter.json({
-            name: profileInfo.name,
-            version: profileInfo.version,
-            manifestPath: profileInfo.manifestPath,
-            exports: profileInfo.exports,
-            extends: profileInfo.extends,
+            id: bundleProfile.id,
+            label: bundleProfile.label,
+            version: bundleProfile.version,
+            source: bundleProfile.source,
+            products: bundleProfile.products,
+            scopes: bundleProfile.scopes.map((s) => ({
+              id: s.id,
+              label: s.label,
+              include: s.include,
+              exclude: s.exclude,
+              isDefault: s.isDefault,
+              products: s.products,
+            })),
+            trace: bundleProfile.trace,
+            productsByScope: bundleProfile.productsByScope,
           });
         } else {
-          ctx.presenter.write(`Name: ${profileInfo.name}\n`);
-          ctx.presenter.write(`Version: ${profileInfo.version}\n`);
-          ctx.presenter.write(`Path: ${profileInfo.manifestPath}\n`);
-          if (profileInfo.extends) {
-            ctx.presenter.write(`Extends: ${profileInfo.extends.join(', ')}\n`);
+          ctx.presenter.write(`ID: ${bundleProfile.id}\n`);
+          if (bundleProfile.label) {
+            ctx.presenter.write(`Label: ${bundleProfile.label}\n`);
           }
+          if (bundleProfile.version) {
+            ctx.presenter.write(`Version: ${bundleProfile.version}\n`);
+          }
+          ctx.presenter.write(`Source: ${bundleProfile.source}\n`);
+          if (bundleProfile.trace?.extends && bundleProfile.trace.extends.length > 0) {
+            ctx.presenter.write(`Extends: ${bundleProfile.trace.extends.join(' → ')}\n`);
+          }
+          ctx.presenter.write(`Products: ${Object.keys(bundleProfile.products || {}).join(', ') || 'none'}\n`);
+          ctx.presenter.write(`Scopes: ${bundleProfile.scopes.map((s) => s.id).join(', ') || 'none'}\n`);
         }
 
         // Track command completion
         await emit({
           type: ANALYTICS_EVENTS.PROFILES_RESOLVE_FINISHED,
           payload: {
-            profileKey: (flags['profile-key'] as string) || 'default',
-            profileName: profileInfo.name,
-            profileVersion: profileInfo.version,
-            exportsCount: Object.keys(profileInfo.exports || {}).length,
-            extendsCount: profileInfo.extends?.length || 0,
+            profileId: bundleProfile.id,
+            profileName: bundleProfile.label || bundleProfile.id,
+            profileVersion: bundleProfile.version || 'unknown',
+            productsCount: Object.keys(bundleProfile.products || {}).length,
+            scopesCount: bundleProfile.scopes.length,
+            extendsCount: bundleProfile.trace?.extends?.length || 0,
             durationMs: totalTime,
             result: 'success',
           },
         });
-        
+
         return 0;
       } catch (e: unknown) {
         const totalTime = Date.now() - startTime;
@@ -70,7 +92,7 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
         await emit({
           type: ANALYTICS_EVENTS.PROFILES_RESOLVE_FINISHED,
           payload: {
-            profileKey: (flags['profile-key'] as string) || 'default',
+            profileId: profileId || undefined,
             durationMs: totalTime,
             result: 'error',
             error: String(e),

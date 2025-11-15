@@ -12,14 +12,16 @@ export const bundleCommands: CommandManifest[] = [
     requires: ['@kb-labs/core-bundle@^0.1.0'],
     flags: [
       { name: 'product', type: 'string', required: true },
-      { name: 'profile-key', type: 'string', default: 'default' },
+      { name: 'profile', type: 'string', description: 'Profile ID (Profiles v2)' },
+      { name: 'scope', type: 'string', description: 'Scope ID within profile' },
       { name: 'cwd', type: 'string' },
       { name: 'json', type: 'boolean' },
       { name: 'with-trace', type: 'boolean' }
     ],
     examples: [
       'kb bundle print --product aiReview',
-      'kb bundle print --product devlink --with-trace'
+      'kb bundle print --product aiReview --profile frontend',
+      'kb bundle print --product aiReview --profile frontend --scope backend --with-trace'
     ],
     loader: async () => import('../cli/bundle/print'),
   },
@@ -31,12 +33,17 @@ export const bundleCommands: CommandManifest[] = [
     requires: ['@kb-labs/core-bundle@^0.1.0'],
     flags: [
       { name: 'product', type: 'string', required: true },
-      { name: 'profile-key', type: 'string', default: 'default' },
+      { name: 'profile', type: 'string', description: 'Profile ID (Profiles v2)' },
+      { name: 'scope', type: 'string', description: 'Scope ID within profile' },
       { name: 'trace', type: 'boolean' },
       { name: 'cwd', type: 'string' },
       { name: 'json', type: 'boolean' }
     ],
-    examples: ['kb bundle inspect --product aiReview --trace'],
+    examples: [
+      'kb bundle inspect --product aiReview',
+      'kb bundle inspect --product aiReview --profile frontend --trace',
+      'kb bundle inspect --product aiReview --profile frontend --scope backend'
+    ],
     loader: async () => import('../cli/bundle/inspect'),
   },
 ];

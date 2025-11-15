@@ -8,7 +8,8 @@ import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../analytics/events';
 export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<number> => {
   const startTime = Date.now();
   const cwd = (flags.cwd as string) || process.cwd();
-  const profileKey = (flags['profile-key'] as string) || 'default';
+  const profileId = flags.profile as string | undefined;
+  const scopeId = flags.scope as string | undefined;
   const noFail = Boolean(flags['no-fail']);
 
   return (await runScope(
@@ -23,14 +24,16 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           type: ANALYTICS_EVENTS.CONFIG_VALIDATE_STARTED,
           payload: {
             product: flags.product as string | undefined,
-            profileKey,
+            profileId,
+            scopeId,
             noFail,
           },
         });
         await loadBundle({
           cwd,
           product: flags.product as ProductId,
-          profileKey,
+          profileId,
+          scopeId,
           validate: noFail ? 'warn' : true,
         });
 
@@ -51,7 +54,8 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           type: ANALYTICS_EVENTS.CONFIG_VALIDATE_FINISHED,
           payload: {
             product: flags.product as string | undefined,
-            profileKey,
+            profileId,
+            scopeId,
             noFail,
             validationOk: true,
             durationMs: totalTime,
@@ -70,7 +74,8 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           type: ANALYTICS_EVENTS.CONFIG_VALIDATE_FINISHED,
           payload: {
             product: flags.product as string | undefined,
-            profileKey,
+            profileId,
+            scopeId,
             noFail,
             validationOk: false,
             errorsCount: errorsArray.length,

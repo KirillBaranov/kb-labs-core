@@ -37,8 +37,5 @@ export {
 // Factory
 export * from "./factory";
 
-// Init API
-export { initProfile, type InitProfileOptions } from "./api/init-profile";
-
 // Constants
 export { MAX_ARTIFACT_SIZE, MAX_FILES_PER_KEY, ALLOWED_EXTENSIONS } from "./constants";

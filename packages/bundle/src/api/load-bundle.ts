@@ -5,12 +5,17 @@
 
 import { promises as fsp } from 'node:fs';
 import path from 'node:path';
-import {
+import { 
   getProductConfig, 
   toFsProduct, 
   readWorkspaceConfig,
+  readProfilesSection,
+  resolveProfile as resolveProfileV2,
+  selectProfileScope,
   MergeTrace,
   validateProductConfig,
+  type BundleProfile,
+  type ProfileLayerInput,
 } from '@kb-labs/core-config';
 import type { ProductId } from '@kb-labs/core-types';
 import {
@@ -35,7 +40,15 @@ import type { LoadBundleOptions, Bundle } from '../types/types';
  * Load bundle with config, profile, artifacts, and policy
  */
 export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bundle<T>> {
-  const { cwd: requestedCwd, product, profileKey = 'default', cli, writeFinalConfig, validate } = opts;
+  const {
+    cwd: requestedCwd,
+    product,
+    profileId: explicitProfileId,
+    scopeId,
+    cli,
+    writeFinalConfig,
+    validate,
+  } = opts;
   const fsProduct = toFsProduct(product);
 
   const workspaceResolution = await resolveWorkspaceRoot({
@@ -43,8 +56,8 @@ export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bund
     startDir: requestedCwd ?? process.cwd(),
   });
   const cwd = workspaceResolution.rootDir;
+  const executionPath = requestedCwd ? path.resolve(requestedCwd) : process.cwd();
 
-  // 1. Read workspace config
   const workspaceConfig = await readWorkspaceConfig(cwd);
   if (!workspaceConfig?.data) {
     throw new KbError(
@@ -57,31 +70,44 @@ export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bund
 
   const workspaceData = workspaceConfig.data as any;
 
-  // 2. Resolve profile
-  const profiles = workspaceData.profiles || {};
-  const profileRef = profiles[profileKey];
-  
-  if (!profileRef) {
+  const profilesSection = await readProfilesSection(cwd);
+  const availableProfiles = profilesSection.profiles.map((p) => p.id);
+  const profileId = determineProfileId(explicitProfileId, availableProfiles);
+  if (!profileId && scopeId) {
     throw new KbError(
       'ERR_PROFILE_NOT_DEFINED',
-      `Profile key "${profileKey}" not found`,
+      'Scope selection requires a profile. Pass --profile=<id>.',
       ERROR_HINTS.ERR_PROFILE_NOT_DEFINED,
-      { profileKey, available: Object.keys(profiles) }
+      { available: availableProfiles }
     );
   }
 
-  // Load profile
-  const profile = await loadProfile({ cwd, name: profileRef });
-  const manifest = normalizeManifest(profile.profile);
-  const profileInfo = extractProfileInfo(manifest, profile.meta.pathAbs);
+  let bundleProfile: BundleProfile | null = null;
+  let profileLayerInput: ProfileLayerInput | undefined;
 
-  // 3. Get product configuration
+  if (profileId) {
+    bundleProfile = await resolveProfileV2({ cwd, profileId });
+    const scopeSelection = selectProfileScope({
+      bundleProfile,
+      cwd,
+      executionPath,
+      scopeId,
+    });
+    bundleProfile.scopeSelection = scopeSelection;
+    if (scopeSelection.scope) {
+      bundleProfile.activeScopeId = scopeSelection.scope.id;
+      bundleProfile.activeScope = scopeSelection.scope;
+    }
+    profileLayerInput = buildProfileLayer(bundleProfile, product);
+  }
+
   const configResult = await getProductConfig({
     cwd,
     product,
     cli,
-    writeFinal: writeFinalConfig
-  }, null, profileInfo);
+    writeFinal: writeFinalConfig,
+    profileLayer: profileLayerInput,
+  }, null);
 
   // Optional validation
   if (validate) {
@@ -97,6 +123,21 @@ export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bund
     }
   }
 
+  // Legacy profile manifest for artifacts (if still defined)
+  let legacyProfileInfo: any;
+  const legacyProfiles = (workspaceData.profiles as Record<string, string>) || {};
+  const legacyProfileRef = profileId ? legacyProfiles[profileId] : undefined;
+
+  if (legacyProfileRef) {
+    try {
+      const legacyProfile = await loadProfile({ cwd, name: legacyProfileRef });
+      const legacyManifest = normalizeManifest(legacyProfile.profile);
+      legacyProfileInfo = extractProfileInfo(legacyManifest, legacyProfile.meta.pathAbs);
+    } catch (error) {
+      console.warn('Warning: Could not load legacy profile manifest:', error);
+    }
+  }
+
   // 4. Resolve policy
   const policyResult = await resolvePolicy({
     presetBundle: workspaceData.policy?.bundle,
@@ -104,7 +145,7 @@ export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bund
   });
 
   // 5. Create artifacts wrapper
-  const artifacts = createArtifactsWrapper(profileInfo, fsProduct, cwd);
+  const artifacts = createArtifactsWrapper(legacyProfileInfo, fsProduct, cwd);
 
   // 6. Create policy wrapper
   const policy = {
@@ -115,12 +156,7 @@ export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bund
   return {
     product,
     config: configResult.config as unknown as T,
-    profile: {
-      key: profileKey,
-      name: profileInfo.name,
-      version: profileInfo.version,
-      overlays: profileInfo.overlays
-    },
+    profile: bundleProfile,
     artifacts,
     policy,
     trace: configResult.trace
@@ -135,6 +171,17 @@ function createArtifactsWrapper(
   fsProduct: string,
   cwd: string
 ) {
+  if (!profileInfo) {
+    return {
+      summary: {},
+      async list() { return []; },
+      async materialize() { return { filesCopied: 0, filesSkipped: 0, bytesWritten: 0 }; },
+      async readText() { throw new KbError('ERR_PROFILE_NOT_DEFINED', 'Legacy profile artifacts are not configured', ERROR_HINTS.ERR_PROFILE_NOT_DEFINED); },
+      async readJson() { throw new KbError('ERR_PROFILE_NOT_DEFINED', 'Legacy profile artifacts are not configured', ERROR_HINTS.ERR_PROFILE_NOT_DEFINED); },
+      async readAll() { return []; },
+    };
+  }
+
   // Get artifact summary from profile exports
   const productExports = profileInfo.exports[fsProduct] || {};
   const summary: Record<string, string[]> = {};
@@ -212,6 +259,59 @@ function createArtifactsWrapper(
       return contents;
     }
   };
+}
+
+function determineProfileId(explicit: string | undefined, available: string[]): string | undefined {
+  if (explicit) {
+    return explicit;
+  }
+  if (available.length === 1) {
+    return available[0];
+  }
+  return undefined;
+}
+
+function buildProfileLayer(bundleProfile: BundleProfile, product: ProductId): ProfileLayerInput {
+  const fsProduct = toFsProduct(product);
+  const profileOverlay = cloneOverlay(
+    bundleProfile.products?.[product] ?? bundleProfile.products?.[fsProduct]
+  );
+  const layer: ProfileLayerInput = {
+    profileId: bundleProfile.id,
+    source: buildProfileSource(bundleProfile),
+    products: profileOverlay,
+  };
+
+  if (bundleProfile.activeScopeId && bundleProfile.productsByScope) {
+    const scopeProducts = bundleProfile.productsByScope[bundleProfile.activeScopeId];
+    const scopeOverlay = cloneOverlay(
+      scopeProducts?.[product] ?? scopeProducts?.[fsProduct]
+    );
+    if (scopeOverlay) {
+      layer.scope = {
+        id: bundleProfile.activeScopeId,
+        source: `profile-scope:${bundleProfile.activeScopeId}`,
+        products: scopeOverlay,
+      };
+    }
+  }
+
+  return layer;
+}
+
+function buildProfileSource(profile: BundleProfile): string {
+  const versionPart = profile.version ? `@${profile.version}` : '';
+  return `profile:${profile.id}${versionPart}`;
+}
+
+function cloneOverlay(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object') {
+    return undefined;
+  }
+  if (typeof structuredClone === 'function') {
+    return structuredClone(value) as Record<string, unknown>;
+  }
+  return JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
 }
 
 /**

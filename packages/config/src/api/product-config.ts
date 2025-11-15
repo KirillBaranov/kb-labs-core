@@ -13,17 +13,15 @@ import type { ProductId, ResolveOptions, ProductConfigResult, ConfigLayer } from
 import { computeConfigHash } from '../hash/config-hash';
 import { resolvePreset, getPresetConfigForProduct } from '../preset/resolve-preset';
 import { updateLockfile } from '../lockfile/lockfile';
-type ProfileInfo = any;
 
 /**
  * Get product configuration with layered merge and trace
  */
 export async function getProductConfig<T>(
   opts: ResolveOptions,
-  schema: any,
-  profileInfo?: ProfileInfo
+  schema: any
 ): Promise<ProductConfigResult<T>> {
-  const { cwd, product, cli = {}, writeFinal = false } = opts;
+  const { cwd, product, cli = {}, writeFinal = false, profileLayer } = opts;
   const fsProduct = toFsProduct(product);
   
   // Read workspace configuration
@@ -40,25 +38,30 @@ export async function getProductConfig<T>(
   });
   
   // 2. Profile defaults
-  let profileDefaults = {};
-  if (profileInfo) {
-    try {
-      const mod = await import('@kb-labs/core-profiles');
-      const getProductDefaults: any = (mod as any).getProductDefaults;
-      profileDefaults = await getProductDefaults(profileInfo, toFsProduct(product), schema);
-    } catch (error) {
-      // Profile defaults failed, continue without them
-      console.warn('Warning: Could not load profile defaults:', error);
+  if (profileLayer && profileLayer.products) {
+    const profileOverlay = (profileLayer.products[product] || profileLayer.products[fsProduct] || {}) as Record<string, unknown>;
+    
+    layers.push({
+      label: 'profile',
+      value: profileOverlay,
+      source: profileLayer.source,
+    });
+
+    if (profileLayer.scope && profileLayer.scope.products) {
+      const scopeOverlay = (profileLayer.scope.products[product] || profileLayer.scope.products[fsProduct] || {}) as Record<string, unknown>;
+      layers.push({
+        label: 'profile-scope',
+        value: scopeOverlay,
+        source: profileLayer.scope.source,
+      });
     }
+  } else {
+    layers.push({
+      label: 'profile',
+      value: {},
+      source: 'profile:none',
+    });
   }
-  
-  layers.push({
-    label: 'profile',
-    value: profileDefaults,
-    source: profileInfo 
-        ? `profile:${profileInfo.name}@${profileInfo.version}`
-        : 'profile:none',
-  });
   
   // 3. Preset defaults (resolve org preset if configured)
   let presetConfig = {};
@@ -161,10 +164,9 @@ export async function getProductConfig<T>(
  */
 export async function explainProductConfig(
   opts: Omit<ResolveOptions, 'writeFinal'>,
-  schema: any,
-  profileInfo?: ProfileInfo
+  schema: any
 ): Promise<{ trace: any[] }> {
-  const result = await getProductConfig(opts, schema, profileInfo);
+  const result = await getProductConfig(opts, schema);
   return { trace: result.trace };
 }
 

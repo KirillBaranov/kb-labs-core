@@ -441,36 +441,6 @@
       "@kb-labs/ui-react/*": [
         "../kb-labs-studio/packages/ui-react/src/*"
       ],
-      "@kb-labs/workflow-artifacts": [
-        "packages/workflow-artifacts/src/index.ts"
-      ],
-      "@kb-labs/workflow-artifacts/*": [
-        "packages/workflow-artifacts/src/*"
-      ],
-      "@kb-labs/workflow-constants": [
-        "packages/workflow-constants/src/index.ts"
-      ],
-      "@kb-labs/workflow-constants/*": [
-        "packages/workflow-constants/src/*"
-      ],
-      "@kb-labs/workflow-contracts": [
-        "packages/workflow-contracts/src/index.ts"
-      ],
-      "@kb-labs/workflow-contracts/*": [
-        "packages/workflow-contracts/src/*"
-      ],
-      "@kb-labs/workflow-engine": [
-        "packages/workflow-engine/src/index.ts"
-      ],
-      "@kb-labs/workflow-engine/*": [
-        "packages/workflow-engine/src/*"
-      ],
-      "@kb-labs/workflow-runtime": [
-        "packages/workflow-runtime/src/index.ts"
-      ],
-      "@kb-labs/workflow-runtime/*": [
-        "packages/workflow-runtime/src/*"
-      ]
     }
   }
 }

@@ -367,7 +367,7 @@ A: Yes, but they should be moved to the new structure. Local overrides go in `.k
 
 ### Q: How do I migrate existing profiles?
 
-A: Run `kb init profile` and it will help scaffold the new profile structure.
+A: Define `profiles[]` inside `kb.config.json` (Profiles v2) or run the relevant `kb <plugin>:setup` command to generate overlays. Local `.kb/profiles` scaffolds are no longer used.
 
 ### Q: What if I need a custom configuration format?
 

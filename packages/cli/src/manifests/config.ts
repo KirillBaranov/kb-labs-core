@@ -12,7 +12,8 @@ export const configCommands: CommandManifest[] = [
     requires: ['@kb-labs/core-bundle@^0.1.0'],
     flags: [
       { name: 'product', type: 'string', required: true, description: 'Product ID' },
-      { name: 'profile-key', type: 'string', default: 'default' },
+      { name: 'profile', type: 'string', description: 'Profile ID (Profiles v2)' },
+      { name: 'scope', type: 'string', description: 'Scope ID within profile' },
       { name: 'cwd', type: 'string' },
       { name: 'json', type: 'boolean' },
       { name: 'yaml', type: 'boolean' }
@@ -31,7 +32,8 @@ export const configCommands: CommandManifest[] = [
     requires: ['@kb-labs/core-bundle@^0.1.0'],
     flags: [
       { name: 'product', type: 'string', required: true },
-      { name: 'profile-key', type: 'string', default: 'default' },
+      { name: 'profile', type: 'string', description: 'Profile ID (Profiles v2)' },
+      { name: 'scope', type: 'string', description: 'Scope ID within profile' },
       { name: 'cwd', type: 'string' },
       { name: 'json', type: 'boolean' }
     ],
@@ -46,7 +48,8 @@ export const configCommands: CommandManifest[] = [
     requires: ['@kb-labs/core-bundle@^0.1.0'],
     flags: [
       { name: 'product', type: 'string', required: true, description: 'Product ID' },
-      { name: 'profile-key', type: 'string', default: 'default' },
+      { name: 'profile', type: 'string', description: 'Profile ID (Profiles v2)' },
+      { name: 'scope', type: 'string', description: 'Scope ID within profile' },
       { name: 'no-fail', type: 'boolean', description: 'Warn instead of failing' },
       { name: 'cwd', type: 'string' },
       { name: 'json', type: 'boolean' }
@@ -65,7 +68,8 @@ export const configCommands: CommandManifest[] = [
     requires: ['@kb-labs/core-bundle@^0.1.0'],
     flags: [
       { name: 'product', type: 'string', required: true },
-      { name: 'profile-key', type: 'string', default: 'default' },
+      { name: 'profile', type: 'string', description: 'Profile ID (Profiles v2)' },
+      { name: 'scope', type: 'string', description: 'Scope ID within profile' },
       { name: 'cwd', type: 'string' },
       { name: 'json', type: 'boolean' }
     ],

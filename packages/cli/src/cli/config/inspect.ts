@@ -8,7 +8,8 @@ import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../analytics/events';
 export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<number> => {
   const startTime = Date.now();
   const cwd = (flags.cwd as string) || process.cwd();
-  const profileKey = (flags['profile-key'] as string) || 'default';
+  const profileId = flags.profile as string | undefined;
+  const scopeId = flags.scope as string | undefined;
   const product = flags.product as ProductId;
 
   return (await runScope(
@@ -38,20 +39,22 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           type: ANALYTICS_EVENTS.CONFIG_INSPECT_STARTED,
           payload: {
             product,
-            profileKey,
+            profileId,
+            scopeId,
           },
         });
-        const bundle = await loadBundle({ cwd, product, profileKey });
+        const bundle = await loadBundle({ cwd, product, profileId, scopeId });
         const cfg = bundle.config;
         const val = validateProductConfig(product, cfg);
 
         const totalTime = Date.now() - startTime;
 
         if (flags.json) {
-          ctx.presenter.json({ ok: true, product, profileKey, topKeys: Object.keys(cfg || {}), validation: val });
+          ctx.presenter.json({ ok: true, product, profileId: bundle.profile?.id, topKeys: Object.keys(cfg || {}), validation: val });
         } else {
+          const profileSummary = bundle.profile?.id || 'none';
           const lines: string[] = [
-            `${safeSymbols.info} ${safeColors.bold(`Product: ${product}`)} (profile: ${profileKey})`,
+            `${safeSymbols.info} ${safeColors.bold(`Product: ${product}`)} (profile: ${profileSummary})`,
             `topKeys: ${Object.keys(cfg || {}).join(', ') || 'none'}`,
             `validation: ${val.ok ? 'ok' : `errors=${val.errors?.length ?? 0}`}`,
           ];
@@ -63,7 +66,8 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           type: ANALYTICS_EVENTS.CONFIG_INSPECT_FINISHED,
           payload: {
             product,
-            profileKey,
+            profileId: bundle.profile?.id,
+            scopeId: bundle.profile?.activeScopeId,
             validationOk: val.ok,
             errorsCount: val.errors?.length || 0,
             topKeysCount: Object.keys(cfg || {}).length,
@@ -81,7 +85,7 @@ export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<numb
           type: ANALYTICS_EVENTS.CONFIG_INSPECT_FINISHED,
           payload: {
             product,
-            profileKey,
+            profileId: profileId || undefined,
             durationMs: totalTime,
             result: 'error',
             error: err?.message || String(err),

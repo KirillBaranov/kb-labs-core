@@ -1,6 +1,7 @@
 {
   "name": "@kb-labs/profile-toolkit",
   "version": "0.1.0",
+  "description": "Toolkit for working with KB Labs profiles, including validation and transformation utilities",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
