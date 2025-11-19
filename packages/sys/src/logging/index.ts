@@ -1,6 +1,12 @@
 export * from "./types";
-export { configureLogger, configureFromEnv, addSink, removeSink, setLogLevel, getLogger } from "./logger";
+export { configureLogger, configureFromEnv, addSink, removeSink, setLogLevel, getLogLevel, getLogger } from "./logger";
 export { createRedactor } from "./redaction";
 export { stdoutSink } from "./sinks/stdout";
 export { jsonSink } from "./sinks/json";
 export { structuredJsonSink } from "./sinks/structured";
+export { createConsoleSink, ConsoleSink } from "./sinks/console-sink";
+export { createFileSink, FileSink } from "./sinks/file-sink";
+export { createOutputSink, OutputSink } from "./sinks/output-sink";
+export { initLogging, resetLogging, type InitLoggingOptions } from "./init";
+export { consoleLog, consoleError, consoleWarn, consoleDebug, getCurrentLogLevel } from "./console-wrapper";
+export { setLogContext, getLogContext, clearLogContext, withLogContext, mergeLogContext, type LogContext } from "./context";

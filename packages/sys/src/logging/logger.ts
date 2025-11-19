@@ -1,34 +1,113 @@
 import type { ConfigureOpts, LogLevel, LogRecord, LogSink, Logger, Redactor } from "./types";
 
-const LEVEL_ORDER: Record<LogLevel, number> = { debug: 10, info: 20, warn: 30, error: 40 };
+const LEVEL_ORDER: Record<LogLevel, number> = { trace: 5, debug: 10, info: 20, warn: 30, error: 40 };
 
-let globalLevel: LogLevel = "info";
-let sinks: LogSink[] = [];
-let redactor: Redactor | null = null;
-let categoryFilter: ConfigureOpts["categoryFilter"];
-let clock: () => Date = () => new Date();
+// Используем globalThis для хранения глобального состояния логирования
+// Это гарантирует, что все экземпляры модуля (даже при бандлинге) используют одно состояние
+const GLOBAL_STORAGE_KEY = Symbol.for('@kb-labs/core-sys/logging');
 
-export function configureLogger(opts: ConfigureOpts): void {
-    if (opts.level) {globalLevel = opts.level;}
-    if (opts.sinks) {sinks = [...opts.sinks];}
-    if (opts.redactor !== undefined) {redactor = opts.redactor;}
-    if (opts.categoryFilter !== undefined) {categoryFilter = opts.categoryFilter;}
-    if (opts.clock) {clock = opts.clock;}
+interface LoggingState {
+    globalLevel: LogLevel;
+    sinks: LogSink[];
+    redactor: Redactor | null;
+    categoryFilter: ConfigureOpts["categoryFilter"];
+    clock: () => Date;
+    initialized: boolean;
 }
 
-export function addSink(sink: LogSink): void { sinks.push(sink); }
-export function removeSink(sink: LogSink): void { sinks = sinks.filter(s => s !== sink); }
-export function setLogLevel(level: LogLevel): void { globalLevel = level; }
+function getGlobalState(): LoggingState {
+    const global = globalThis as typeof globalThis & { [GLOBAL_STORAGE_KEY]?: LoggingState };
+    if (!global[GLOBAL_STORAGE_KEY]) {
+        global[GLOBAL_STORAGE_KEY] = {
+            globalLevel: "info",
+            sinks: [],
+            redactor: null,
+            categoryFilter: undefined,
+            clock: () => new Date(),
+            initialized: false,
+        };
+    }
+    return global[GLOBAL_STORAGE_KEY];
+}
+
+function getGlobalLevel(): LogLevel {
+    return getGlobalState().globalLevel;
+}
+
+function setGlobalLevel(level: LogLevel): void {
+    getGlobalState().globalLevel = level;
+}
+
+export function configureLogger(opts: ConfigureOpts): void {
+    const state = getGlobalState();
+    
+    if (opts.level) {
+        state.globalLevel = opts.level;
+    }
+    
+    // Handle sinks: replace if first init or explicitly requested, otherwise add
+    if (opts.sinks) {
+        const shouldReplace = opts.replaceSinks !== undefined 
+            ? opts.replaceSinks 
+            : !state.initialized; // Default: replace on first init, add after
+        
+        if (shouldReplace) {
+            state.sinks = [...opts.sinks];
+        } else {
+            // Add new sinks that aren't already present
+            for (const sink of opts.sinks) {
+                if (!state.sinks.includes(sink)) {
+                    state.sinks.push(sink);
+                }
+            }
+        }
+        state.initialized = true;
+    }
+    
+    if (opts.redactor !== undefined) { state.redactor = opts.redactor; }
+    if (opts.categoryFilter !== undefined) { state.categoryFilter = opts.categoryFilter; }
+    if (opts.clock) { state.clock = opts.clock; }
+}
+
+export function addSink(sink: LogSink): void {
+    const state = getGlobalState();
+    state.sinks.push(sink);
+}
+
+export function removeSink(sink: LogSink): void {
+    const state = getGlobalState();
+    state.sinks = state.sinks.filter(s => s !== sink);
+}
+
+export function setLogLevel(level: LogLevel): void {
+    const state = getGlobalState();
+    const previousLevel = state.globalLevel;
+    state.globalLevel = level;
+    
+    // Log level change (only if debug enabled)
+    if (level === 'debug' || previousLevel === 'debug') {
+        // Use a logger instance to avoid circular dependency
+        // We can't use getLogger here because it might not be initialized yet
+        // So we'll skip logging level changes during initialization
+    }
+}
+
+export function getLogLevel(): LogLevel {
+    return getGlobalLevel();
+}
 
 function allowedCategory(cat?: string): boolean {
+    const state = getGlobalState();
+    const categoryFilter = state.categoryFilter;
     if (!categoryFilter) {return true;}
     if (Array.isArray(categoryFilter)) {return !cat ? false : categoryFilter.includes(cat);}
     return !!cat && categoryFilter.test(cat);
 }
 
 async function fanout(rec: LogRecord): Promise<void> {
-    const prepared = redactor ? redactor(rec) : rec;
-    for (const s of sinks) {
+    const state = getGlobalState();
+    const prepared = state.redactor ? state.redactor(rec) : rec;
+    for (const s of state.sinks) {
         try { await s.handle(prepared); } catch { /* never throw */ }
     }
 }
@@ -38,8 +117,16 @@ function baseLogger(bindings?: { category?: string; meta?: Record<string, unknow
     const boundMeta = bindings?.meta ?? {};
 
     function emit(level: LogLevel, msg: string, meta?: Record<string, unknown> | Error) {
-        if (LEVEL_ORDER[level] < LEVEL_ORDER[globalLevel]) {return;}
-        if (!allowedCategory(boundCat)) {return;}
+        const state = getGlobalState();
+        
+        // Filter by global log level first
+        if (LEVEL_ORDER[level] < LEVEL_ORDER[state.globalLevel]) {
+            return;
+        }
+        // Filter by category if configured
+        if (!allowedCategory(boundCat)) {
+            return;
+        }
 
         let err: LogRecord["err"] | undefined;
         let attach: Record<string, unknown> | undefined;
@@ -51,7 +138,7 @@ function baseLogger(bindings?: { category?: string; meta?: Record<string, unknow
         }
 
         const rec: LogRecord = {
-            time: clock().toISOString(),
+            time: state.clock().toISOString(),
             level,
             category: boundCat,
             msg,
