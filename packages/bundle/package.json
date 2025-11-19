@@ -30,9 +30,10 @@
     "@kb-labs/core-config": "link:../config",
     "@kb-labs/core-policy": "link:../policy",
     "@kb-labs/core-profiles": "link:../profiles",
+    "@kb-labs/core-sys": "link:../sys",
     "@kb-labs/core-types": "link:../types",
     "glob": "^11.0.0",
-    "picomatch": "^4.0.2"
+    "picomatch": "^4.0.3"
   },
   "devDependencies": {
     "@types/node": "^24.3.3",

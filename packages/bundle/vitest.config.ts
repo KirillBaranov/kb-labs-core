@@ -24,5 +24,17 @@ export default defineConfig({
         '**/types/**',
       ],
     },
+    server: {
+      deps: {
+        // Inline picomatch to avoid ESM/CommonJS resolution issues
+        inline: ['picomatch', '@kb-labs/core-config'],
+        // Exclude dist files from transformation
+        external: [],
+      },
+    },
+  },
+  resolve: {
+    conditions: ['import', 'module', 'node', 'default'],
+    extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
   },
 })

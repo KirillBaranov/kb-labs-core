@@ -29,13 +29,13 @@
     "build": "tsup --config tsup.config.ts",
     "dev": "tsup --config tsup.config.ts --watch",
     "type-check": "tsc --noEmit",
-    "test": "vitest run -c ../../vitest.config.ts",
-    "test:watch": "vitest -c ../../vitest.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint . --ignore-pattern 'dist/**'",
     "lint:fix": "eslint . --fix --ignore-pattern 'dist/**'"
   },
   "dependencies": {
-    "@kb-labs/analytics-sdk-node": "link:../../../kb-labs-analytics/packages/analytics-sdk-node",
+    "@kb-labs/core-types": "workspace:*",
     "@kb-labs/cli-core": "link:../../../kb-labs-cli/packages/core",
     "@kb-labs/core-bundle": "link:../bundle",
     "@kb-labs/core-config": "link:../config",
@@ -45,6 +45,8 @@
     "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
     "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui",
     "glob": "^11.0.3",
+    "picomatch": "^4.0.2",
+    "uuidv7": "^0.6.1",
     "yaml": "^2.8.0"
   },
   "devDependencies": {

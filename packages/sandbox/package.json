@@ -24,7 +24,12 @@
     "lint:fix": "eslint . --fix --ignore-pattern 'dist/**'",
     "type-check": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@kb-labs/core-sys": "workspace:*",
+    "@kb-labs/shared-cli-ui": "workspace:*",
+    "execa": "^9.6.0",
+    "minimatch": "^10.1.1"
+  },
   "devDependencies": {
     "@kb-labs/devkit": "link:../../../kb-labs-devkit",
     "@types/node": "^24.3.3",
@@ -36,4 +41,3 @@
     "node": ">=18.18.0"
   }
 }
-
