@@ -111,12 +111,6 @@
       "@kb-labs/changelog/*": [
         "../kb-labs-release-manager/packages/changelog/src/*"
       ],
-      "@kb-labs/cli-adapters": [
-        "../kb-labs-cli/packages/adapters/src/index.ts"
-      ],
-      "@kb-labs/cli-adapters/*": [
-        "../kb-labs-cli/packages/adapters/src/*"
-      ],
       "@kb-labs/cli-api": [
         "../kb-labs-cli/packages/cli-api/src/index.ts"
       ],
@@ -225,6 +219,24 @@
       "@kb-labs/devlink-core/*": [
         "../kb-labs-devlink/packages/core/src/*"
       ],
+      "@kb-labs/knowledge-contracts": [
+        "../kb-labs-knowledge/packages/knowledge-contracts/src/index.ts"
+      ],
+      "@kb-labs/knowledge-contracts/*": [
+        "../kb-labs-knowledge/packages/knowledge-contracts/src/*"
+      ],
+      "@kb-labs/knowledge-core": [
+        "../kb-labs-knowledge/packages/knowledge-core/src/index.ts"
+      ],
+      "@kb-labs/knowledge-core/*": [
+        "../kb-labs-knowledge/packages/knowledge-core/src/*"
+      ],
+      "@kb-labs/knowledge-fs": [
+        "../kb-labs-knowledge/packages/knowledge-fs/src/index.ts"
+      ],
+      "@kb-labs/knowledge-fs/*": [
+        "../kb-labs-knowledge/packages/knowledge-fs/src/*"
+      ],
       "@kb-labs/mind-adapters": [
         "../kb-labs-mind/packages/mind-adapters/src/index.ts"
       ],
@@ -249,6 +261,18 @@
       "@kb-labs/mind-core/*": [
         "../kb-labs-mind/packages/mind-core/src/*"
       ],
+      "@kb-labs/mind-embeddings": [
+        "../kb-labs-mind/packages/mind-embeddings/src/index.ts"
+      ],
+      "@kb-labs/mind-embeddings/*": [
+        "../kb-labs-mind/packages/mind-embeddings/src/*"
+      ],
+      "@kb-labs/mind-engine": [
+        "../kb-labs-mind/packages/mind-engine/src/index.ts"
+      ],
+      "@kb-labs/mind-engine/*": [
+        "../kb-labs-mind/packages/mind-engine/src/*"
+      ],
       "@kb-labs/mind-gateway": [
         "../kb-labs-mind/packages/mind-gateway/src/index.ts"
       ],
@@ -260,6 +284,12 @@
       ],
       "@kb-labs/mind-indexer/*": [
         "../kb-labs-mind/packages/mind-indexer/src/*"
+      ],
+      "@kb-labs/mind-llm": [
+        "../kb-labs-mind/packages/mind-llm/src/index.ts"
+      ],
+      "@kb-labs/mind-llm/*": [
+        "../kb-labs-mind/packages/mind-llm/src/*"
       ],
       "@kb-labs/mind-pack": [
         "../kb-labs-mind/packages/mind-pack/src/index.ts"
@@ -285,6 +315,12 @@
       "@kb-labs/mind-types/*": [
         "../kb-labs-mind/packages/mind-types/src/*"
       ],
+      "@kb-labs/mind-vector-store": [
+        "../kb-labs-mind/packages/mind-vector-store/src/index.ts"
+      ],
+      "@kb-labs/mind-vector-store/*": [
+        "../kb-labs-mind/packages/mind-vector-store/src/*"
+      ],
       "@kb-labs/plugin-adapter-cli": [
         "../kb-labs-plugin/packages/adapters/cli/src/index.ts"
       ],
@@ -302,6 +338,12 @@
       ],
       "@kb-labs/plugin-adapter-studio/*": [
         "../kb-labs-plugin/packages/adapters/studio/src/*"
+      ],
+      "@kb-labs/plugin-contracts": [
+        "../kb-labs-plugin/packages/plugin-contracts/src/index.ts"
+      ],
+      "@kb-labs/plugin-contracts/*": [
+        "../kb-labs-plugin/packages/plugin-contracts/src/*"
       ],
       "@kb-labs/plugin-devtools": [
         "../kb-labs-plugin/packages/devtools/src/index.ts"
@@ -405,12 +447,6 @@
       "@kb-labs/shared-diff/*": [
         "../kb-labs-shared/packages/diff/src/*"
       ],
-      "@kb-labs/shared-profiles": [
-        "../kb-labs-shared/packages/profiles/src/index.ts"
-      ],
-      "@kb-labs/shared-profiles/*": [
-        "../kb-labs-shared/packages/profiles/src/*"
-      ],
       "@kb-labs/shared-repo": [
         "../kb-labs-shared/packages/repo/src/index.ts"
       ],
@@ -441,6 +477,36 @@
       "@kb-labs/ui-react/*": [
         "../kb-labs-studio/packages/ui-react/src/*"
       ],
+      "@kb-labs/workflow-artifacts": [
+        "../kb-labs-workflow/packages/workflow-artifacts/src/index.ts"
+      ],
+      "@kb-labs/workflow-artifacts/*": [
+        "../kb-labs-workflow/packages/workflow-artifacts/src/*"
+      ],
+      "@kb-labs/workflow-constants": [
+        "../kb-labs-workflow/packages/workflow-constants/src/index.ts"
+      ],
+      "@kb-labs/workflow-constants/*": [
+        "../kb-labs-workflow/packages/workflow-constants/src/*"
+      ],
+      "@kb-labs/workflow-contracts": [
+        "../kb-labs-workflow/packages/workflow-contracts/src/index.ts"
+      ],
+      "@kb-labs/workflow-contracts/*": [
+        "../kb-labs-workflow/packages/workflow-contracts/src/*"
+      ],
+      "@kb-labs/workflow-engine": [
+        "../kb-labs-workflow/packages/workflow-engine/src/index.ts"
+      ],
+      "@kb-labs/workflow-engine/*": [
+        "../kb-labs-workflow/packages/workflow-engine/src/*"
+      ],
+      "@kb-labs/workflow-runtime": [
+        "../kb-labs-workflow/packages/workflow-runtime/src/index.ts"
+      ],
+      "@kb-labs/workflow-runtime/*": [
+        "../kb-labs-workflow/packages/workflow-runtime/src/*"
+      ]
     }
   }
 }

@@ -26,6 +26,8 @@ export {
   type Redactor,
   type ConfigureOpts,
   type Logger,
+  type InitLoggingOptions,
+  type LogContext,
 
   // Functions
   configureLogger,
@@ -33,13 +35,26 @@ export {
   addSink,
   removeSink,
   setLogLevel,
+  getLogLevel,
   getLogger,
   createRedactor,
   stdoutSink,
   jsonSink,
+  initLogging,
+  resetLogging,
+  consoleLog,
+  consoleError,
+  consoleWarn,
+  consoleDebug,
+  getCurrentLogLevel,
+  setLogContext,
+  getLogContext,
+  clearLogContext,
+  withLogContext,
+  mergeLogContext,
   toAbsolute,
   findRepoRoot
-} from '@kb-labs/core-sys';
+} from '@kb-labs/core-sys/logging';
 
 export {
   // Profile Functions
@@ -67,3 +82,9 @@ export {
   type ResolveWorkspaceRootOptions,
   type WorkspaceRootResolution,
 } from '@kb-labs/core-workspace';
+
+export {
+  loadKnowledgeConfig,
+  createKnowledgeClientFromConfig,
+  type KnowledgeClientOptions,
+} from './knowledge.js';
