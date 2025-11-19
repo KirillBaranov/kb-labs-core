@@ -6,6 +6,8 @@
 export interface LogContext {
   traceId?: string;
   spanId?: string;
+  parentSpanId?: string;
+  executionId?: string;
   requestId?: string;
 }
 

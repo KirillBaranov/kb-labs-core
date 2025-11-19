@@ -7,6 +7,7 @@ import { configureLogger, setLogLevel, removeSink, getLogger } from "./index.js"
 import type { LogLevel, VerbosityLevel, OutputMode, DebugFormat } from "./types/types.js";
 import { createConsoleSink } from "./sinks/console-sink.js";
 import { jsonSink } from "./sinks/json.js";
+import { setupGracefulShutdown } from "./shutdown.js";
 
 export interface InitLoggingOptions {
   level?: LogLevel;
@@ -19,6 +20,7 @@ export interface InitLoggingOptions {
 
 let initialized = false;
 let consoleSinkInstance: ReturnType<typeof createConsoleSink> | null = null;
+let gracefulShutdownSetup = false;
 
 /**
  * Initialize logging system with unified configuration
@@ -92,6 +94,12 @@ export function initLogging(options: InitLoggingOptions = {}): void {
   });
 
   initialized = true;
+
+  // Setup graceful shutdown on first initialization
+  if (!gracefulShutdownSetup) {
+    setupGracefulShutdown();
+    gracefulShutdownSetup = true;
+  }
 
   // Log initialization details (only if not quiet and debug enabled)
   if (!quiet && (debug || actualLevel === 'debug')) {
