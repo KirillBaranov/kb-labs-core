@@ -1,4 +1,5 @@
 export * from './types'
 export * from './logging'
+export * from './output'
 export * from './fs'
 export * from './repo'
