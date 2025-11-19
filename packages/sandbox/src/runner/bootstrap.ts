@@ -16,50 +16,57 @@ import type { HandlerRef, ExecutionContext } from '../types/index.js';
 import type { SerializableContext } from './ipc-serializer.js';
 import type { CliHandlerContext, RestHandlerContext } from '../types/adapter-context.js';
 import { normalizeError } from '../errors/handler-error.js';
+import { SANDBOX_ERROR_CODES } from '../errors/error-codes.js';
+import { createSandboxOutput } from '../output/index.js';
+import type { Output } from '@kb-labs/core-sys/output';
+
+// Signal readiness IMMEDIATELY - before any other operations
+// This must happen synchronously at module load time, RIGHT AFTER imports
+// CRITICAL: Parent process is waiting for this message
+if (process.send) {
+  try {
+    process.send({ type: 'READY' });
+  } catch (e) {
+    // If IPC fails, log to stderr (can't use Output yet - not initialized)
+    // This is a critical error - parent will timeout
+    console.error(`CRITICAL: Failed to send READY: ${e}`);
+    // Exit immediately - parent will see exit code
+    process.exit(1);
+  }
+}
 
 // Check if debug mode is enabled (from environment or parent process)
 const DEBUG_MODE = process.env.KB_PLUGIN_DEV_MODE === 'true' || process.env.DEBUG?.includes('@kb-labs');
 
+// Create unified Output for sandbox
+const sandboxOutput: Output = createSandboxOutput({
+  verbosity: DEBUG_MODE ? 'debug' : 'normal',
+  category: 'sandbox:bootstrap',
+  format: 'human',
+});
+
 /**
- * Send LOG message to parent process
- * Always sends via IPC for log collection, and outputs to stdout/stderr
- * Parent process controls visibility via --quiet flag
- * Debug messages only shown in DEBUG_MODE
+ * Send LOG message to parent process via Output
+ * Uses unified Output system instead of direct console manipulation
  */
 function sendLog(level: 'info' | 'warn' | 'error' | 'debug', ...args: unknown[]): void {
   const message = args.map(a => String(a)).join(' ');
   
-  // Send via IPC for log collection in parent process
-  if (process.send) {
-    try {
-      process.send({
-        type: 'LOG',
-        payload: {
-          level,
-          message,
-          meta: {},
-        },
-      });
-    } catch (e) {
-      // Ignore IPC errors silently
-    }
-  }
-  
-  // Output directly to stdout/stderr
-  // Parent process controls visibility via --quiet flag
-  // Debug messages only shown in DEBUG_MODE
-  if (level === 'error') {
-    originalConsole.error(message);
-  } else if (level === 'warn') {
-    originalConsole.warn(message);
-  } else if (level === 'debug') {
-    // Only show debug messages in DEBUG_MODE
-    if (DEBUG_MODE) {
-      originalConsole.log(message);
-    }
-  } else {
-    // info level - always show
-    originalConsole.log(message);
+  // Use Output system which handles IPC automatically
+  switch (level) {
+    case 'error':
+      sandboxOutput.error(message);
+      break;
+    case 'warn':
+      sandboxOutput.warn(message);
+      break;
+    case 'debug':
+      if (DEBUG_MODE) {
+        sandboxOutput.debug(message);
+      }
+      break;
+    default:
+      sandboxOutput.info(message);
   }
 }
 
@@ -99,37 +106,94 @@ console.debug = (...args: unknown[]) => {
  */
 function recreateContext(serializedCtx: SerializableContext): ExecutionContext {
   // Ensure pluginRoot is set (required)
-  if (!serializedCtx.pluginRoot) {
+  if (!serializedCtx || !serializedCtx.pluginRoot) {
     throw new Error('pluginRoot is required in SerializableContext');
   }
   
+  // Defensive: ensure serializedCtx has all required fields
   const ctx: ExecutionContext = {
-    ...serializedCtx,
+    requestId: serializedCtx.requestId || '',
+    workdir: serializedCtx.workdir || '',
+    outdir: serializedCtx.outdir,
     pluginRoot: serializedCtx.pluginRoot, // Required field
+    pluginId: serializedCtx.pluginId || '',
+    pluginVersion: serializedCtx.pluginVersion || '',
+    traceId: serializedCtx.traceId,
+    spanId: serializedCtx.spanId,
+    parentSpanId: serializedCtx.parentSpanId,
+    debug: serializedCtx.debug || false,
+    debugLevel: serializedCtx.debugLevel, // Can be undefined, which is fine
+    dryRun: serializedCtx.dryRun || false,
+    user: serializedCtx.user,
     // Recreate functions as no-ops or IPC forwarders
     remainingMs: () => 0, // subprocess не знает о родительском timeout
     analytics: undefined, // не поддерживается в subprocess
     onLog: undefined, // логи идут через stdout/stderr
     signal: undefined, // cancellation через IPC
     resources: undefined, // cleanup в родительском процессе
+    adapterMeta: serializedCtx.adapterMeta,
+    version: serializedCtx.version,
   };
+  
+  // Validate context in debug mode (non-blocking, just log warnings)
+  // Note: Validation is optional and skipped if module is not available
+  if (process.env.KB_PLUGIN_DEV_MODE === 'true' || process.env.DEBUG?.includes('@kb-labs')) {
+    // Try to validate context if validation module is available
+    // This is optional and won't break if module is not available
+    try {
+      // Use dynamic import to avoid circular dependency and handle missing module gracefully
+      void import('@kb-labs/plugin-runtime/context')
+        .then((module) => {
+          if (module?.validateExecutionContext && module?.formatValidationResult) {
+            // Type assertion needed due to different ExecutionContext types between packages
+            // Both packages have compatible ExecutionContext structures, so this is safe
+            const validation = module.validateExecutionContext(ctx as Parameters<typeof module.validateExecutionContext>[0]);
+            if (!validation.valid) {
+              const formatted = module.formatValidationResult(validation);
+              sandboxOutput.warn('Context validation warnings:\n' + formatted);
+            }
+          }
+        })
+        .catch(() => {
+          // Ignore validation errors silently - module might not be available
+        });
+    } catch {
+      // Ignore validation errors in production
+    }
+  }
   
   // Recreate adapter context if needed
   if (serializedCtx.adapterContextData) {
     const data = serializedCtx.adapterContextData;
+    if (DEBUG_MODE) {
+      sandboxOutput.debug(`adapterContextData received: type=${data.type}, hasFlags=${!!data.flags}`);
+    }
     if (data.type === 'cli') {
-      // Presenter в subprocess логирует через console/IPC
+      // Create Output for plugin in subprocess
+      const pluginOutput = createSandboxOutput({
+        verbosity: ctx.debug ? 'debug' : 'normal',
+        category: `plugin:${ctx.pluginId || 'unknown'}`,
+        format: 'human',
+        context: {
+          plugin: ctx.pluginId,
+          command: ctx.adapterMeta?.signature === 'command' ? 'command' : undefined,
+          trace: ctx.traceId,
+        },
+      });
+      
+      // Presenter в subprocess логирует через console/IPC (для обратной совместимости)
       ctx.adapterContext = {
         type: 'cli',
+        output: pluginOutput,
         presenter: {
-          write: (text: string) => console.log(text),
-          error: (text: string) => console.error(text),
-          info: (text: string) => console.log(text),
-          json: (data: any) => console.log(JSON.stringify(data)),
+          write: (text: string) => pluginOutput.write(text),
+          error: (text: string) => pluginOutput.error(text),
+          info: (text: string) => pluginOutput.info(text),
+          json: (data: unknown) => pluginOutput.json(data),
         },
-        cwd: data.cwd as string,
-        flags: data.flags as Record<string, any>,
-        argv: data.argv as string[],
+        cwd: (data.cwd as string) || ctx.workdir,
+        flags: (data.flags as Record<string, unknown>) || {},
+        argv: (data.argv as string[]) || [],
         requestId: ctx.requestId,
         workdir: ctx.workdir,
         outdir: ctx.outdir,
@@ -176,7 +240,6 @@ async function executeHandler(
   input: unknown,
   ctx: ExecutionContext
 ): Promise<{ ok: true; data: unknown } | { ok: false; error: { code: string; message: string; stack?: string } }> {
-  sendLog('debug', `[BOOTSTRAP] executeHandler called - handler: ${handlerRef.file}#${handlerRef.export}`);
   try {
     // Resolve handler path
     // Handler file path from manifest (e.g., './cli/init#run')
@@ -224,34 +287,33 @@ async function executeHandler(
     // Convert to file:// URL for ES module import
     const handlerUrl = pathToFileURL(finalHandlerPath).href;
     
-    sendLog('debug', `[BOOTSTRAP] Loading handler module from: ${finalHandlerPath}`);
-    sendLog('debug', `[BOOTSTRAP] Handler URL: ${handlerUrl}`);
-    
     // Load handler module
-    let handlerModule: any;
+    let handlerModule: Record<string, unknown>;
     try {
-      sendLog('debug', '[BOOTSTRAP] Starting import...');
-      handlerModule = await import(handlerUrl);
-      sendLog('debug', `[BOOTSTRAP] Module imported successfully, exports: ${Object.keys(handlerModule).join(', ')}`);
-    } catch (importError: any) {
-      sendLog('error', `[BOOTSTRAP] Failed to import handler module: ${importError.message}`);
-      if (importError.stack) {
-        sendLog('error', `[BOOTSTRAP] Import error stack: ${importError.stack}`);
+      handlerModule = await import(handlerUrl) as Record<string, unknown>;
+    } catch (importError: unknown) {
+      const error = importError instanceof Error ? importError : new Error(String(importError));
+      sandboxOutput.error(`Failed to import handler module: ${error.message}`, {
+        code: SANDBOX_ERROR_CODES.HANDLER_IMPORT_FAILED,
+      });
+      if (error.stack) {
+        sandboxOutput.debug(`Import error stack: ${error.stack}`);
       }
-      throw importError;
+      throw error;
     }
     
-    sendLog('debug', `[BOOTSTRAP] Looking for handler export: ${handlerRef.export}`);
     const handlerFn = handlerModule[handlerRef.export];
     
     if (!handlerFn || typeof handlerFn !== 'function') {
       const errorMsg = `Handler ${handlerRef.export} not found or not a function in ${handlerRef.file}`;
-      sendLog('error', `[BOOTSTRAP] ${errorMsg}`);
-      sendLog('error', `[BOOTSTRAP] Available exports: ${Object.keys(handlerModule).join(', ')}`);
+      sandboxOutput.error(errorMsg, {
+        code: SANDBOX_ERROR_CODES.HANDLER_NOT_FOUND,
+      });
+      if (DEBUG_MODE) {
+        sandboxOutput.debug(`Available exports: ${Object.keys(handlerModule).join(', ')}`);
+      }
       throw new Error(errorMsg);
     }
-    
-    sendLog('debug', '[BOOTSTRAP] Handler function found, preparing to execute...');
     
     // Execute handler based on adapter signature
     let result: unknown;
@@ -260,7 +322,19 @@ async function executeHandler(
     if (adapterMeta?.signature === 'command' && ctx.adapterContext?.type === 'cli') {
       // CLI command signature: (ctx, argv, flags)
       const cmdCtx = ctx.adapterContext as CliHandlerContext;
-      result = await handlerFn(cmdCtx, cmdCtx.argv, cmdCtx.flags);
+      // Ensure flags is always an object, never undefined
+      const flags = cmdCtx.flags || {};
+      try {
+        result = await handlerFn(cmdCtx, cmdCtx.argv, flags);
+      } catch (error) {
+        sandboxOutput.error(`Handler threw error: ${error instanceof Error ? error.message : String(error)}`, {
+          code: SANDBOX_ERROR_CODES.HANDLER_EXECUTION_ERROR,
+        });
+        if (error instanceof Error && error.stack) {
+          sandboxOutput.debug(`Error stack: ${error.stack}`);
+        }
+        throw error;
+      }
     } else {
       // REST/Request signature: (input, ctx)
       const restCtx = ctx.adapterContext as RestHandlerContext | undefined;
@@ -282,15 +356,14 @@ async function executeHandler(
       }
     }
     
-    sendLog('debug', `[BOOTSTRAP] Handler executed successfully, result type: ${typeof result}`);
-    
     // Handle numeric exit codes (CLI handlers return numbers)
     if (typeof result === 'number') {
-      sendLog('debug', `[BOOTSTRAP] Handler returned exit code: ${result}`);
       if (result === 0) {
         return { ok: true, data: result };
       } else {
-        sendLog('error', `[BOOTSTRAP] Handler returned non-zero exit code: ${result}`);
+        sandboxOutput.error(`Handler returned non-zero exit code: ${result}`, {
+          code: SANDBOX_ERROR_CODES.HANDLER_EXIT_CODE,
+        });
         return {
           ok: false,
           error: {
@@ -302,12 +375,13 @@ async function executeHandler(
       }
     }
     
-    sendLog('debug', `[BOOTSTRAP] Returning success result`);
     return { ok: true, data: result };
   } catch (error) {
-    sendLog('error', `[BOOTSTRAP] Handler execution failed: ${error instanceof Error ? error.message : String(error)}`);
+    sandboxOutput.error(`Handler execution failed: ${error instanceof Error ? error.message : String(error)}`, {
+      code: SANDBOX_ERROR_CODES.HANDLER_EXECUTION_FAILED,
+    });
     if (error instanceof Error && error.stack) {
-      sendLog('error', `[BOOTSTRAP] Stack trace: ${error.stack}`);
+      sandboxOutput.debug(`Stack trace: ${error.stack}`);
     }
     const normalizedError = normalizeError(error);
     return {
@@ -329,68 +403,181 @@ async function handleRunMessage(payload: {
   input: unknown;
   ctx: SerializableContext | ExecutionContext;
 }): Promise<void> {
-  sendLog('debug', '[BOOTSTRAP] handleRunMessage called');
   const { handlerRef, input, ctx: rawCtx } = payload;
   
+  // Wrap everything in try-catch to ensure we ALWAYS send a response
   try {
-    sendLog('debug', '[BOOTSTRAP] Recreating context...');
     // Recreate context from serialized version if needed
-    const ctx = 'adapterContext' in rawCtx 
-      ? rawCtx as ExecutionContext
-      : recreateContext(rawCtx as SerializableContext);
-    
-    sendLog('debug', `[BOOTSTRAP] Context recreated, pluginRoot: ${ctx.pluginRoot}`);
-    sendLog('debug', '[BOOTSTRAP] Calling executeHandler...');
-    const result = await executeHandler(handlerRef, input, ctx);
-    
-    sendLog('debug', `[BOOTSTRAP] executeHandler returned, ok: ${result.ok}`);
-    
-    if (result.ok) {
-      sendLog('debug', '[BOOTSTRAP] Sending OK message to parent');
-      process.send!({
-        type: 'OK',
-        payload: {
-          data: result.data,
-        },
+    let ctx: ExecutionContext;
+    try {
+      ctx = 'adapterContext' in rawCtx 
+        ? rawCtx as ExecutionContext
+        : recreateContext(rawCtx as SerializableContext);
+    } catch (contextError) {
+      const err = contextError instanceof Error ? contextError : new Error(String(contextError));
+      sandboxOutput.error(`Failed to recreate context: ${err.message}`, {
+        code: SANDBOX_ERROR_CODES.CONTEXT_RECREATE_FAILED,
       });
-    } else {
-      sendLog('error', `[BOOTSTRAP] Sending ERR message to parent: ${result.error.code} - ${result.error.message}`);
-      process.send!({
-        type: 'ERR',
-        payload: {
-          code: result.error.code,
-          message: result.error.message,
-          stack: result.error.stack,
+      if (process.send) {
+        process.send({
+          type: 'ERR',
+          payload: {
+            code: 'CONTEXT_ERROR',
+            message: `Failed to recreate context: ${err.message}`,
+            stack: err.stack,
+          },
+        });
+      }
+      return;
+    }
+    
+    // Execute handler with timeout protection
+    let result: { ok: true; data: unknown } | { ok: false; error: { code: string; message: string; stack?: string } };
+    try {
+      result = await executeHandler(handlerRef, input, ctx);
+    } catch (execError) {
+      const err = execError instanceof Error ? execError : new Error(String(execError));
+      sandboxOutput.error(`Handler execution failed: ${err.message}`, {
+        code: SANDBOX_ERROR_CODES.HANDLER_EXECUTION_FAILED,
+      });
+      result = {
+        ok: false,
+        error: {
+          code: 'HANDLER_EXECUTION_ERROR',
+          message: err.message,
+          stack: err.stack,
         },
+      };
+    }
+    
+    // Send result to parent
+    if (!process.send) {
+      sandboxOutput.error('process.send is not available, cannot send result', {
+        code: SANDBOX_ERROR_CODES.IPC_UNAVAILABLE,
+      });
+      return;
+    }
+    
+    try {
+      if (result.ok) {
+        process.send({
+          type: 'OK',
+          payload: {
+            data: result.data,
+          },
+        });
+      } else {
+        sandboxOutput.debug(`Sending ERR message to parent: ${result.error.code} - ${result.error.message}`);
+        process.send({
+          type: 'ERR',
+          payload: {
+            code: result.error.code,
+            message: result.error.message,
+            stack: result.error.stack,
+          },
+        });
+      }
+    } catch (sendError) {
+      // If sending fails, log but don't throw (process will exit anyway)
+      sandboxOutput.error(`Failed to send result to parent: ${sendError instanceof Error ? sendError.message : String(sendError)}`, {
+        code: SANDBOX_ERROR_CODES.IPC_SEND_FAILED,
       });
     }
   } catch (error) {
-    sendLog('error', `[BOOTSTRAP] Exception in handleRunMessage: ${error instanceof Error ? error.message : String(error)}`);
-    if (error instanceof Error && error.stack) {
-      sendLog('error', `[BOOTSTRAP] Stack: ${error.stack}`);
-    }
-    const normalizedError = normalizeError(error);
-    process.send!({
-      type: 'ERR',
-      payload: {
-        code: normalizedError.code,
-        message: normalizedError.message,
-        stack: normalizedError.stack,
-      },
+    // Final safety net - catch ANY unhandled error
+    sandboxOutput.error(`Unhandled exception in handleRunMessage: ${error instanceof Error ? error.message : String(error)}`, {
+      code: SANDBOX_ERROR_CODES.UNHANDLED_EXCEPTION,
     });
+    if (error instanceof Error && error.stack) {
+      sandboxOutput.debug(`Stack: ${error.stack}`);
+    }
+    
+    // Try to send error to parent
+    if (process.send) {
+      try {
+        const normalizedError = normalizeError(error);
+        process.send({
+          type: 'ERR',
+          payload: {
+            code: normalizedError.code,
+            message: normalizedError.message,
+            stack: normalizedError.stack,
+          },
+        });
+      } catch (sendError) {
+        // If even sending error fails, log and exit
+        sandboxOutput.error(`Failed to send error to parent: ${sendError instanceof Error ? sendError.message : String(sendError)}`, {
+          code: SANDBOX_ERROR_CODES.IPC_SEND_FAILED,
+        });
+        process.exit(1);
+      }
+    } else {
+      process.exit(1);
+    }
   }
+}
+
+/**
+ * IPC message from parent process
+ */
+interface IpcMessage {
+  type: 'RUN' | 'READY' | 'LOG' | 'ERR';
+  payload?: {
+    handlerRef?: HandlerRef;
+    input?: unknown;
+    ctx?: SerializableContext | ExecutionContext;
+  };
 }
 
 /**
  * Listen for messages from parent process
  */
-process.on('message', async (msg: any) => {
-  sendLog('debug', `[BOOTSTRAP] Received message: ${msg?.type || 'unknown'}`);
-  if (msg?.type === 'RUN' && msg.payload) {
-    sendLog('debug', `[BOOTSTRAP] Handling RUN message for handler: ${msg.payload.handlerRef?.file}#${msg.payload.handlerRef?.export}`);
-    await handleRunMessage(msg.payload);
-  } else {
-    sendLog('warn', `[BOOTSTRAP] Unknown message type: ${msg?.type || 'undefined'}`);
+process.on('message', async (msg: unknown) => {
+  try {
+    const message = msg as IpcMessage;
+    if (message?.type === 'RUN' && message.payload) {
+      const payload = message.payload;
+      // Validate required fields
+      if (!payload.handlerRef || !payload.ctx) {
+        sandboxOutput.error('Invalid RUN message: missing handlerRef or ctx', {
+          code: SANDBOX_ERROR_CODES.INVALID_MESSAGE,
+        });
+        return;
+      }
+      sandboxOutput.debug(`Received RUN message, handler: ${payload.handlerRef.file}#${payload.handlerRef.export}`);
+      await handleRunMessage({
+        handlerRef: payload.handlerRef,
+        input: payload.input,
+        ctx: payload.ctx,
+      });
+    } else if (message?.type && message.type !== 'READY' && message.type !== 'LOG') {
+      sandboxOutput.warn(`Unknown message type: ${message.type}`);
+    }
+  } catch (error) {
+    const errorMsg = `Error handling message: ${error instanceof Error ? error.message : String(error)}`;
+    sandboxOutput.error(errorMsg, {
+      code: SANDBOX_ERROR_CODES.MESSAGE_HANDLER_ERROR,
+    });
+    if (error instanceof Error && error.stack) {
+      sandboxOutput.debug(`Stack: ${error.stack}`);
+    }
+    // Send error back to parent
+    if (process.send) {
+      try {
+        process.send({
+          type: 'ERR',
+          payload: {
+            error: {
+              code: 'BOOTSTRAP_ERROR',
+              message: errorMsg,
+              stack: error instanceof Error ? error.stack : undefined,
+            },
+          },
+        });
+      } catch {
+        // Ignore if we can't send
+      }
+    }
   }
 });
 
@@ -398,7 +585,9 @@ process.on('message', async (msg: any) => {
  * Handle uncaught errors
  */
 process.on('uncaughtException', (error: Error) => {
-  sendLog('error', `Uncaught exception: ${error.message}`);
+  sandboxOutput.error(`Uncaught exception: ${error.message}`, {
+    code: SANDBOX_ERROR_CODES.UNHANDLED_EXCEPTION,
+  });
   if (process.send) {
     process.send({
       type: 'ERR',
@@ -414,7 +603,9 @@ process.on('uncaughtException', (error: Error) => {
 
 process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
   const message = reason instanceof Error ? reason.message : String(reason);
-  sendLog('error', `Unhandled rejection: ${message}`);
+  sandboxOutput.error(`Unhandled rejection: ${message}`, {
+    code: SANDBOX_ERROR_CODES.UNHANDLED_REJECTION,
+  });
   if (process.send) {
     process.send({
       type: 'ERR',
@@ -428,18 +619,6 @@ process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) =>
   process.exit(1);
 });
 
-// Signal readiness
-sendLog('debug', '[BOOTSTRAP] Process started, preparing to send READY');
-if (process.send) {
-  try {
-    sendLog('debug', '[BOOTSTRAP] Sending READY message');
-    process.send({ type: 'READY' });
-    sendLog('debug', '[BOOTSTRAP] READY message sent');
-  } catch (e) {
-    sendLog('error', `[BOOTSTRAP] Failed to send READY: ${e}`);
-  }
-} else {
-  // Log to stderr if IPC is not available
-  sendLog('error', '[BOOTSTRAP] WARNING: process.send is not available');
-}
+// Note: READY message is sent at the top of the file, immediately after imports
+// This ensures parent process receives it before any initialization code runs
 

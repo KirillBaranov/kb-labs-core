@@ -5,6 +5,7 @@
 
 import * as path from 'node:path';
 import * as semver from 'semver';
+import { getLogger } from '@kb-labs/core-sys/logging';
 import type { DiscoveryStrategy, DiscoveryResult } from './types.js';
 import type { PluginBrief, DiscoveryOptions } from '../registry/plugin-registry.js';
 import { WorkspaceStrategy } from './strategies/workspace.js';
@@ -12,6 +13,8 @@ import { PkgStrategy } from './strategies/pkg.js';
 import { DirStrategy } from './strategies/dir.js';
 import { FileStrategy } from './strategies/file.js';
 import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+
+const logger = getLogger('DiscoveryManager');
 
 /**
  * Discovery manager - coordinates all strategies with priority
@@ -37,8 +40,8 @@ export class DiscoveryManager {
 
     // Get roots (default to cwd)
     const roots = this.opts.roots || [process.cwd()];
-    console.log(`[DiscoveryManager] Starting discovery with roots: ${roots.join(', ')}`);
-    console.log(`[DiscoveryManager] Enabled strategies: ${this.opts.strategies.join(', ')}`);
+    logger.debug('Starting discovery', { roots });
+    logger.debug('Enabled strategies', { strategies: this.opts.strategies });
 
     // Execute strategies in parallel
     const enabledStrategies = this.opts.strategies
@@ -46,13 +49,16 @@ export class DiscoveryManager {
       .filter((s): s is DiscoveryStrategy => s !== undefined)
       .sort((a, b) => a.priority - b.priority);
 
-    console.log(`[DiscoveryManager] Found ${enabledStrategies.length} enabled strategies: ${enabledStrategies.map(s => s.name).join(', ')}`);
+    logger.debug('Found enabled strategies', { 
+      count: enabledStrategies.length,
+      strategies: enabledStrategies.map((s) => s.name)
+    });
 
     const results = await Promise.all(
-      enabledStrategies.map(strategy => {
-        console.log(`[DiscoveryManager] Executing strategy: ${strategy.name}`);
+      enabledStrategies.map((strategy) => {
+        logger.debug('Executing strategy', { strategyName: strategy.name });
         return strategy.discover(roots);
-      })
+      }),
     );
 
     // Merge results
@@ -75,20 +81,25 @@ export class DiscoveryManager {
       let manifest = allManifests.get(plugin.id);
       if (manifest) {
         deduplicatedManifests.set(plugin.id, manifest);
-        console.log(`[DiscoveryManager] Found manifest for plugin ${plugin.id} by plugin.id`);
+        logger.debug('Found manifest for plugin by plugin.id', { pluginId: plugin.id });
       } else {
         // If not found by plugin.id, try to find by manifest.id from all manifests
         for (const [id, m] of allManifests) {
           if (m.id === plugin.id) {
             manifest = m;
             deduplicatedManifests.set(plugin.id, m);
-            console.log(`[DiscoveryManager] Found manifest for plugin ${plugin.id} by manifest.id (was stored as ${id})`);
+            logger.debug('Found manifest for plugin by manifest.id', { 
+              pluginId: plugin.id,
+              storedAs: id 
+            });
             break;
           }
         }
         if (!manifest) {
-          console.warn(`[DiscoveryManager] WARNING: No manifest found for plugin ${plugin.id}`);
-          console.warn(`[DiscoveryManager] Available manifest IDs: ${Array.from(allManifests.keys()).join(', ')}`);
+          logger.warn('No manifest found for plugin', { pluginId: plugin.id });
+          logger.warn('Available manifest IDs', { 
+            manifestIds: Array.from(allManifests.keys()) 
+          });
         }
       }
     }

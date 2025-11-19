@@ -46,6 +46,11 @@ export interface SerializableContext {
  * Extracts only serializable fields, excludes functions and callbacks
  */
 export function serializeContext(ctx: ExecutionContext): SerializableContext {
+  // Handle undefined ctx gracefully (should not happen, but defensive programming)
+  if (!ctx) {
+    throw new Error('Cannot serialize undefined context');
+  }
+
   const serializable: SerializableContext = {
     requestId: ctx.requestId,
     workdir: ctx.workdir,
@@ -57,7 +62,7 @@ export function serializeContext(ctx: ExecutionContext): SerializableContext {
     spanId: ctx.spanId,
     parentSpanId: ctx.parentSpanId,
     debug: ctx.debug,
-    debugLevel: ctx.debugLevel,
+    debugLevel: ctx.debugLevel, // Can be undefined, which is fine
     dryRun: ctx.dryRun,
     user: ctx.user,
     version: (ctx as any).version,
@@ -75,8 +80,8 @@ export function serializeContext(ctx: ExecutionContext): SerializableContext {
       type: adapterCtx.type,
       // CLI-specific fields
       cwd: adapterCtx.cwd,
-      flags: adapterCtx.flags,
-      argv: adapterCtx.argv,
+      flags: adapterCtx.flags || {}, // Ensure flags is always an object
+      argv: adapterCtx.argv || [], // Ensure argv is always an array
       // REST-specific fields
       request: adapterCtx.request ? {
         // Only serialize request metadata, not full request object

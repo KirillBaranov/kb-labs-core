@@ -3,6 +3,8 @@
  * Adapter-specific context types
  */
 
+import type { Output } from '@kb-labs/core-sys/output';
+
 /**
  * Base context shared by all handlers
  */
@@ -23,7 +25,8 @@ export interface BaseHandlerContext {
  */
 export interface CliHandlerContext extends BaseHandlerContext {
   type: 'cli';
-  presenter: {
+  output: Output; // ✅ Unified Output interface
+  presenter: {    // ⚠️ Deprecated, kept for backwards compatibility
     write: (text: string) => void;
     error: (text: string) => void;
     info: (text: string) => void;

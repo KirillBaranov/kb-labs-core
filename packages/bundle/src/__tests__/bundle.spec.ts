@@ -68,9 +68,10 @@ describe('Bundle System', () => {
 
       expect(bundle.product).toBe('aiReview');
       expect(bundle.profile).toBeDefined();
-      expect(bundle.profile.id).toBe('default');
-      expect(bundle.profile.label).toBe('Default Profile');
-      expect(bundle.profile.source).toBe('workspace');
+      expect(bundle.profile).not.toBeNull();
+      expect(bundle.profile!.id).toBe('default');
+      expect(bundle.profile!.label).toBe('Default Profile');
+      expect(bundle.profile!.source).toBe('workspace');
       expect(bundle.artifacts.summary).toBeDefined();
       expect(bundle.policy.permits).toBeDefined();
       expect(bundle.trace).toBeDefined();

@@ -22,6 +22,13 @@ import type { SandboxConfig } from '../types/index.js';
 import { createDebugLogger, createLoggerOptionsFromContext } from '../debug/logger.js';
 import { serializeContext } from './ipc-serializer.js';
 import { createTimeoutSignal } from '../cancellation/abort-controller.js';
+import {
+  formatLogLine,
+  colorizeLevel,
+  shouldUseColors,
+  type LiveMetrics,
+  formatLiveMetrics,
+} from '../debug/progress.js';
 
 /**
  * Setup log pipes for child process
@@ -48,9 +55,14 @@ function setupLogPipes(
         // Always collect in buffer for error display
         ringBuffer.append(line);
         
+        // Format line with colors if enabled
+        const formattedLine = shouldUseColors() && !quiet
+          ? formatLogLine('info', line, ctx.pluginId)
+          : line;
+        
         // Show output only if NOT quiet
         if (!quiet) {
-          process.stdout.write(line + '\n');
+          process.stdout.write(formattedLine + '\n');
         }
         
         // Send through onLog callback if available (for debug mode formatting)
@@ -74,9 +86,6 @@ function setupLogPipes(
         // Always collect in buffer for error display
         ringBuffer.append(line);
         
-        // stderr always shown (even with quiet, errors should be visible)
-        process.stderr.write(line + '\n');
-        
         // Try to detect log level from line content
         let level: 'info' | 'warn' | 'error' | 'debug' = 'error';
         const lowerLine = line.toLowerCase();
@@ -89,6 +98,14 @@ function setupLogPipes(
         } else {
           level = 'info';
         }
+        
+        // Format line with colors if enabled
+        const formattedLine = shouldUseColors()
+          ? formatLogLine(level, line, ctx.pluginId)
+          : line;
+        
+        // stderr always shown (even with quiet, errors should be visible)
+        process.stderr.write(formattedLine + '\n');
         
         // Send through onLog callback if available
         if (ctx.onLog) {
@@ -416,28 +433,67 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
       // IMPORTANT: setupLogPipes already sets up a message handler for LOG messages
       // We need to ensure our readyHandler can still receive READY messages
       await new Promise<void>((resolve, reject) => {
+        // Check if child already exited (shouldn't happen, but be defensive)
+        if (child.killed || child.exitCode !== null) {
+          reject(new Error(`Subprocess exited before sending READY (exitCode: ${child.exitCode})`));
+          return;
+        }
+        
+        let resolved = false;
+        const cleanup = () => {
+          if (resolved) return;
+          resolved = true;
+          clearTimeout(timeout);
+          child.off('message', readyHandler);
+          child.off('exit', exitHandler);
+        };
+        
         const timeout = setTimeout(() => {
           logger.error('READY message not received within 5 seconds', {
             pid: child.pid,
             killed: child.killed,
+            exitCode: child.exitCode,
+            signalCode: child.signalCode,
           });
+          cleanup();
+          // Kill the child process if it's still running but not responding
+          if (!child.killed && child.exitCode === null) {
+            child.kill('SIGTERM');
+          }
           reject(new Error('Subprocess did not send READY message within 5 seconds'));
         }, 5000);
         
-        const readyHandler = (msg: any) => {
-          logger.debug('Received message while waiting for READY', { type: msg?.type });
-          if (msg?.type === 'READY') {
+        const readyHandler = (msg: unknown) => {
+          if (resolved) return;
+          const message = msg as { type?: string; payload?: unknown };
+          logger.debug('Received message while waiting for READY', { type: message?.type });
+          if (message?.type === 'READY') {
             logger.debug('READY message received, proceeding with RUN');
-            clearTimeout(timeout);
-            // Remove this handler - READY received
-            child.off('message', readyHandler);
+            cleanup();
             resolve();
-          } else if (msg?.type === 'LOG') {
+          } else if (message?.type === 'LOG') {
             // LOG messages are handled by setupLogPipes, but log here too for debugging
-            logger.debug('Received LOG while waiting for READY', { message: msg?.payload?.message });
+            logger.debug('Received LOG while waiting for READY', { 
+              message: (message.payload as { message?: string })?.message 
+            });
             // Don't remove handler - continue waiting for READY
+          } else if (message?.type === 'ERR') {
+            // If subprocess sends ERR before READY, something went wrong
+            logger.error('Subprocess sent ERR before READY', { 
+              payload: message.payload 
+            });
+            cleanup();
+            reject(new Error(`Subprocess error before READY: ${JSON.stringify(message.payload)}`));
           }
         };
+        
+        // Handle child exit before READY
+        const exitHandler = (code: number | null, signal: NodeJS.Signals | null) => {
+          if (resolved) return;
+          cleanup();
+          reject(new Error(`Subprocess exited before READY (code: ${code}, signal: ${signal})`));
+        };
+        child.once('exit', exitHandler);
         
         // Add handler - it will be called BEFORE setupLogPipes handler (if both handle same message)
         // But we need to ensure both can coexist - setupLogPipes handles LOG, we handle READY
@@ -454,33 +510,51 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
         },
       });
 
-      // Wait for result
-      return new Promise<ExecutionResult<TOutput>>((resolve) => {
+      // Wait for result with timeout protection
+      return new Promise<ExecutionResult<TOutput>>((resolve, reject) => {
+        let resolved = false;
         const cleanup = () => {
+          if (resolved) return;
+          resolved = true;
           clearTimeoutWatch(timeoutHandle);
           if (!child.killed) {
             child.kill();
           }
         };
 
+        // Timeout for waiting for response (should be less than execution timeout)
+        const responseTimeout = setTimeout(() => {
+          if (resolved) return;
+          logger.error('Subprocess did not respond within timeout', {
+            pid: child.pid,
+            timeoutMs: config.execution.timeoutMs,
+          });
+          cleanup();
+          reject(new Error(`Subprocess did not respond within ${config.execution.timeoutMs}ms`));
+        }, config.execution.timeoutMs + 10000); // Add 10s buffer
+
         // Handle all message types (LOG, OK, ERR, READY)
-        const messageHandler = (msg: any) => {
-          logger.debug('Received message in result handler', { type: msg?.type });
+        const messageHandler = (msg: unknown) => {
+          if (resolved) return;
+          const message = msg as { type?: string; payload?: unknown };
+          logger.debug('Received message in result handler', { type: message?.type });
           
           // LOG messages are handled by setupLogPipes
-          if (msg?.type === 'LOG') {
+          if (message?.type === 'LOG') {
             return; // Already handled
           }
           
-          if (msg?.type === 'OK' && msg.payload) {
+          if (message?.type === 'OK' && message.payload) {
+            const payload = message.payload as { data?: unknown };
             logger.debug('Received OK message, resolving with success');
+            clearTimeout(responseTimeout);
             cleanup();
             child.off('message', messageHandler);
             const metrics = collectMetrics(startedAt, cpuStart, memStart);
         
             const result: ExecutionResult<TOutput> = {
               ok: true,
-              data: msg.payload.data as TOutput,
+              data: payload.data as TOutput,
               metrics,
             };
         
@@ -492,11 +566,13 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
         
             logger.groupEnd();
             resolve(result);
-          } else if (msg?.type === 'ERR' && msg.payload) {
+          } else if (message?.type === 'ERR' && message.payload) {
+            const payload = message.payload as { code?: string; message?: string; stack?: string };
             logger.error('Received ERR message', {
-              code: msg.payload.code,
-              message: msg.payload.message,
+              code: payload.code,
+              message: payload.message,
             });
+            clearTimeout(responseTimeout);
             cleanup();
             child.off('message', messageHandler);
             const metrics = collectMetrics(startedAt, cpuStart, memStart);
@@ -504,9 +580,9 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
             const result: ExecutionResult<TOutput> = {
               ok: false,
               error: {
-                code: msg.payload.code || 'HANDLER_ERROR',
-                message: msg.payload.message || 'Handler execution failed',
-                stack: msg.payload.stack,
+                code: payload.code || 'HANDLER_ERROR',
+                message: payload.message || 'Handler execution failed',
+                stack: payload.stack,
               },
               metrics,
             };
@@ -524,7 +600,23 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
         
         child.on('message', messageHandler);
 
+        // Handle process exit without response
+        const exitHandler = (code: number | null, signal: NodeJS.Signals | null) => {
+          if (resolved) return;
+          logger.error('Subprocess exited without sending response', {
+            pid: child.pid,
+            code,
+            signal,
+          });
+          clearTimeout(responseTimeout);
+          cleanup();
+          reject(new Error(`Subprocess exited without response (code: ${code}, signal: ${signal})`));
+        };
+        child.once('exit', exitHandler);
+
         child.on('error', (error: Error) => {
+          if (resolved) return;
+          clearTimeout(responseTimeout);
           cleanup();
           const metrics = collectMetrics(startedAt, cpuStart, memStart);
 

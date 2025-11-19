@@ -42,10 +42,22 @@ export interface ExecutionContextWithDebug {
  * Create logger options from execution context
  */
 export function createLoggerOptionsFromContext(
-  ctx: ExecutionContextWithDebug,
+  ctx: ExecutionContextWithDebug | undefined,
   spanId?: string,
   parentSpanId?: string
 ): DebugLoggerOptions {
+  // Handle undefined ctx gracefully
+  if (!ctx) {
+    return {
+      format: 'human',
+      detailLevel: 'verbose',
+      traceId: undefined,
+      spanId,
+      parentSpanId,
+      jsonMode: false,
+    };
+  }
+
   // Map debugLevel to detailLevel
   let detailLevel: DebugDetailLevel = 'verbose';
   if (ctx.debugLevel === 'inspect' || ctx.debugLevel === 'profile') {
@@ -156,11 +168,13 @@ export function createDebugLogger(enabled: boolean, namespace: string, options?:
   // Import formatters from shared-cli-ui (required dependency)
   // Note: Using dynamic import to avoid circular dependencies
   // Formatters are loaded synchronously on first use
-  let formatters: {
-    formatDebugEntryAI: (entry: any) => string;
-    formatDebugEntryHuman: (entry: any, options?: any) => string;
+  // Note: Types from shared-cli-ui may differ slightly, so we use a more flexible type
+  interface DebugFormatters {
+    formatDebugEntryAI: (entry: unknown) => string;
+    formatDebugEntryHuman: (entry: unknown, options?: unknown) => string;
     shouldUseAIFormat: (format?: DebugFormat, jsonMode?: boolean) => boolean;
-  } | null = null;
+  }
+  let formatters: DebugFormatters | null = null;
   let formattersError: Error | null = null;
   let formattersLoading: Promise<void> | null = null;
   
@@ -178,8 +192,8 @@ export function createDebugLogger(enabled: boolean, namespace: string, options?:
           throw new Error('Debug formatters not found in @kb-labs/shared-cli-ui/debug');
         }
         formatters = {
-          formatDebugEntryAI: debugModule.formatDebugEntryAI,
-          formatDebugEntryHuman: debugModule.formatDebugEntryHuman,
+          formatDebugEntryAI: debugModule.formatDebugEntryAI as (entry: unknown) => string,
+          formatDebugEntryHuman: debugModule.formatDebugEntryHuman as (entry: unknown, options?: unknown) => string,
           shouldUseAIFormat: debugModule.shouldUseAIFormat || ((f?: DebugFormat, j?: boolean) => f === 'ai' || j === true),
         };
       } catch (error) {

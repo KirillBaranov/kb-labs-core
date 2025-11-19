@@ -26,7 +26,8 @@ import {
   materializeArtifacts,
   readArtifactText,
   readArtifactJson,
-  clearCaches as clearProfileCaches
+  clearCaches as clearProfileCaches,
+  type ProfileInfo
 } from '@kb-labs/core-profiles';
 import {
   resolvePolicy, 
@@ -34,7 +35,10 @@ import {
 } from '@kb-labs/core-policy';
 import { KbError, ERROR_HINTS } from '@kb-labs/core-config';
 import { resolveWorkspaceRoot } from '@kb-labs/core-workspace';
+import { getLogger } from '@kb-labs/core-sys';
 import type { LoadBundleOptions, Bundle } from '../types/types';
+
+const log = getLogger('core-bundle');
 
 /**
  * Load bundle with config, profile, artifacts, and policy
@@ -68,7 +72,7 @@ export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bund
     );
   }
 
-  const workspaceData = workspaceConfig.data as any;
+  const workspaceData = workspaceConfig.data as Record<string, unknown>;
 
   const profilesSection = await readProfilesSection(cwd);
   const availableProfiles = profilesSection.profiles.map((p) => p.id);
@@ -114,17 +118,18 @@ export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bund
     const result = validateProductConfig(product, configResult.config);
     if (!result.ok) {
       if (validate === 'warn') {
-        console.warn('Config validation warnings:', result.errors);
+        log.warn('Config validation warnings', { errors: result.errors });
       } else {
-        const err = new Error('Config validation failed');
-        (err as any).details = result.errors;
+        const err = new Error('Config validation failed') as Error & { details: unknown };
+        err.details = result.errors;
         throw err;
       }
     }
   }
 
-  // Legacy profile manifest for artifacts (if still defined)
-  let legacyProfileInfo: any;
+  // Support legacy profile format for artifacts (backward compatibility)
+  // Profiles v2 uses profileId from profiles section, but old configs may reference profiles directly
+  let legacyProfileInfo: ProfileInfo | undefined;
   const legacyProfiles = (workspaceData.profiles as Record<string, string>) || {};
   const legacyProfileRef = profileId ? legacyProfiles[profileId] : undefined;
 
@@ -134,14 +139,17 @@ export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bund
       const legacyManifest = normalizeManifest(legacyProfile.profile);
       legacyProfileInfo = extractProfileInfo(legacyManifest, legacyProfile.meta.pathAbs);
     } catch (error) {
-      console.warn('Warning: Could not load legacy profile manifest:', error);
+      log.warn('Could not load legacy profile manifest', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
   // 4. Resolve policy
+  const policyConfig = workspaceData.policy as { bundle?: string; overrides?: import('@kb-labs/core-policy').Policy } | undefined;
   const policyResult = await resolvePolicy({
-    presetBundle: workspaceData.policy?.bundle,
-    workspaceOverrides: workspaceData.policy?.overrides
+    presetBundle: policyConfig?.bundle,
+    workspaceOverrides: policyConfig?.overrides
   });
 
   // 5. Create artifacts wrapper
@@ -167,7 +175,7 @@ export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bund
  * Create artifacts wrapper with lazy loading
  */
 function createArtifactsWrapper(
-  profileInfo: any,
+  profileInfo: ProfileInfo | undefined,
   fsProduct: string,
   cwd: string
 ) {
@@ -176,8 +184,8 @@ function createArtifactsWrapper(
       summary: {},
       async list() { return []; },
       async materialize() { return { filesCopied: 0, filesSkipped: 0, bytesWritten: 0 }; },
-      async readText() { throw new KbError('ERR_PROFILE_NOT_DEFINED', 'Legacy profile artifacts are not configured', ERROR_HINTS.ERR_PROFILE_NOT_DEFINED); },
-      async readJson() { throw new KbError('ERR_PROFILE_NOT_DEFINED', 'Legacy profile artifacts are not configured', ERROR_HINTS.ERR_PROFILE_NOT_DEFINED); },
+      async readText() { throw new KbError('ERR_PROFILE_NOT_DEFINED', 'Profile artifacts are not configured', ERROR_HINTS.ERR_PROFILE_NOT_DEFINED); },
+      async readJson() { throw new KbError('ERR_PROFILE_NOT_DEFINED', 'Profile artifacts are not configured', ERROR_HINTS.ERR_PROFILE_NOT_DEFINED); },
       async readAll() { return []; },
     };
   }

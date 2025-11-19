@@ -252,7 +252,30 @@ export const manifest: ManifestV2 = {
     ],
   },
   
-  // No REST, Studio, or artifacts for core CLI
+  // Setup handler
+  setup: {
+    handler: './setup/handler.js#run',
+    describe: 'Create basic .kb directory structure and initial files.',
+    permissions: {
+      fs: {
+        mode: 'readWrite',
+        allow: ['.kb/**', 'kb-labs.config.*', 'kb.config.*'],
+        deny: ['node_modules/**', '.git/**'],
+      },
+      net: 'none',
+      env: {
+        allow: ['NODE_ENV'],
+      },
+      quotas: {
+        timeoutMs: 5000,
+        memoryMb: 64,
+        cpuMs: 2500,
+      },
+      capabilities: ['fs:read', 'fs:write'],
+    },
+  },
+  
+  // No REST, Studio, or artifacts for core CLI (core is CLI-only)
   permissions: {
     fs: {
       mode: 'readWrite',

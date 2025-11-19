@@ -215,6 +215,20 @@ export function formatTimeline(data: ProfileData): string {
 }
 
 /**
+ * Re-export flame graph functions
+ */
+export {
+  profileToFlameGraph,
+  exportFlameGraphHTML,
+  checkPerformanceBudget,
+  formatBudgetViolations,
+  createDefaultBudget,
+  type FlameGraphNode,
+  type PerformanceBudget,
+  type BudgetViolation,
+} from './flame-graph.js';
+
+/**
  * Export profile data to Chrome DevTools format
  */
 export function exportChromeFormat(data: ProfileData): object {
