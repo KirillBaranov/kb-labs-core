@@ -6,7 +6,7 @@
 import type { Output, OutputMode, VerbosityLevel, DebugFormat } from "./types.js";
 import type { LogSink } from "../logging/types/types.js";
 import { createConsoleSink } from "../logging/sinks/console-sink.js";
-import { createFileSink } from "../logging/sinks/file-sink.js";
+import { getLogger, type Logger } from "../logging/index.js";
 import { OutputImpl } from "./output-impl.js";
 
 export interface OutputConfig {
@@ -35,19 +35,18 @@ export function createOutput(config: OutputConfig = {}): Output {
     const format: DebugFormat =
         config.format || (config.json ? "ai" : "human");
 
-    // Создать sinks
+    // Создать sinks только для форматированного вывода пользователю
     const sinks: LogSink[] = config.sinks || [];
 
-    // Console sink (всегда активен)
+    // Console sink для форматированного вывода (UI)
+    // FileSink убран - используем глобальную систему логирования
     sinks.push(createConsoleSink({ verbosity, mode, format }));
 
-    // File sink (всегда активен для debug)
-    const fileSink = createFileSink({
-        path: ".kb/logs/current.jsonl",
-        maxSize: "10MB",
-        maxAge: "7d",
+    // Получить глобальный logger для записи в файлы
+    // Output будет использовать его вместо собственного FileSink
+    const logger = getLogger(config.category || 'output').child({
+        meta: config.context || {},
     });
-    sinks.push(fileSink);
 
     // Создать Output implementation
     return new OutputImpl({
@@ -55,7 +54,8 @@ export function createOutput(config: OutputConfig = {}): Output {
         verbosity,
         format,
         json: config.json || false,
-        sinks,
+        sinks, // Только ConsoleSink для UI
+        logger, // Глобальный logger для записи в файлы
         category: config.category,
         context: config.context,
     });

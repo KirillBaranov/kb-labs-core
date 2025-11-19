@@ -14,6 +14,7 @@ import type {
     Spinner,
 } from "./types.js";
 import type { LogSink, LogRecord } from "../logging/types/types.js";
+import type { Logger } from "../logging/index.js";
 import {
     box,
     keyValue,
@@ -31,7 +32,8 @@ export class OutputImpl implements Output {
             verbosity: VerbosityLevel;
             format: DebugFormat;
             json: boolean;
-            sinks: LogSink[];
+            sinks: LogSink[]; // Только для форматированного вывода (ConsoleSink)
+            logger: Logger; // Глобальный logger для записи в файлы
             category?: string;
             context?: Record<string, unknown>;
         }
@@ -117,7 +119,8 @@ export class OutputImpl implements Output {
 
         const output = `${safeSymbols.success} ${message}`;
         console.log(safeColors.success(output));
-        this.log("info", message, data);
+        // Использовать глобальный logger для записи в файлы
+        this.config.logger.info(message, data);
     }
 
     error(error: Error | string, options?: ErrorOptions): void {
@@ -183,12 +186,19 @@ export class OutputImpl implements Output {
         const boxed = box("Error", lines);
         console.error(boxed);
 
-        // Логировать в файл
-        this.log("error", message, {
+        // Использовать глобальный logger для записи в файлы
+        const errorMeta: Record<string, unknown> = {
             code: options?.code,
             context: options?.context,
-            stack,
-        });
+        };
+        if (stack) {
+            errorMeta.stack = stack;
+        }
+        if (error instanceof Error) {
+            this.config.logger.error(message, error);
+        } else {
+            this.config.logger.error(message, errorMeta);
+        }
     }
 
     warn(message: string, hint?: string): void {
@@ -201,7 +211,8 @@ export class OutputImpl implements Output {
             console.warn(safeColors.muted(`  ${hint}`));
         }
 
-        this.log("warn", message, { hint });
+        // Использовать глобальный logger для записи в файлы
+        this.config.logger.warn(message, { hint });
     }
 
     progress(stage: string, details?: ProgressDetails): void {
@@ -220,7 +231,8 @@ export class OutputImpl implements Output {
         }
 
         console.log(safeColors.info(output));
-        this.log("info", output, details);
+        // Использовать глобальный logger для записи в файлы
+        this.config.logger.info(output, details as Record<string, unknown>);
     }
 
     spinner(text: string): Spinner {
@@ -231,21 +243,24 @@ export class OutputImpl implements Output {
         if (!this.isVerbose) return;
 
         console.log(message);
-        this.log("info", message, meta);
+        // Использовать глобальный logger для записи в файлы
+        this.config.logger.info(message, meta);
     }
 
     debug(message: string, meta?: Record<string, unknown>): void {
         if (!this.isDebug) return;
 
         console.log(safeColors.muted(message));
-        this.log("debug", message, meta);
+        // Использовать глобальный logger для записи в файлы
+        this.config.logger.debug(message, meta);
     }
 
     trace(message: string, meta?: Record<string, unknown>): void {
         if (this.verbosity !== "inspect") return;
 
         console.log(safeColors.muted(`[TRACE] ${message}`));
-        this.log("trace", message, meta);
+        // Использовать глобальный logger для записи в файлы (trace → debug)
+        this.config.logger.debug(message, { ...meta, trace: true } as Record<string, unknown>);
     }
 
     json(data: unknown): void {
@@ -269,8 +284,9 @@ export class OutputImpl implements Output {
         }
     }
 
-    // Internal method
-    private log(
+    // Internal method для форматированного вывода через ConsoleSink
+    // Используется только для UI вывода, не для записи в файлы
+    private logToConsoleSink(
         level: LogRecord["level"],
         msg: string,
         meta?: Record<string, unknown>
@@ -284,7 +300,8 @@ export class OutputImpl implements Output {
             meta: { ...this.config.context, ...meta },
         };
 
-        // Отправить во все sinks
+        // Отправить только в ConsoleSink для форматированного вывода
+        // Запись в файлы идет через глобальный logger
         for (const sink of this.config.sinks) {
             try {
                 void sink.handle(record);
