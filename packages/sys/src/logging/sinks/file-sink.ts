@@ -20,6 +20,7 @@ export class FileSink implements LogSink {
     private currentSize: number = 0;
     private readonly maxSizeBytes: number;
     private initPromise: Promise<void> | null = null;
+    private flushPromise: Promise<void> | null = null;
 
     constructor(private config: FileSinkConfig) {
         this.maxSizeBytes = this.parseSize(config.maxSize);
@@ -79,7 +80,9 @@ export class FileSink implements LogSink {
     private async rotate(): Promise<void> {
         // Закрыть текущий stream
         if (this.stream) {
-            this.stream.end();
+            await new Promise<void>((resolve) => {
+                this.stream!.end(() => resolve());
+            });
             this.stream = null;
         }
 
@@ -90,6 +93,8 @@ export class FileSink implements LogSink {
 
         try {
             await fs.rename(this.config.path, archivePath);
+            const { recordRotation } = await import("../metrics.js");
+            recordRotation();
         } catch (err) {
             console.error("Failed to rotate log file:", err);
         }
@@ -97,6 +102,48 @@ export class FileSink implements LogSink {
         // Создать новый stream
         this.initPromise = null;
         await this.init();
+    }
+
+    /**
+     * Flush pending writes
+     */
+    async flush(): Promise<void> {
+        if (this.flushPromise) {
+            return this.flushPromise;
+        }
+
+        this.flushPromise = (async () => {
+            if (!this.stream) {
+                return;
+            }
+
+            // Wait for stream to drain
+            await new Promise<void>((resolve, reject) => {
+                if (!this.stream) {
+                    resolve();
+                    return;
+                }
+
+                if (this.stream.writableEnded) {
+                    resolve();
+                    return;
+                }
+
+                this.stream.once('drain', resolve);
+                this.stream.once('error', reject);
+                
+                // If stream is not draining, resolve anyway after short timeout
+                setTimeout(() => {
+                    resolve();
+                }, 100);
+            });
+        })();
+
+        try {
+            await this.flushPromise;
+        } finally {
+            this.flushPromise = null;
+        }
     }
 
     private parseSize(size: string): number {

@@ -7,7 +7,10 @@ function serialize(rec: LogRecord): string {
   const payload: Record<string, unknown> = {
     ts: rec.time,
     level: rec.level,
-    traceId: traceId ?? requestId ?? null,
+    traceId: rec.trace ?? traceId ?? requestId ?? null,
+    spanId: rec.span ?? null,
+    parentSpanId: rec.parentSpan ?? null,
+    executionId: rec.executionId ?? null,
     reqId: reqId ?? requestId ?? null,
     layer: typeof layer === "string" ? layer : rec.category ?? null,
     msg: rec.msg ?? "",
