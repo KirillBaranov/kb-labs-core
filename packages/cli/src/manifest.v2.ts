@@ -3,12 +3,14 @@
  * Manifest v2 for Core CLI
  */
 
-import type { ManifestV2 } from '@kb-labs/plugin-manifest';
+import { createManifestV2 } from '@kb-labs/plugin-manifest';
+import { pluginContractsManifest } from '@kb-labs/core-contracts';
 
 /**
  * Core CLI Manifest v2
+ * Level 2: Типизация через contracts для автодополнения и проверки ID
  */
-export const manifest: ManifestV2 = {
+export const manifest = createManifestV2<typeof pluginContractsManifest>({
   schema: 'kb.plugin/2',
   id: '@kb-labs/core',
   version: '0.1.0',
@@ -294,7 +296,7 @@ export const manifest: ManifestV2 = {
     capabilities: [],
   },
   artifacts: [],
-};
+});
 
 export default manifest;
 
