@@ -21,9 +21,8 @@ export default defineConfig({
     'src/cli/bundle/print.ts',
     'src/cli/bundle/inspect.ts',
   ],
-  external: [
-    /^@kb-labs\//,
-  ],
+  tsconfig: "tsconfig.build.json", // Use build-specific tsconfig without paths
+  // nodePreset already includes all workspace packages as external via tsup.external.json
   dts: {
     resolve: true,
     skipLibCheck: true,

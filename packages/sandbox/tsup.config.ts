@@ -7,7 +7,7 @@ export default defineConfig({
     index: 'src/index.ts',
     'runner/bootstrap': 'src/runner/bootstrap.ts', // Bootstrap for subprocess runner
   },
-  external: [/^@kb-labs\//],
-  skipNodeModulesBundle: true,
+  tsconfig: "tsconfig.build.json", // Use build-specific tsconfig without paths
+  // nodePreset already includes all workspace packages as external via tsup.external.json
 })
 

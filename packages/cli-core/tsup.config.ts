@@ -7,6 +7,6 @@ export default defineConfig({
     index: 'src/index.ts',
     public: 'src/public/index.ts',
   },
-  external: [/^@kb-labs\//, 'colorette', 'semver', 'chokidar', 'glob', 'yaml', 'zod'],
-  skipNodeModulesBundle: true,
+  tsconfig: "tsconfig.build.json", // Use build-specific tsconfig without paths
+  // nodePreset already includes all workspace packages as external via tsup.external.json
 });

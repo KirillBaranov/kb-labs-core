@@ -6,6 +6,6 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
   },
-  external: [],
+  tsconfig: "tsconfig.build.json", // Use build-specific tsconfig without paths
 })
 
