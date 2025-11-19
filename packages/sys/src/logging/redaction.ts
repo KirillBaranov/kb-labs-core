@@ -2,7 +2,20 @@ import type { LogRecord, Redactor } from "./types";
 
 /** Simple key-based redactor; masks values by key in meta recursively. */
 export function createRedactor(opts?: { keys?: string[]; mask?: string }): Redactor {
-    const keys = new Set((opts?.keys ?? ["token", "apiKey", "authorization"]).map(k => k.toLowerCase()));
+    // Default sensitive keys: tokens, API keys, passwords, env variables
+    const defaultKeys = [
+        "token", "apiKey", "apikey", "api_key", "api-key",
+        "authorization", "authorization",
+        "secret", "secretKey", "secret_key", "secret-key",
+        "accessToken", "access_token", "access-token",
+        "refreshToken", "refresh_token", "refresh-token",
+        "authToken", "auth_token", "auth-token",
+        "bearerToken", "bearer_token", "bearer-token",
+        "password", "passwd", "pwd",
+        "privateKey", "private_key", "private-key",
+        "env", "environment", "config", // Env variables that might contain secrets
+    ];
+    const keys = new Set((opts?.keys ?? defaultKeys).map(k => k.toLowerCase()));
     const mask = opts?.mask ?? "****";
 
     function redactValue(v: unknown, path: string[] = []): unknown {
