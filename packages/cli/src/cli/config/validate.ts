@@ -1,110 +1,99 @@
-import type { CommandModule } from '../types';
+// @ts-expect-error - types will be available after command-kit types are generated
+import { defineCommand } from '@kb-labs/cli-command-kit';
 import { loadBundle } from '@kb-labs/core-bundle';
 import type { ProductId } from '@kb-labs/core-bundle';
 import { box, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
-import type { TelemetryEvent, TelemetryEmitResult } from '@kb-labs/core-types';
-import { runWithOptionalAnalytics } from '../../infra/analytics/telemetry-wrapper.js';
 import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../infra/analytics/events.js';
 
-export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<number> => {
-  const startTime = Date.now();
-  const cwd = (flags.cwd as string) || process.cwd();
-  const profileId = flags.profile as string | undefined;
-  const scopeId = flags.scope as string | undefined;
-  const noFail = Boolean(flags['no-fail']);
-
-  return (await runWithOptionalAnalytics(
-    {
-      actor: ANALYTICS_ACTOR,
-      ctx: { workspace: cwd },
+export const run = defineCommand({
+  name: 'config:validate',
+  flags: {
+    product: {
+      type: 'string',
+      description: 'Product ID',
+      required: true,
     },
-    async (emit: (event: Partial<TelemetryEvent>) => Promise<TelemetryEmitResult>): Promise<number> => {
-      try {
-        // Track command start
-        await emit({
-          type: ANALYTICS_EVENTS.CONFIG_VALIDATE_STARTED,
-          payload: {
-            product: flags.product as string | undefined,
-            profileId,
-            scopeId,
-            noFail,
-          },
-        });
-        await loadBundle({
-          cwd,
-          product: flags.product as ProductId,
-          profileId,
-          scopeId,
-          validate: noFail ? 'warn' : true,
-        });
+    profile: {
+      type: 'string',
+      description: 'Profile ID (Profiles v2)',
+    },
+    scope: {
+      type: 'string',
+      description: 'Scope ID within profile',
+    },
+    'no-fail': {
+      type: 'boolean',
+      description: 'Warn instead of failing',
+      default: false,
+    },
+    cwd: {
+      type: 'string',
+      description: 'Working directory',
+    },
+    json: {
+      type: 'boolean',
+      description: 'Output in JSON format',
+      default: false,
+    },
+  },
+  analytics: {
+    startEvent: ANALYTICS_EVENTS.CONFIG_VALIDATE_STARTED,
+    finishEvent: ANALYTICS_EVENTS.CONFIG_VALIDATE_FINISHED,
+    actor: ANALYTICS_ACTOR.id,
+    includeFlags: true,
+  },
+  // @ts-expect-error - types will be inferred from schema after types are generated
+  async handler(ctx: any, argv: any, flags: any) {
+    const cwd = flags.cwd || ctx.cwd || process.cwd();
+    const noFail = flags['no-fail'];
+    
+    ctx.tracker.checkpoint('load');
 
-        const totalTime = Date.now() - startTime;
+    try {
+      await loadBundle({
+        cwd,
+        product: flags.product as ProductId,
+        profileId: flags.profile,
+        scopeId: flags.scope,
+        validate: noFail ? 'warn' : true,
+      });
 
-        if (flags.json) {
-          ctx.presenter.json({ ok: true, product: flags.product });
-        } else {
-          ctx.presenter.write(
-            box('Config Validation', [
-              `${safeSymbols.success} ${safeColors.bold('Valid config')} for ${flags.product}`,
-            ])
-          );
-        }
+      ctx.tracker.checkpoint('complete');
 
-        // Track command completion
-        await emit({
-          type: ANALYTICS_EVENTS.CONFIG_VALIDATE_FINISHED,
-          payload: {
-            product: flags.product as string | undefined,
-            profileId,
-            scopeId,
-            noFail,
-            validationOk: true,
-            durationMs: totalTime,
-            result: 'success',
-          },
-        });
-
-        return 0;
-      } catch (err: any) {
-        const totalTime = Date.now() - startTime;
-        const details = err?.details || null;
-        const errorsArray = Array.isArray(details) ? details : [];
-
-        // Track command completion with failure
-        await emit({
-          type: ANALYTICS_EVENTS.CONFIG_VALIDATE_FINISHED,
-          payload: {
-            product: flags.product as string | undefined,
-            profileId,
-            scopeId,
-            noFail,
-            validationOk: false,
-            errorsCount: errorsArray.length,
-            durationMs: totalTime,
-            result: 'failed',
-          },
-        });
-
-        if (flags.json) {
-          ctx.presenter.json({ ok: false, errors: details });
-        } else {
-          const lines: string[] = [
-            `${safeSymbols.error} ${safeColors.bold('Invalid config')} for ${flags.product}`,
-          ];
-          if (Array.isArray(details)) {
-            lines.push('', safeColors.bold('Errors:'));
-            for (const e of details) {
-              const instancePath = e.instancePath || e.instance || '';
-              const msg = e.message || 'Validation error';
-              lines.push(`  - ${instancePath ? instancePath + ': ' : ''}${msg}`);
-            }
-          }
-          ctx.presenter.write(box('Config Validation', lines));
-        }
-        return noFail ? 0 : 1;
+      if (flags.json) {
+        ctx.output?.json({ ok: true, product: flags.product });
+      } else {
+        ctx.output?.write(
+          box('Config Validation', [
+            `${safeSymbols.success} ${safeColors.bold('Valid config')} for ${flags.product}`,
+          ])
+        );
       }
+
+      return { ok: true, product: flags.product };
+    } catch (err: any) {
+      const details = err?.details || null;
+      const errorsArray = Array.isArray(details) ? details : [];
+
+      if (flags.json) {
+        ctx.output?.json({ ok: false, errors: details });
+      } else {
+        const lines: string[] = [
+          `${safeSymbols.error} ${safeColors.bold('Invalid config')} for ${flags.product}`,
+        ];
+        if (Array.isArray(details)) {
+          lines.push('', safeColors.bold('Errors:'));
+          for (const e of details) {
+            const instancePath = e.instancePath || e.instance || '';
+            const msg = e.message || 'Validation error';
+            lines.push(`  - ${instancePath ? instancePath + ': ' : ''}${msg}`);
+          }
+        }
+        ctx.output?.write(box('Config Validation', lines));
+      }
+      
+      // Return exit code based on no-fail flag
+      return noFail ? 0 : 1;
     }
-  )) as number;
-};
-
-
+  },
+});

@@ -1,112 +1,98 @@
-import type { CommandModule } from '../types';
+// @ts-expect-error - types will be available after command-kit types are generated
+import { defineCommand } from '@kb-labs/cli-command-kit';
 import { detectConfigArtifacts } from '../../artifacts/config-artifacts';
 import { generateConfigSuggestions } from '../../application/suggestions/config-suggestions.js';
-import { box, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
-import type { TelemetryEvent, TelemetryEmitResult } from '@kb-labs/core-types';
-import { runWithOptionalAnalytics } from '../../infra/analytics/telemetry-wrapper.js';
+import { box, safeSymbols } from '@kb-labs/shared-cli-ui';
 import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../infra/analytics/events.js';
 
-export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<number> => {
-  const startTime = Date.now();
-  const cwd = (flags.cwd as string) || process.cwd();
-
-  return (await runWithOptionalAnalytics(
-    {
-      actor: ANALYTICS_ACTOR,
-      ctx: { workspace: cwd },
+export const run = defineCommand({
+  name: 'config:doctor',
+  flags: {
+    fix: {
+      type: 'boolean',
+      description: 'Auto-fix issues',
+      default: false,
     },
-    async (emit: (event: Partial<TelemetryEvent>) => Promise<TelemetryEmitResult>): Promise<number> => {
-      try {
-        // Track command start
-        await emit({
-          type: ANALYTICS_EVENTS.CONFIG_DOCTOR_STARTED,
-          payload: {
-            fix: !!flags.fix,
-          },
-        });
-        const artifacts = await detectConfigArtifacts(cwd);
-        const suggestions = generateConfigSuggestions(artifacts, {});
-        
-        // Build health report
-        const issues: string[] = [];
-        
-        if (artifacts.missingWorkspaceConfig) {
-          issues.push(`${safeSymbols.error} Workspace config missing`);
-        }
-        
-        if (artifacts.missingProfiles.length > 0) {
-          issues.push(`${safeSymbols.warning} Missing profiles: ${artifacts.missingProfiles.join(', ')}`);
-        }
-        
-        if (artifacts.invalidProfiles.length > 0) {
-          issues.push(`${safeSymbols.error} Invalid profiles: ${artifacts.invalidProfiles.join(', ')}`);
-        }
-        
-        if (artifacts.missingLockfile) {
-          issues.push(`${safeSymbols.warning} Lockfile missing`);
-        }
+    cwd: {
+      type: 'string',
+      description: 'Working directory',
+    },
+    json: {
+      type: 'boolean',
+      description: 'Output in JSON format',
+      default: false,
+    },
+  },
+  analytics: {
+    startEvent: ANALYTICS_EVENTS.CONFIG_DOCTOR_STARTED,
+    finishEvent: ANALYTICS_EVENTS.CONFIG_DOCTOR_FINISHED,
+    actor: ANALYTICS_ACTOR.id,
+    includeFlags: true,
+  },
+  // @ts-expect-error - types will be inferred from schema after types are generated
+  async handler(ctx: any, argv: any, flags: any) {
+    const cwd = flags.cwd || ctx.cwd || process.cwd();
+    
+    ctx.tracker.checkpoint('detect');
 
-        const totalTime = Date.now() - startTime;
-        const healthy = issues.length === 0;
+    const artifacts = await detectConfigArtifacts(cwd);
+    const suggestions = generateConfigSuggestions(artifacts, {});
+    
+    ctx.tracker.checkpoint('complete');
+    
+    // Build health report
+    const issues: string[] = [];
+    
+    if (artifacts.missingWorkspaceConfig) {
+      issues.push(`${safeSymbols.error} Workspace config missing`);
+    }
+    
+    if (artifacts.missingProfiles.length > 0) {
+      issues.push(`${safeSymbols.warning} Missing profiles: ${artifacts.missingProfiles.join(', ')}`);
+    }
+    
+    if (artifacts.invalidProfiles.length > 0) {
+      issues.push(`${safeSymbols.error} Invalid profiles: ${artifacts.invalidProfiles.join(', ')}`);
+    }
+    
+    if (artifacts.missingLockfile) {
+      issues.push(`${safeSymbols.warning} Lockfile missing`);
+    }
+
+    const healthy = issues.length === 0;
+    
+    ctx.logger?.info('Config doctor check completed', {
+      healthy,
+      issuesCount: issues.length,
+      suggestionsCount: suggestions.length,
+    });
+    
+    if (flags.json) {
+      ctx.output?.json({ 
+        artifacts, 
+        suggestions, 
+        healthy 
+      });
+    } else {
+      // Pretty output с suggestions
+      if (issues.length === 0) {
+        ctx.output?.write(box('Config Health', [
+          `${ctx.output?.ui.symbols.success ?? '✓'} All checks passed`
+        ]));
+      } else {
+        const outputLines = [
+          ...issues,
+          '',
+          `${ctx.output?.ui.colors.bold('Suggestions:') ?? 'Suggestions:'}`,
+          ...suggestions.map(s => 
+            `  ${s.command} ${s.args.join(' ')} - ${s.description}`
+          )
+        ];
         
-        if (flags.json) {
-          ctx.presenter.json({ 
-            artifacts, 
-            suggestions, 
-            healthy 
-          });
-        } else {
-          // Pretty output с suggestions
-          if (issues.length === 0) {
-            ctx.presenter.write(box('Config Health', [
-              `${safeSymbols.success} All checks passed`
-            ]));
-          } else {
-            const output = [
-              ...issues,
-              '',
-              safeColors.bold('Suggestions:'),
-              ...suggestions.map(s => 
-                `  ${s.command} ${s.args.join(' ')} - ${s.description}`
-              )
-            ];
-            
-            ctx.presenter.write(box('Config Health', output));
-          }
-        }
-
-        // Track command completion
-        await emit({
-          type: ANALYTICS_EVENTS.CONFIG_DOCTOR_FINISHED,
-          payload: {
-            fix: !!flags.fix,
-            healthy,
-            issuesCount: issues.length,
-            suggestionsCount: suggestions.length,
-            durationMs: totalTime,
-            result: healthy ? 'success' : 'failed',
-          },
-        });
-
-        return healthy ? 0 : 1;
-      } catch (e: unknown) {
-        const totalTime = Date.now() - startTime;
-
-        // Track command failure
-        await emit({
-          type: ANALYTICS_EVENTS.CONFIG_DOCTOR_FINISHED,
-          payload: {
-            fix: !!flags.fix,
-            durationMs: totalTime,
-            result: 'error',
-            error: String(e),
-          },
-        });
-
-        ctx.presenter.error(String(e));
-        return 1;
+        ctx.output?.write(box('Config Health', outputLines));
       }
     }
-  )) as number;
-};
 
+    return healthy ? { ok: true, healthy } : { ok: false, healthy, issues };
+  },
+});

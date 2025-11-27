@@ -1,73 +1,62 @@
-import type { CommandModule } from '../types';
+// @ts-expect-error - types will be available after command-kit types are generated
+import { defineCommand } from '@kb-labs/cli-command-kit';
 import { initWorkspaceConfig } from '@kb-labs/core-config';
-import type { TelemetryEvent, TelemetryEmitResult } from '@kb-labs/core-types';
-import { runWithOptionalAnalytics } from '../../infra/analytics/telemetry-wrapper.js';
 import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../infra/analytics/events.js';
 
-export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<number> => {
-  const startTime = Date.now();
-  const cwd = (flags.cwd as string) || process.cwd();
-
-  return (await runWithOptionalAnalytics(
-    {
-      actor: ANALYTICS_ACTOR,
-      ctx: { workspace: cwd },
+export const run = defineCommand({
+  name: 'init:workspace',
+  flags: {
+    format: {
+      type: 'string',
+      description: 'Config format',
+      choices: ['yaml', 'json'] as const,
+      default: 'yaml',
     },
-    async (emit: (event: Partial<TelemetryEvent>) => Promise<TelemetryEmitResult>): Promise<number> => {
-      try {
-        // Track command start
-        await emit({
-          type: ANALYTICS_EVENTS.INIT_WORKSPACE_STARTED,
-          payload: {
-            format: (flags.format as string) || 'yaml',
-            force: !!flags.force,
-          },
-        });
-        const result = await initWorkspaceConfig({
-          format: (flags.format as 'yaml' | 'json') || 'yaml',
-          force: !!flags.force,
-          cwd
-        });
-        
-        const totalTime = Date.now() - startTime;
+    force: {
+      type: 'boolean',
+      description: 'Force initialization even if already exists',
+      default: false,
+    },
+    cwd: {
+      type: 'string',
+      description: 'Working directory',
+    },
+    json: {
+      type: 'boolean',
+      description: 'Output in JSON format',
+      default: false,
+    },
+  },
+  analytics: {
+    startEvent: ANALYTICS_EVENTS.INIT_WORKSPACE_STARTED,
+    finishEvent: ANALYTICS_EVENTS.INIT_WORKSPACE_FINISHED,
+    actor: ANALYTICS_ACTOR.id,
+    includeFlags: true,
+  },
+  // @ts-expect-error - types will be inferred from schema after types are generated
+  async handler(ctx: any, argv: any, flags: any) {
+    const cwd = flags.cwd || ctx.cwd || process.cwd();
+    
+    ctx.tracker.checkpoint('init');
 
-        if (flags.json) {
-          ctx.presenter.json(result);
-        } else {
-          ctx.presenter.write('Workspace configuration initialized successfully.\n');
-        }
+    const result = await initWorkspaceConfig({
+      format: flags.format || 'yaml',
+      force: flags.force,
+      cwd
+    });
+    
+    ctx.tracker.checkpoint('complete');
 
-        // Track command completion
-        await emit({
-          type: ANALYTICS_EVENTS.INIT_WORKSPACE_FINISHED,
-          payload: {
-            format: (flags.format as string) || 'yaml',
-            force: !!flags.force,
-            durationMs: totalTime,
-            result: 'success',
-          },
-        });
-        
-        return 0;
-      } catch (e: unknown) {
-        const totalTime = Date.now() - startTime;
+    ctx.logger?.info('Workspace configuration initialized successfully', {
+      format: flags.format || 'yaml',
+    });
 
-        // Track command failure
-        await emit({
-          type: ANALYTICS_EVENTS.INIT_WORKSPACE_FINISHED,
-          payload: {
-            format: (flags.format as string) || 'yaml',
-            force: !!flags.force,
-            durationMs: totalTime,
-            result: 'error',
-            error: String(e),
-          },
-        });
-
-        ctx.presenter.error(String(e));
-        return 1;
-      }
+    if (flags.json) {
+      ctx.output?.json(result);
+    } else {
+      ctx.output?.write('Workspace configuration initialized successfully.\n');
     }
-  )) as number;
-};
 
+    return { ok: true, result };
+  },
+});

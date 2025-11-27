@@ -25,7 +25,7 @@ export const manifest = createManifestV2<typeof pluginContractsManifest>({
     commands: [
       // INIT commands
       {
-        id: 'init:workspace',
+        id: 'workspace',
         group: 'init',
         describe: 'Initialize workspace configuration',
         flags: [
@@ -41,7 +41,7 @@ export const manifest = createManifestV2<typeof pluginContractsManifest>({
         handler: './cli/init/workspace.js#run',
       },
       {
-        id: 'init:policy',
+        id: 'policy',
         group: 'init',
         describe: 'Initialize policy configuration',
         flags: [
@@ -55,7 +55,7 @@ export const manifest = createManifestV2<typeof pluginContractsManifest>({
         handler: './cli/init/policy.js#run',
       },
       {
-        id: 'init:setup',
+        id: 'setup',
         group: 'init',
         describe: 'Initialize complete KB Labs workspace',
         longDescription: 'Setup workspace with config, profile, and policy in one command',
@@ -80,7 +80,7 @@ export const manifest = createManifestV2<typeof pluginContractsManifest>({
       
       // CONFIG commands
       {
-        id: 'config:get',
+        id: 'get',
         group: 'config',
         describe: 'Get product configuration',
         flags: [
@@ -98,7 +98,7 @@ export const manifest = createManifestV2<typeof pluginContractsManifest>({
         handler: './cli/config/get.js#run',
       },
       {
-        id: 'config:inspect',
+        id: 'inspect',
         group: 'config',
         describe: 'Inspect product configuration (summary + validation)',
         flags: [
@@ -114,7 +114,7 @@ export const manifest = createManifestV2<typeof pluginContractsManifest>({
         handler: './cli/config/inspect.js#run',
       },
       {
-        id: 'config:validate',
+        id: 'validate',
         group: 'config',
         describe: 'Validate product configuration against schemas',
         flags: [
@@ -132,7 +132,7 @@ export const manifest = createManifestV2<typeof pluginContractsManifest>({
         handler: './cli/config/validate.js#run',
       },
       {
-        id: 'config:explain',
+        id: 'explain',
         group: 'config',
         describe: 'Explain configuration resolution',
         flags: [
@@ -148,7 +148,7 @@ export const manifest = createManifestV2<typeof pluginContractsManifest>({
         handler: './cli/config/explain.js#run',
       },
       {
-        id: 'config:doctor',
+        id: 'doctor',
         group: 'config',
         describe: 'Check configuration health and get suggestions',
         flags: [
@@ -166,7 +166,7 @@ export const manifest = createManifestV2<typeof pluginContractsManifest>({
       
       // PROFILES commands
       {
-        id: 'profiles:inspect',
+        id: 'inspect',
         group: 'profiles',
         describe: 'Inspect profile configuration (Profiles v2)',
         flags: [
@@ -182,7 +182,7 @@ export const manifest = createManifestV2<typeof pluginContractsManifest>({
         handler: './cli/profiles/inspect.js#run',
       },
       {
-        id: 'profiles:resolve',
+        id: 'resolve',
         group: 'profiles',
         describe: 'Resolve and display profile configuration (Profiles v2)',
         flags: [
@@ -197,7 +197,7 @@ export const manifest = createManifestV2<typeof pluginContractsManifest>({
         handler: './cli/profiles/resolve.js#run',
       },
       {
-        id: 'profiles:validate',
+        id: 'validate',
         group: 'profiles',
         describe: 'Validate profile configuration (Profiles v2)',
         flags: [
@@ -214,7 +214,7 @@ export const manifest = createManifestV2<typeof pluginContractsManifest>({
       
       // BUNDLE commands
       {
-        id: 'bundle:print',
+        id: 'print',
         group: 'bundle',
         describe: 'Print complete bundle for product',
         flags: [
@@ -233,7 +233,7 @@ export const manifest = createManifestV2<typeof pluginContractsManifest>({
         handler: './cli/bundle/print.js#run',
       },
       {
-        id: 'bundle:inspect',
+        id: 'inspect',
         group: 'bundle',
         describe: 'Inspect bundle (profile + config + artifacts + trace)',
         flags: [

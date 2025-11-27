@@ -1,176 +1,117 @@
-import type { CommandModule } from '../types';
+// @ts-expect-error - types will be available after command-kit types are generated
+import { defineCommand } from '@kb-labs/cli-command-kit';
 import { readProfilesSection, resolveProfile, ProfileV2Schema } from '@kb-labs/core-config';
 import { box, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
-import type { TelemetryEvent, TelemetryEmitResult } from '@kb-labs/core-types';
-import { runWithOptionalAnalytics } from '../../infra/analytics/telemetry-wrapper.js';
 import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../infra/analytics/events.js';
 
-export const run: CommandModule['run'] = async (ctx, _argv, flags): Promise<number> => {
-  const startTime = Date.now();
-  const cwd = (flags.cwd as string) || process.cwd();
-  const profileId = flags.profile as string | undefined;
-
-  return (await runWithOptionalAnalytics(
-    {
-      actor: ANALYTICS_ACTOR,
-      ctx: { workspace: cwd },
+export const run = defineCommand({
+  name: 'profiles:validate',
+  flags: {
+    profile: {
+      type: 'string',
+      description: 'Profile ID to validate',
     },
-    async (emit: (event: Partial<TelemetryEvent>) => Promise<TelemetryEmitResult>): Promise<number> => {
-      try {
-        // Track command start
-        await emit({
-          type: ANALYTICS_EVENTS.PROFILES_VALIDATE_STARTED,
-          payload: {
-            profileId,
-          },
-        });
+    cwd: {
+      type: 'string',
+      description: 'Working directory',
+    },
+    json: {
+      type: 'boolean',
+      description: 'Output in JSON format',
+      default: false,
+    },
+  },
+  analytics: {
+    startEvent: ANALYTICS_EVENTS.PROFILES_VALIDATE_STARTED,
+    finishEvent: ANALYTICS_EVENTS.PROFILES_VALIDATE_FINISHED,
+    actor: ANALYTICS_ACTOR.id,
+    includeFlags: true,
+  },
+  // @ts-expect-error - types will be inferred from schema after types are generated
+  async handler(ctx: any, argv: any, flags: any) {
+    const cwd = flags.cwd || ctx.cwd || process.cwd();
+    
+    ctx.tracker.checkpoint('load');
 
-        const profilesSection = await readProfilesSection(cwd);
-        const availableProfiles = profilesSection.profiles.map((p) => p.id);
+    const profilesSection = await readProfilesSection(cwd);
+    const availableProfiles = profilesSection.profiles.map((p) => p.id);
 
-        if (!profileId) {
-          const totalTime = Date.now() - startTime;
-          await emit({
-            type: ANALYTICS_EVENTS.PROFILES_VALIDATE_FINISHED,
-          payload: {
-            profileId: undefined,
-            durationMs: totalTime,
-            result: 'failed',
-            error: 'No profile specified',
-          },
-          });
+    if (!flags.profile) {
+      const msg = `No profile specified. Available profiles: ${availableProfiles.join(', ') || 'none'}`;
+      if (flags.json) {
+        ctx.output?.json({ ok: false, error: msg, available: availableProfiles });
+      } else {
+        ctx.output?.error(msg);
+      }
+      return 1;
+    }
 
-          const msg = `No profile specified. Available profiles: ${availableProfiles.join(', ') || 'none'}`;
-          if (flags.json) {
-            ctx.presenter.json({ ok: false, error: msg, available: availableProfiles });
-            return 1;
-          }
-          ctx.presenter.error(msg);
-          return 1;
-        }
+    if (!availableProfiles.includes(flags.profile)) {
+      const msg = `Profile "${flags.profile}" not found. Available: ${availableProfiles.join(', ') || 'none'}`;
+      if (flags.json) {
+        ctx.output?.json({ ok: false, error: msg, available: availableProfiles });
+      } else {
+        ctx.output?.error(msg);
+      }
+      return 1;
+    }
 
-        if (!availableProfiles.includes(profileId)) {
-          const totalTime = Date.now() - startTime;
-          await emit({
-            type: ANALYTICS_EVENTS.PROFILES_VALIDATE_FINISHED,
-          payload: {
-            profileId,
-            durationMs: totalTime,
-            result: 'failed',
-            error: `Profile "${profileId}" not found`,
-          },
-          });
+    // Find profile in section and validate with Zod
+    const profile = profilesSection.profiles.find((p) => p.id === flags.profile);
+    if (!profile) {
+      const msg = `Profile "${flags.profile}" not found in profiles section`;
+      if (flags.json) {
+        ctx.output?.json({ ok: false, error: msg });
+      } else {
+        ctx.output?.error(msg);
+      }
+      return 1;
+    }
 
-          const msg = `Profile "${profileId}" not found. Available: ${availableProfiles.join(', ') || 'none'}`;
-          if (flags.json) {
-            ctx.presenter.json({ ok: false, error: msg, available: availableProfiles });
-            return 1;
-          }
-          ctx.presenter.error(msg);
-          return 1;
-        }
+    ctx.tracker.checkpoint('validate');
 
-        // Find profile in section and validate with Zod
-        const profile = profilesSection.profiles.find((p) => p.id === profileId);
-        if (!profile) {
-          const totalTime = Date.now() - startTime;
-          await emit({
-            type: ANALYTICS_EVENTS.PROFILES_VALIDATE_FINISHED,
-            payload: {
-              profileKey: profileId,
-              durationMs: totalTime,
-              result: 'failed',
-              error: 'Profile not found in section',
-            },
-          });
+    // Validate with Zod schema
+    const validation = ProfileV2Schema.safeParse(profile);
+    const isValid = validation.success;
+    const errors = !validation.success
+      ? validation.error.issues.map((e) => ({
+          path: e.path.join('.'),
+          message: e.message,
+        }))
+      : null;
 
-          const msg = `Profile "${profileId}" not found in profiles section`;
-          if (flags.json) {
-            ctx.presenter.json({ ok: false, error: msg });
-            return 1;
-          }
-          ctx.presenter.error(msg);
-          return 1;
-        }
+    ctx.tracker.checkpoint('complete');
 
-        // Validate with Zod schema
-        const validation = ProfileV2Schema.safeParse(profile);
-        const isValid = validation.success;
-        const errors = !validation.success
-          ? validation.error.issues.map((e) => ({
-              path: e.path.join('.'),
-              message: e.message,
-            }))
-          : null;
-
-        const totalTime = Date.now() - startTime;
-
-        if (flags.json) {
-          ctx.presenter.json({
-            ok: isValid,
-            errors,
-            profileId: profile.id,
-            source: profilesSection.sourcePath,
-          });
-        } else {
-          if (isValid) {
-            ctx.presenter.write(
-              box('Profile Validation', [
-                `${safeSymbols.success} ${safeColors.bold('Valid profile')} "${profileId}" (Profiles v2)`,
-                `source: ${profilesSection.sourcePath || 'unknown'}`,
-              ])
-            );
-          } else {
-            const lines: string[] = [
-              `${safeSymbols.error} ${safeColors.bold('Invalid profile')} "${profileId}" (Profiles v2)`,
-              `source: ${profilesSection.sourcePath || 'unknown'}`,
-            ];
-            if (errors && errors.length > 0) {
-              lines.push('', safeColors.bold('Errors:'));
-              for (const e of errors) {
-                lines.push(`  - ${e.path ? e.path + ': ' : ''}${e.message}`);
-              }
-            }
-            ctx.presenter.write(box('Profile Validation', lines));
+    if (flags.json) {
+      ctx.output?.json({
+        ok: isValid,
+        errors,
+        profileId: profile.id,
+        source: profilesSection.sourcePath,
+      });
+    } else {
+      if (isValid) {
+        ctx.output?.write(
+          box('Profile Validation', [
+            `${safeSymbols.success} ${safeColors.bold('Valid profile')} "${flags.profile}" (Profiles v2)`,
+            `source: ${profilesSection.sourcePath || 'unknown'}`,
+          ])
+        );
+      } else {
+        const lines: string[] = [
+          `${safeSymbols.error} ${safeColors.bold('Invalid profile')} "${flags.profile}" (Profiles v2)`,
+          `source: ${profilesSection.sourcePath || 'unknown'}`,
+        ];
+        if (errors && errors.length > 0) {
+          lines.push('', safeColors.bold('Errors:'));
+          for (const e of errors) {
+            lines.push(`  - ${e.path ? e.path + ': ' : ''}${e.message}`);
           }
         }
-
-        // Track command completion
-        await emit({
-          type: ANALYTICS_EVENTS.PROFILES_VALIDATE_FINISHED,
-          payload: {
-            profileId: profile.id,
-            validationOk: isValid,
-            errorsCount: errors?.length || 0,
-            durationMs: totalTime,
-            result: isValid ? 'success' : 'failed',
-          },
-        });
-
-        return isValid ? 0 : 1;
-      } catch (err: any) {
-        const totalTime = Date.now() - startTime;
-
-        // Track command failure
-        await emit({
-          type: ANALYTICS_EVENTS.PROFILES_VALIDATE_FINISHED,
-          payload: {
-            profileId: profileId || undefined,
-            durationMs: totalTime,
-            result: 'error',
-            error: err?.message || String(err),
-          },
-        });
-
-        if (flags.json) {
-          ctx.presenter.json({ ok: false, error: err?.message || String(err) });
-        } else {
-          ctx.presenter.error(err?.message || String(err));
-        }
-        return 1;
+        ctx.output?.write(box('Profile Validation', lines));
       }
     }
-  )) as number;
-};
 
-
+    return isValid ? { ok: true, valid: true } : { ok: false, valid: false, errors };
+  },
+});

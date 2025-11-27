@@ -99,9 +99,12 @@ async function findNearestConfig(
       
       try {
         await fsp.access(candidate);
-        // Warn if using old location
+        // Warn if using old location (only in debug mode)
         if (!candidate.includes('.kb/')) {
-          console.warn('[kb-labs] DEPRECATED: Move config to .kb/kb-labs.config.yaml');
+          const DEBUG_MODE = process.env.DEBUG_SANDBOX === '1' || process.env.NODE_ENV === 'development';
+          if (DEBUG_MODE) {
+            console.warn('[kb-labs] DEPRECATED: Move config to .kb/kb-labs.config.yaml');
+          }
         }
         return { path: candidate, tried };
       } catch {

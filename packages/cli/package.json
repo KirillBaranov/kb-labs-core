@@ -37,6 +37,7 @@
   "dependencies": {
     "@kb-labs/core-types": "workspace:*",
     "@kb-labs/cli-core": "link:../../../kb-labs-cli/packages/core",
+    "@kb-labs/cli-command-kit": "workspace:*",
     "@kb-labs/core-bundle": "link:../bundle",
     "@kb-labs/core-config": "link:../config",
     "@kb-labs/core-policy": "link:../policy",

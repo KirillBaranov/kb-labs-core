@@ -98,6 +98,8 @@
     "@kb-labs/core-bundle": "link:packages/bundle",
     "@kb-labs/core-config": "link:packages/config",
     "@kb-labs/core-policy": "link:packages/policy",
+    "@kb-labs/core-profiles": "link:packages/profiles",
+    "@kb-labs/core-workspace": "link:packages/core",
     "@kb-labs/core-sys": "link:packages/sys",
     "@kb-labs/knowledge-contracts": "workspace:*",
     "@kb-labs/knowledge-core": "workspace:*",

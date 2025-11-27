@@ -65,7 +65,7 @@ export async function run(ctx: SetupContext = {}) {
     ].join('\n')
   );
 
-  ctx.runtime?.log?.('info', 'Core CLI setup completed', { cwd, created });
+  ctx.logger?.info('Core CLI setup completed', { cwd, created });
 
   return {
     ok: true,
