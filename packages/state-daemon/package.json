@@ -1,0 +1,37 @@
+{
+  "name": "@kb-labs/state-daemon",
+  "version": "0.1.0",
+  "description": "State daemon server for persistent cross-invocation state",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "kb-state-daemon": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "pnpm clean && tsup --config tsup.config.ts",
+    "dev": "tsup --config tsup.config.ts --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@kb-labs/state-broker": "link:../state-broker"
+  },
+  "devDependencies": {
+    "@kb-labs/devkit": "link:../../../kb-labs-devkit",
+    "@types/node": "^24.3.3",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.6.3"
+  }
+}
