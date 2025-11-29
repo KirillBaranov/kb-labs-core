@@ -75,7 +75,7 @@ function getMetricsState(): MetricsState {
         global[METRICS_STORAGE_KEY] = {
             logsWritten: 0,
             logsDropped: 0,
-            logsByLevel: { trace: 0, debug: 0, info: 0, warn: 0, error: 0 },
+            logsByLevel: { trace: 0, debug: 0, info: 0, warn: 0, error: 0, silent: 0 },
             sinkFailures: 0,
             rotationCount: 0,
             lastReset: new Date(),
@@ -188,7 +188,7 @@ export function resetMetrics(): void {
     const state = getMetricsState();
     state.logsWritten = 0;
     state.logsDropped = 0;
-    state.logsByLevel = { trace: 0, debug: 0, info: 0, warn: 0, error: 0 };
+    state.logsByLevel = { trace: 0, debug: 0, info: 0, warn: 0, error: 0, silent: 0 };
     state.sinkFailures = 0;
     state.rotationCount = 0;
     state.lastReset = new Date();

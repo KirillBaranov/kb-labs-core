@@ -70,8 +70,18 @@ export interface ExecutionContext {
   /** Resource tracker for cleanup */
   resources?: import('../cleanup/resource-tracker.js').ResourceTracker;
   
-  /** Extension point for future capabilities */
-  extensions?: Record<string, unknown>;
+  /** 
+   * Extension point for future capabilities
+   * 
+   * @deprecated Use `runtime` API instead (e.g., `ctx.runtime.invoke()` instead of `ctx.extensions.invoke.invoke()`)
+   * This will be removed in a future version. Migrate to runtime API for better type safety and consistency.
+   */
+  extensions?: {
+    artifacts?: any;
+    invoke?: any;
+    shell?: any;
+    events?: any;
+  };
   
   /** Lifecycle hooks (optional, for observability) */
   hooks?: import('./lifecycle-hooks.js').LifecycleHooks;

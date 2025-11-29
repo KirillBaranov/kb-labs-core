@@ -1,4 +1,4 @@
-export type LogLevel = "trace" | "debug" | "info" | "warn" | "error";
+export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "silent";
 
 // Уровни verbosity (пользовательские)
 export type VerbosityLevel = "quiet" | "normal" | "verbose" | "debug" | "inspect";

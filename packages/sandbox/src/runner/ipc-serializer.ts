@@ -95,15 +95,28 @@ export function serializeContext(ctx: ExecutionContext): SerializableContext {
   // Serialize extension data (only if it's serializable)
   if (ctx.extensions) {
     const extensionsData: Record<string, unknown> = {};
+    const MAX_EXTENSION_SIZE = 100 * 1024; // 100KB limit
+    
     for (const [key, value] of Object.entries(ctx.extensions)) {
       // Only include serializable values
       if (value !== null && typeof value !== 'function') {
         try {
-          // Test if value is JSON-serializable
-          JSON.stringify(value);
+          // CRITICAL: Estimate size WITHOUT creating full string to prevent OOM
+          // Use recursive size estimation instead of JSON.stringify
+          const estimatedSize = estimateSerializedSize(value);
+          
+          // SAFETY: Skip extensions larger than 100KB to prevent IPC OOM
+          if (estimatedSize > MAX_EXTENSION_SIZE) {
+            // Only log in debug mode to avoid memory issues
+            if (ctx.debug) {
+              console.warn(`⚠️  SERIALIZE: Skipping extension "${key}" - too large (${(estimatedSize / 1024).toFixed(2)} KB > 100 KB)`);
+            }
+            continue;
+          }
+
           extensionsData[key] = value;
         } catch {
-          // Skip non-serializable values
+          // Skip non-serializable values silently
         }
       }
     }
@@ -122,7 +135,50 @@ export function serializeContext(ctx: ExecutionContext): SerializableContext {
   return serializable;
 }
 
-
-
-
+/**
+ * Estimate serialized size without actually stringifying
+ * Prevents OOM from creating large string copies
+ */
+function estimateSerializedSize(value: unknown): number {
+  if (value === null || value === undefined) {
+    return 4; // "null"
+  }
+  
+  if (typeof value === 'string') {
+    // String size: quotes + escaped characters
+    return value.length + 2 + (value.match(/["\\\n\r\t]/g)?.length || 0);
+  }
+  
+  if (typeof value === 'number') {
+    return 20; // Approximate max number size
+  }
+  
+  if (typeof value === 'boolean') {
+    return value ? 4 : 5; // "true" or "false"
+  }
+  
+  if (Array.isArray(value)) {
+    // Array overhead: brackets + commas
+    let size = 2; // []
+    for (const item of value) {
+      size += estimateSerializedSize(item) + 1; // +1 for comma
+    }
+    return size;
+  }
+  
+  if (typeof value === 'object') {
+    // Object overhead: braces + colons + commas
+    let size = 2; // {}
+    const entries = Object.entries(value);
+    for (const [key, val] of entries) {
+      // Key: quotes + escaped chars + colon
+      size += key.length + 2 + (key.match(/["\\]/g)?.length || 0) + 1;
+      // Value
+      size += estimateSerializedSize(val) + 1; // +1 for comma
+    }
+    return size;
+  }
+  
+  return 100; // Fallback estimate
+}
 

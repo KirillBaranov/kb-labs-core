@@ -259,6 +259,7 @@ function levelToSeverity(level: LogLevel): number {
         info: 5,
         warn: 7,
         error: 10,
+        silent: 0,  // silent = lowest severity (never logged)
     };
     return map[level] || 5;
 }

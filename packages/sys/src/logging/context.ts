@@ -9,6 +9,10 @@ export interface LogContext {
   parentSpanId?: string;
   executionId?: string;
   requestId?: string;
+  /** Tenant identifier (multi-tenancy support) */
+  tenantId?: string;
+  /** Tenant tier (multi-tenancy support) */
+  tier?: string;
 }
 
 let currentContext: LogContext | undefined;
@@ -60,6 +64,17 @@ export function mergeLogContext(additional: Partial<LogContext>): void {
   } else {
     currentContext = { ...additional };
   }
+}
+
+/**
+ * Set tenant context for logging
+ * Helper for multi-tenancy support
+ *
+ * @param tenantId - Tenant identifier
+ * @param tier - Tenant tier (optional)
+ */
+export function setTenantContext(tenantId: string, tier?: string): void {
+  mergeLogContext({ tenantId, tier });
 }
 
 

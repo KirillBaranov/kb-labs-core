@@ -3,7 +3,7 @@
  * Smart console sink with verbosity filtering and formatting
  */
 
-import type { LogRecord, LogSink } from "../types/types.js";
+import type { LogRecord, LogSink, LogLevel } from "../types/types.js";
 import type { VerbosityLevel, OutputMode, DebugFormat } from "../types/types.js";
 import { safeColors, safeSymbols } from "@kb-labs/shared-cli-ui";
 
@@ -67,21 +67,22 @@ export class ConsoleSink implements LogSink {
     }
 
     private outputJSON(rec: LogRecord): void {
-        console.log(JSON.stringify(rec));
+        // Write to stderr (logs should not pollute stdout)
+        console.error(JSON.stringify(rec));
     }
 
     private outputAI(rec: LogRecord): void {
-        // Минималистичный формат для LLM
+        // Минималистичный формат для LLM - write to stderr
         const parts: string[] = [];
 
         if (rec.level) parts.push(`[${rec.level.toUpperCase()}]`);
         if (rec.category) parts.push(`[${rec.category}]`);
         if (rec.msg) parts.push(rec.msg);
 
-        console.log(parts.join(" "));
+        console.error(parts.join(" "));
 
         if (rec.meta && Object.keys(rec.meta).length > 0) {
-            console.log(JSON.stringify(rec.meta, null, 2));
+            console.error(JSON.stringify(rec.meta, null, 2));
         }
     }
 
@@ -89,30 +90,32 @@ export class ConsoleSink implements LogSink {
         const { level, msg, meta, err } = rec;
 
         // Цвета по уровню
-        const colors = {
+        const colors: Record<LogLevel, (text: string) => string> = {
             trace: safeColors.muted,
             debug: safeColors.muted,
             info: safeColors.info,
             warn: safeColors.warning,
             error: safeColors.error,
+            silent: safeColors.muted,  // silent никогда не должен выводиться, но на всякий случай
         };
 
         const color = colors[level] || safeColors.info;
 
         // Убираем префиксы типа [BOOTSTRAP], [PkgStrategy] - они идут в category
         // В human формате показываем только важное
+        // Write to stderr (logs should not pollute stdout)
         if (msg) {
             // Для debug логов добавляем category если есть
-            const prefix = rec.category && (rec.level === 'debug' || rec.level === 'trace') 
-                ? `${safeColors.muted(`[${rec.category}]`)} ` 
+            const prefix = rec.category && (rec.level === 'debug' || rec.level === 'trace')
+                ? `${safeColors.muted(`[${rec.category}]`)} `
                 : '';
             const output = `${prefix}${color(msg)}`;
-            console.log(output);
+            console.error(output);
         }
 
         // Метаданные в debug режиме
         if (meta && this.config.verbosity === "debug") {
-            console.log(safeColors.muted(JSON.stringify(meta, null, 2)));
+            console.error(safeColors.muted(JSON.stringify(meta, null, 2)));
         }
 
         // Ошибки всегда показываем

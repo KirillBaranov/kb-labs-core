@@ -3,8 +3,9 @@ import { recordLogWritten, recordLogDropped, recordSinkFailure, recordSinkSucces
 import { getLogContext } from "./context.js";
 import { getGlobalState, type LoggingState } from "./state.js";
 import { enrichLogRecord } from "./ai-enrichment.js";
+import { initLogging } from "./init.js";
 
-const LEVEL_ORDER: Record<LogLevel, number> = { trace: 5, debug: 10, info: 20, warn: 30, error: 40 };
+const LEVEL_ORDER: Record<LogLevel, number> = { trace: 5, debug: 10, info: 20, warn: 30, error: 40, silent: 50 };
 
 function getGlobalLevel(): LogLevel {
     return getGlobalState().globalLevel;
@@ -161,36 +162,49 @@ function baseLogger(bindings?: { category?: string; meta?: Record<string, unknow
     };
 }
 
-// Lazy import для избежания циклических зависимостей
-let ensureLoggingInitialized: (() => void) | null = null;
+// Флаг для предотвращения повторной инициализации
+let autoInitAttempted = false;
 
 function lazyLoadAutoInit(): void {
-    if (ensureLoggingInitialized) {
-        ensureLoggingInitialized();
+    // Если уже пытались инициализировать, не пытаемся снова
+    if (autoInitAttempted) {
         return;
     }
-    
-    if (typeof process !== 'undefined' && process.env) {
-        try {
-            // Используем синхронный require для немедленной инициализации
-            // Это безопасно так как auto-init не зависит от logger
-            const autoInit = require('./auto-init.js');
-            if (autoInit && typeof autoInit.ensureLoggingInitialized === 'function') {
-                const initFn = autoInit.ensureLoggingInitialized;
-                ensureLoggingInitialized = initFn;
-                initFn();
-            }
-        } catch {
-            // Если auto-init недоступен, это нормально - значит инициализация уже произошла
-            // или мы в браузере где require может не работать
-        }
+    autoInitAttempted = true;
+
+    // Всегда делаем auto-init с дефолтами из env vars или из state.ts
+    // Это нужно для модулей которые вызывают getLogger() на топ-уровне
+    // Дефолтный уровень 'silent' установлен в state.ts (полностью тихий режим)
+    try {
+        initLogging({
+            level: (process.env.KB_LOG_LEVEL || process.env.LOG_LEVEL || 'silent') as any,
+            mode: (process.env.KB_OUTPUT_MODE || 'auto') as any,
+            replaceSinks: true,
+            quiet: false,
+            debug: false,
+        });
+    } catch (err) {
+        // Если инициализация не удалась (циклическая зависимость), ничего не делаем
+        // Bootstrap позже переинициализирует с правильными параметрами
     }
 }
 
 export function getLogger(category?: string): Logger {
-    // Автоматически инициализировать при первом вызове (zero config)
-    lazyLoadAutoInit();
-    
+    const state = getGlobalState();
+
+    // Если не инициализирован, пробуем автоинит (только если env vars установлены)
+    if (!state.initialized) {
+        lazyLoadAutoInit();
+
+        // Если все еще не инициализирован - это ошибка
+        if (!state.initialized) {
+            throw new Error(
+                'Logger not initialized. Call initLogging() first in your CLI entry point (e.g., bootstrap.ts). ' +
+                'Ensure KB_LOG_LEVEL env var is set before importing modules that use getLogger().'
+            );
+        }
+    }
+
     return baseLogger({ category });
 }
 

@@ -37,3 +37,4 @@ export function isAIEnabled(): boolean {
     return state.aiConfig?.mode !== undefined && state.aiConfig.mode !== 'off';
 }
 
+

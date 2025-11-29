@@ -31,6 +31,32 @@ import {
 } from '../debug/progress.js';
 
 /**
+ * Quick estimate of object size without stringifying
+ * Prevents OOM from creating large string copies
+ */
+function estimateObjectSize(obj: unknown): number {
+  if (obj === null || obj === undefined) {
+    return 4;
+  }
+  if (typeof obj === 'string') {
+    return obj.length;
+  }
+  if (typeof obj === 'number' || typeof obj === 'boolean') {
+    return 20;
+  }
+  if (Array.isArray(obj)) {
+    return obj.reduce((sum, item) => sum + estimateObjectSize(item), 2);
+  }
+  if (typeof obj === 'object') {
+    return Object.entries(obj).reduce(
+      (sum, [key, val]) => sum + key.length + estimateObjectSize(val),
+      2
+    );
+  }
+  return 100;
+}
+
+/**
  * Setup log pipes for child process
  * @param child - Child process
  * @param ctx - Execution context
@@ -49,7 +75,18 @@ function setupLogPipes(
 
   if (child.stdout) {
     child.stdout.setEncoding('utf8');
-    child.stdout.on('data', (data: string) => {
+    child.stdout.on('data', (dataRaw: string) => {
+      // CRITICAL OOM FIX: Limit data size BEFORE split() to prevent OOM on huge logs
+      // Even 1MB chunks can cause OOM when split() creates tens of thousands of lines
+      const MAX_LOG_CHUNK_SIZE = 100000; // 100KB limit per chunk (safe for split)
+      let data = dataRaw;
+      if (data.length > MAX_LOG_CHUNK_SIZE) {
+        const truncated = data.slice(0, MAX_LOG_CHUNK_SIZE);
+        const warning = `\n[WARNING: Log output truncated - ${data.length} bytes > ${MAX_LOG_CHUNK_SIZE} bytes]`;
+        data = truncated + warning;
+        console.error(`⚠️  PARENT: Child stdout exceeded ${MAX_LOG_CHUNK_SIZE} bytes, truncating to prevent OOM`);
+      }
+
       const lines = data.split('\n').filter((line) => line.trim());
       for (const line of lines) {
         // Always collect in buffer for error display
@@ -80,7 +117,18 @@ function setupLogPipes(
 
   if (child.stderr) {
     child.stderr.setEncoding('utf8');
-    child.stderr.on('data', (data: string) => {
+    child.stderr.on('data', (dataRaw: string) => {
+      // CRITICAL OOM FIX: Limit data size BEFORE split() to prevent OOM on huge logs
+      // Even 1MB chunks can cause OOM when split() creates tens of thousands of lines
+      const MAX_LOG_CHUNK_SIZE = 100000; // 100KB limit per chunk (safe for split)
+      let data = dataRaw;
+      if (data.length > MAX_LOG_CHUNK_SIZE) {
+        const truncated = data.slice(0, MAX_LOG_CHUNK_SIZE);
+        const warning = `\n[WARNING: Log output truncated - ${data.length} bytes > ${MAX_LOG_CHUNK_SIZE} bytes]`;
+        data = truncated + warning;
+        console.error(`⚠️  PARENT: Child stderr exceeded ${MAX_LOG_CHUNK_SIZE} bytes, truncating to prevent OOM`);
+      }
+
       const lines = data.split('\n').filter((line) => line.trim());
       for (const line of lines) {
         // Always collect in buffer for error display
@@ -125,7 +173,22 @@ function setupLogPipes(
   child.on('message', (msg: any) => {
     if (msg?.type === 'LOG' && msg.payload) {
       const { level, message, meta } = msg.payload;
-      const logLine = `${message}${meta ? ` ${JSON.stringify(meta)}` : ''}`;
+      // Optimize: Only stringify meta if it's small to prevent memory issues
+      let metaStr = '';
+      if (meta) {
+        try {
+          // Quick size check before stringifying
+          const metaSize = estimateObjectSize(meta);
+          if (metaSize < 10 * 1024) { // Only stringify if < 10KB
+            metaStr = ` ${JSON.stringify(meta)}`;
+          } else {
+            metaStr = ` [meta: ${metaSize} bytes, truncated]`;
+          }
+        } catch {
+          metaStr = ' [meta: non-serializable]';
+        }
+      }
+      const logLine = `${message}${metaStr}`;
       const logLevel = (level || 'info') as 'info' | 'warn' | 'error' | 'debug';
       
       // Always collect in buffer
@@ -182,24 +245,30 @@ function getBootstrapPath(): string {
   const workspaceRootFromDirname = findWorkspaceRoot(__dirname);
   const workspaceRoot = workspaceRootFromCwd || workspaceRootFromDirname;
   
-  // Always log for debugging (critical issue) - use process.stderr.write for guaranteed output
-  const debugInfo = {
-    __filename,
-    __dirname,
-    cwd,
-    workspaceRootFromCwd,
-    workspaceRootFromDirname,
-    workspaceRoot,
-  };
-  process.stderr.write(`[getBootstrapPath] DEBUG: ${JSON.stringify(debugInfo, null, 2)}\n`);
+  // Debug info - use compact JSON to prevent memory issues
+  if (process.env.KB_PLUGIN_DEV_MODE === 'true') {
+    const debugInfo = {
+      __filename,
+      __dirname,
+      cwd,
+      workspaceRootFromCwd,
+      workspaceRootFromDirname,
+      workspaceRoot,
+    };
+    process.stderr.write(`[getBootstrapPath] DEBUG: ${JSON.stringify(debugInfo)}\n`);
+  }
   
   // 1. Try workspace root (most reliable for monorepo)
   if (workspaceRoot) {
     const workspacePath = path.join(workspaceRoot, 'kb-labs-core', 'packages', 'sandbox', 'dist', 'runner', 'bootstrap.js');
     const exists = existsSync(workspacePath);
-    process.stderr.write(`[getBootstrapPath] Checking workspace path: ${workspacePath}, exists: ${exists}\n`);
+    if (process.env.KB_PLUGIN_DEV_MODE === 'true') {
+      process.stderr.write(`[getBootstrapPath] Checking workspace path: ${workspacePath}, exists: ${exists}\n`);
+    }
     if (exists) {
-      process.stderr.write(`[getBootstrapPath] SUCCESS: Found bootstrap at workspace root: ${workspacePath}\n`);
+      if (process.env.KB_PLUGIN_DEV_MODE === 'true') {
+        process.stderr.write(`[getBootstrapPath] SUCCESS: Found bootstrap at workspace root: ${workspacePath}\n`);
+      }
       return workspacePath;
     }
   }
@@ -207,9 +276,13 @@ function getBootstrapPath(): string {
   // 2. Try relative to current file (if we're in sandbox/dist/runner, bootstrap is in same dir)
   const relativePath = path.join(__dirname, 'bootstrap.js');
   const relativeExists = existsSync(relativePath);
-  process.stderr.write(`[getBootstrapPath] Checking relative path: ${relativePath}, exists: ${relativeExists}\n`);
+  if (process.env.KB_PLUGIN_DEV_MODE === 'true') {
+    process.stderr.write(`[getBootstrapPath] Checking relative path: ${relativePath}, exists: ${relativeExists}\n`);
+  }
   if (relativeExists) {
-    process.stderr.write(`[getBootstrapPath] SUCCESS: Found bootstrap at relative path: ${relativePath}\n`);
+    if (process.env.KB_PLUGIN_DEV_MODE === 'true') {
+      process.stderr.write(`[getBootstrapPath] SUCCESS: Found bootstrap at relative path: ${relativePath}\n`);
+    }
     return relativePath;
   }
   
@@ -219,9 +292,13 @@ function getBootstrapPath(): string {
   for (let i = 0; i < 10; i++) {
     const nodeModulesPath = path.join(currentDir, 'node_modules', '@kb-labs', 'sandbox', 'dist', 'runner', 'bootstrap.js');
     const nodeModulesExists = existsSync(nodeModulesPath);
-    process.stderr.write(`[getBootstrapPath] Checking node_modules path: ${nodeModulesPath}, exists: ${nodeModulesExists}\n`);
+    if (process.env.KB_PLUGIN_DEV_MODE === 'true') {
+      process.stderr.write(`[getBootstrapPath] Checking node_modules path: ${nodeModulesPath}, exists: ${nodeModulesExists}\n`);
+    }
     if (nodeModulesExists) {
-      process.stderr.write(`[getBootstrapPath] SUCCESS: Found bootstrap at node_modules: ${nodeModulesPath}\n`);
+      if (process.env.KB_PLUGIN_DEV_MODE === 'true') {
+        process.stderr.write(`[getBootstrapPath] SUCCESS: Found bootstrap at node_modules: ${nodeModulesPath}\n`);
+      }
       return nodeModulesPath;
     }
     
@@ -327,7 +404,8 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
       const execArgv: string[] = [
         `--max-old-space-size=${memoryMb}`,
         '--no-deprecation',
-        '--enable-source-maps',
+        // TEMPORARILY DISABLED: --enable-source-maps may cause OOM during module loading
+        // '--enable-source-maps',
       ];
 
       // Add inspect flag if debug mode is inspect
@@ -381,21 +459,57 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
         stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
         cwd: ctx.workdir,
       });
-    
+
+      // DIAGNOSTIC: Test if stderr works at all (only in debug mode)
+      const DEBUG_MODE = process.env.DEBUG_SANDBOX === '1' || process.env.NODE_ENV === 'development';
+      if (DEBUG_MODE) {
+        process.stderr.write(`\n[DIAGNOSTIC] Child forked, PID: ${child.pid}\n`);
+      }
+
       logger.debug('Child process forked', { pid: child.pid });
-    
+
       if (ctx.onLog) {
         ctx.onLog(`[SUBPROCESS] Child process forked, PID: ${child.pid}`, 'debug');
       }
 
       // Extract quiet flag from context (if available)
       const quiet = !!(ctx.adapterContext as any)?.flags?.quiet;
-      
+
+      // Debug logging removed to prevent memory issues
       // Setup log collection (BEFORE waiting for READY, so we can capture early logs)
       const logBuffer = setupLogPipes(child, ctx, config, quiet);
-      
+      // Debug logging removed to prevent memory issues
+
+      // ═══════════════════════════════════════════════════════════════════════════
+      // PARENT PROCESS MEMORY MONITORING
+      // ═══════════════════════════════════════════════════════════════════════════
+      // Monitor parent process memory to detect issues BEFORE subprocess crashes
+      if (DEBUG_MODE) {
+        process.stderr.write('[DIAGNOSTIC] Starting parent memory monitor\n');
+      }
+      const parentMemoryMonitor = setInterval(() => {
+        if (!DEBUG_MODE) return; // Skip monitoring if not in debug mode
+
+        const mem = process.memoryUsage();
+        const heapUsedMB = (mem.heapUsed / 1024 / 1024).toFixed(0);
+        const heapTotalMB = (mem.heapTotal / 1024 / 1024).toFixed(0);
+        const rssMB = (mem.rss / 1024 / 1024).toFixed(0);
+        const externalMB = (mem.external / 1024 / 1024).toFixed(0);
+
+        process.stderr.write(`[PARENT-MEMORY] Heap: ${heapUsedMB}/${heapTotalMB}MB, RSS: ${rssMB}MB, External: ${externalMB}MB\n`);
+
+        // Warning if parent process using too much memory
+        if (mem.heapUsed > 512 * 1024 * 1024) { // >512MB
+          process.stderr.write(`[PARENT-MEMORY] ⚠️  Parent process heap usage HIGH: ${heapUsedMB}MB\n`);
+        }
+      }, 2000); // Every 2 seconds
+
+      // ═══════════════════════════════════════════════════════════════════════════
+
       // Log when child process exits
       child.on('exit', (code, signal) => {
+        clearInterval(parentMemoryMonitor); // Stop monitoring
+
         logger.debug('Child process exited', { code, signal });
         if (ctx.onLog) {
           ctx.onLog(`[SUBPROCESS] Child process exited with code ${code}, signal ${signal}`, 'debug');
@@ -501,12 +615,20 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
       });
 
       // Send execution request (serialize context for IPC)
+      let serializedCtx;
+      try {
+        serializedCtx = serializeContext(ctxWithSignal);
+      } catch (err) {
+        logger.error('Context serialization failed', { error: err });
+        throw err;
+      }
+
       child.send({
         type: 'RUN',
         payload: {
           handlerRef: handler,
           input,
-          ctx: serializeContext(ctxWithSignal),
+          ctx: serializedCtx,
         },
       });
 

@@ -21,7 +21,7 @@ export function getGlobalState(): LoggingState {
     const global = globalThis as typeof globalThis & { [GLOBAL_STORAGE_KEY]?: LoggingState };
     if (!global[GLOBAL_STORAGE_KEY]) {
         global[GLOBAL_STORAGE_KEY] = {
-            globalLevel: "info",
+            globalLevel: "silent",  // Default: completely silent (no logs), user must use --debug for logs
             sinks: [],
             redactor: null,
             categoryFilter: undefined,

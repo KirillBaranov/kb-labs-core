@@ -1,6 +1,14 @@
 /**
  * @module @kb-labs/core-sys/logging/auto-init
- * Automatic logging initialization with zero-config support
+ * @deprecated This module is deprecated and will be removed in future versions.
+ *
+ * Auto-init mechanism has been removed. Use explicit initLogging() in your CLI entry point instead.
+ * This ensures logging is configured correctly BEFORE any modules try to use getLogger().
+ *
+ * Migration: Call initLogging() in bootstrap.ts immediately after parsing CLI arguments.
+ * Example:
+ *   import { initLogging } from '@kb-labs/core-sys/logging';
+ *   initLogging({ level: 'error', mode: 'json', replaceSinks: true });
  */
 
 import { initLogging } from "./init.js";
@@ -62,17 +70,18 @@ export function ensureLoggingInitialized(): void {
 }
 
 function initDefaultLogging(): void {
-  const level = (process.env.LOG_LEVEL || process.env.KB_LOG_LEVEL || 'info').toLowerCase() as any;
+  const level = (process.env.LOG_LEVEL || process.env.KB_LOG_LEVEL || 'error').toLowerCase() as any;
   const quiet = process.env.KB_QUIET === 'true';
-  
+
   // Умные дефолты по окружению
   const isDevelopment = process.env.NODE_ENV === 'development';
   const isCI = process.env.CI === 'true';
   const isTTY = typeof process !== 'undefined' && process.stdout && process.stdout.isTTY;
-  
-  const defaultLevel = isDevelopment ? 'debug' : 'info';
+
+  // Default to 'error' to avoid log spam (users can override with --debug or env vars)
+  const defaultLevel = isDevelopment ? 'debug' : 'error';
   const defaultMode = isCI || !isTTY ? 'json' : 'auto';
-  
+
   initLogging({
     level: level || defaultLevel,
     mode: defaultMode,

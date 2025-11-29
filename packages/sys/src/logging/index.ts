@@ -1,6 +1,7 @@
 export * from "./types";
 export { configureLogger, configureFromEnv, addSink, removeSink, setLogLevel, getLogLevel, getLogger } from "./logger";
 export { getGlobalState, type LoggingState } from "./state";
+export { createNoOpLogger } from "./noop-logger";
 export { createRedactor } from "./redaction";
 export { stdoutSink } from "./sinks/stdout";
 export { jsonSink } from "./sinks/json";
