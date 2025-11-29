@@ -22,6 +22,7 @@ import {
     createSpinner,
     safeColors,
     safeSymbols,
+    sideBorderBox,
 } from "@kb-labs/shared-cli-ui";
 import { formatTable } from "@kb-labs/shared-cli-ui/table";
 
@@ -71,6 +72,7 @@ export class OutputImpl implements Output {
     get ui(): UIUtilities {
         return {
             box,
+            sideBox: sideBorderBox,
             table: (rows, headers) => {
                 if (headers && headers.length > 0) {
                     return formatTable(

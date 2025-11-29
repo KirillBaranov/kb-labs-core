@@ -46,6 +46,13 @@ export interface ErrorOptions {
  */
 export interface UIUtilities {
     box: (title: string, content?: string[], maxWidth?: number) => string;
+    sideBox: (options: {
+        title: string;
+        sections: Array<{ header?: string; items: string[] }>;
+        footer?: string;
+        status?: 'success' | 'error' | 'warning' | 'info';
+        timing?: number;
+    }) => string;
     table: (rows: (string | number)[][], headers?: string[]) => string[];
     keyValue: (pairs: Record<string, string | number>, options?: { padKeys?: boolean }) => string[];
     spinner: (text: string, jsonMode?: boolean) => Spinner;
