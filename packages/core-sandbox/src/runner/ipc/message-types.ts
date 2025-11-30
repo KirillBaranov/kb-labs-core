@@ -1,0 +1,38 @@
+/**
+ * @module @kb-labs/core-sandbox/runner/ipc/message-types
+ * IPC message type definitions
+ */
+
+import type { HandlerRef, ExecutionContext } from '../../types/index';
+import type { SerializableContext } from '../ipc-serializer';
+
+/**
+ * IPC message from parent process
+ */
+export interface IpcMessage {
+  type: 'RUN' | 'READY' | 'LOG' | 'ERR' | 'CRASH';
+  payload?: {
+    handlerRef?: HandlerRef;
+    input?: unknown;
+    ctx?: SerializableContext | ExecutionContext;
+    error?: {
+      code: string;
+      message: string;
+      stack?: string;
+    };
+    data?: unknown;
+    report?: string;
+    snapshotPath?: string;
+    tracePath?: string;
+    logPath?: string;
+  };
+}
+
+/**
+ * RUN message payload
+ */
+export interface RunMessagePayload {
+  handlerRef: HandlerRef;
+  input: unknown;
+  ctx: SerializableContext | ExecutionContext;
+}

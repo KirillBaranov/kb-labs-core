@@ -87,4 +87,4 @@ export {
   loadKnowledgeConfig,
   createKnowledgeClientFromConfig,
   type KnowledgeClientOptions,
-} from './knowledge.js';
+} from './knowledge';

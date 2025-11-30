@@ -5,7 +5,7 @@ import path from 'node:path';
 import {
   createKnowledgeClientFromConfig,
   loadKnowledgeConfig,
-} from '../knowledge.js';
+} from '../knowledge';
 
 const sampleKnowledgeConfig = {
   sources: [
