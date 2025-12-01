@@ -1,10 +1,8 @@
-// @ts-expect-error - types will be available after command-kit types are generated
 import { defineCommand } from '@kb-labs/shared-command-kit';
 import { loadBundle } from '@kb-labs/core-bundle';
 import type { ProductId } from '@kb-labs/core-bundle';
 import { box, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
 import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../infra/analytics/events';
-
 export const run = defineCommand({
   name: 'config:validate',
   flags: {
@@ -42,13 +40,10 @@ export const run = defineCommand({
     actor: ANALYTICS_ACTOR.id,
     includeFlags: true,
   },
-  // @ts-expect-error - types will be inferred from schema after types are generated
   async handler(ctx: any, argv: any, flags: any) {
     const cwd = flags.cwd || ctx.cwd || process.cwd();
     const noFail = flags['no-fail'];
-    
     ctx.tracker.checkpoint('load');
-
     try {
       await loadBundle({
         cwd,
@@ -57,9 +52,7 @@ export const run = defineCommand({
         scopeId: flags.scope,
         validate: noFail ? 'warn' : true,
       });
-
       ctx.tracker.checkpoint('complete');
-
       if (flags.json) {
         ctx.output?.json({ ok: true, product: flags.product });
       } else {
@@ -69,12 +62,10 @@ export const run = defineCommand({
           ])
         );
       }
-
       return { ok: true, product: flags.product };
     } catch (err: any) {
       const details = err?.details || null;
       const errorsArray = Array.isArray(details) ? details : [];
-
       if (flags.json) {
         ctx.output?.json({ ok: false, errors: details });
       } else {
@@ -91,7 +82,6 @@ export const run = defineCommand({
         }
         ctx.output?.write(box('Config Validation', lines));
       }
-      
       // Return exit code based on no-fail flag
       return noFail ? 0 : 1;
     }
