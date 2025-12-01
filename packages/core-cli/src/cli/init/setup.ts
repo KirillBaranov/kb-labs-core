@@ -1,9 +1,7 @@
-// @ts-expect-error - types will be available after command-kit types are generated
 import { defineCommand } from '@kb-labs/shared-command-kit';
 import { box, keyValue, formatTiming } from '@kb-labs/shared-cli-ui';
 import { initAll } from '@kb-labs/core-bundle';
 import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../infra/analytics/events';
-
 export const run = defineCommand({
   name: 'init:setup',
   flags: {
@@ -57,13 +55,10 @@ export const run = defineCommand({
     actor: ANALYTICS_ACTOR.id,
     includeFlags: true,
   },
-  // @ts-expect-error - types will be inferred from schema after types are generated
   async handler(ctx: any, argv: any, flags: any) {
     const cwd = flags.cwd || ctx.cwd || process.cwd();
     const products = flags.products ? flags.products.split(',') : ['aiReview'];
-    
     ctx.tracker.checkpoint('init');
-
     ctx.logger?.info('Initializing KB Labs workspace', {
       format: flags.format || 'yaml',
       products,
@@ -73,7 +68,6 @@ export const run = defineCommand({
       force: flags.force,
       cwd,
     });
-
     const result = await initAll({
       cwd,
       format: (flags.format as 'yaml' | 'json') || 'yaml',
@@ -83,9 +77,7 @@ export const run = defineCommand({
       dryRun: flags['dry-run'],
       force: flags.force,
     });
-    
     ctx.tracker.checkpoint('complete');
-
     if (flags.json) {
       ctx.output?.json({ ok: true, result, timingMs: ctx.tracker.total() });
     } else {
@@ -97,13 +89,11 @@ export const run = defineCommand({
       });
       ctx.output?.write(box('KB Labs Setup Complete', [...summary, '', `Time: ${formatTiming(ctx.tracker.total())}`]));
     }
-
     ctx.logger?.info('KB Labs workspace initialized successfully', {
       created: result.stats.created,
       updated: result.stats.updated,
       skipped: result.stats.skipped,
     });
-
     return { ok: true, result, stats: result.stats };
   },
 });
