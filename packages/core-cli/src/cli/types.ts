@@ -1,5 +1,4 @@
 import type { CliContext } from '@kb-labs/cli-core';
-
 export interface CommandModule {
   run: (
     ctx: CliContext,
@@ -7,7 +6,6 @@ export interface CommandModule {
     flags: Record<string, unknown>
   ) => Promise<number>;
 }
-
 export interface FlagDefinition {
   name: string;
   type: 'string' | 'boolean' | 'number' | 'array';
@@ -17,7 +15,6 @@ export interface FlagDefinition {
   choices?: string[];
   required?: boolean;
 }
-
 export interface CommandManifest {
   manifestVersion: '1.0';
   id: string;
@@ -30,4 +27,3 @@ export interface CommandManifest {
   examples?: string[];
   loader: () => Promise<{ run: any }>;
 }
-

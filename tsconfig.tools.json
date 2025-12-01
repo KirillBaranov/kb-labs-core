@@ -2,7 +2,7 @@
   "extends": "./tsconfig.base.json",
   "files": [],
   "references": [
-    { "path": "packages/config" },
+    { "path": "packages/core-config" },
     { "path": "packages/sys" },
     { "path": "apps/demo" }
   ],

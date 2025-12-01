@@ -8,7 +8,7 @@
       "path": "packages/sys"
     },
     {
-      "path": "packages/core"
+      "path": "packages/core-framework"
     },
     {
       "path": "apps/demo"

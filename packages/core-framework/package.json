@@ -33,7 +33,7 @@
   "dependencies": {
     "@kb-labs/core-sys": "workspace:*",
     "@kb-labs/plugin-adapter-rest": "link:../../../kb-labs-plugin/packages/adapters/rest",
-    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
+    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/plugin-manifest",
     "chokidar": "^4.0.3",
     "colorette": "^2.0.20",
     "glob": "^11.0.0",

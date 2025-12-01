@@ -45,6 +45,12 @@
       "@kb-labs/core-contracts/*": [
         "packages/core-contracts/src/*"
       ],
+      "@kb-labs/core-framework": [
+        "packages/core-framework/src/index.ts"
+      ],
+      "@kb-labs/core-framework/*": [
+        "packages/core-framework/src/*"
+      ],
       "@kb-labs/core-policy": [
         "packages/core-policy/src/index.ts"
       ],
@@ -100,16 +106,16 @@
         "../kb-labs-plugin/packages/adapters/rest/src/*"
       ],
       "@kb-labs/plugin-manifest": [
-        "../kb-labs-plugin/packages/manifest/src/index.ts"
+        "../kb-labs-plugin/packages/plugin-manifest/src/index.ts"
       ],
       "@kb-labs/plugin-manifest/*": [
-        "../kb-labs-plugin/packages/manifest/src/*"
+        "../kb-labs-plugin/packages/plugin-manifest/src/*"
       ],
       "@kb-labs/shared-cli-ui": [
-        "../kb-labs-shared/packages/cli-ui/src/index.ts"
+        "../kb-labs-shared/packages/shared-cli-ui/src/index.ts"
       ],
       "@kb-labs/shared-cli-ui/*": [
-        "../kb-labs-shared/packages/cli-ui/src/*"
+        "../kb-labs-shared/packages/shared-cli-ui/src/*"
       ],
       "@kb-labs/shared-command-kit": [
         "../kb-labs-shared/packages/shared-command-kit/src/index.ts"

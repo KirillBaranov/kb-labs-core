@@ -260,7 +260,7 @@ function getBootstrapPath(): string {
   
   // 1. Try workspace root (most reliable for monorepo)
   if (workspaceRoot) {
-    const workspacePath = path.join(workspaceRoot, 'kb-labs-core', 'packages', 'sandbox', 'dist', 'runner', 'bootstrap.js');
+    const workspacePath = path.join(workspaceRoot, 'kb-labs-core', 'packages', 'core-sandbox', 'dist', 'runner', 'bootstrap.js');
     const exists = existsSync(workspacePath);
     if (process.env.KB_PLUGIN_DEV_MODE === 'true') {
       process.stderr.write(`[getBootstrapPath] Checking workspace path: ${workspacePath}, exists: ${exists}\n`);
@@ -310,7 +310,7 @@ function getBootstrapPath(): string {
   // If nothing found, throw clear error with all attempted paths
   const attemptedPaths: string[] = [];
   if (workspaceRoot) {
-    attemptedPaths.push(path.join(workspaceRoot, 'kb-labs-core', 'packages', 'sandbox', 'dist', 'runner', 'bootstrap.js'));
+    attemptedPaths.push(path.join(workspaceRoot, 'kb-labs-core', 'packages', 'core-sandbox', 'dist', 'runner', 'bootstrap.js'));
   }
   attemptedPaths.push(relativePath);
   attemptedPaths.push('node_modules/@kb-labs/core-sandbox/dist/runner/bootstrap.js');
@@ -321,7 +321,7 @@ function getBootstrapPath(): string {
     `\n__dirname: ${__dirname}\n` +
     `cwd: ${cwd}\n` +
     `workspaceRoot: ${workspaceRoot || 'null'}\n` +
-    `Make sure @kb-labs/core-sandbox is built: run 'pnpm build' in kb-labs-core/packages/sandbox`
+    `Make sure @kb-labs/core-sandbox is built: run 'pnpm build' in kb-labs-core/packages/core-sandbox`
   );
 }
 
