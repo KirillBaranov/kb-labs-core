@@ -1,8 +1,6 @@
-// @ts-expect-error - types will be available after command-kit types are generated
 import { defineCommand } from '@kb-labs/shared-command-kit';
 import { readProfilesSection, resolveProfile } from '@kb-labs/core-config';
 import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../infra/analytics/events';
-
 export const run = defineCommand({
   name: 'profiles:resolve',
   flags: {
@@ -26,12 +24,9 @@ export const run = defineCommand({
     actor: ANALYTICS_ACTOR.id,
     includeFlags: true,
   },
-  // @ts-expect-error - types will be inferred from schema after types are generated
   async handler(ctx: any, argv: any, flags: any) {
     const cwd = flags.cwd || ctx.cwd || process.cwd();
-    
     ctx.tracker.checkpoint('load');
-
     if (!flags.profile) {
       const profilesSection = await readProfilesSection(cwd);
       const availableProfiles = profilesSection.profiles.map((p) => p.id);
@@ -39,11 +34,8 @@ export const run = defineCommand({
       ctx.output?.error(msg);
       return 1;
     }
-
     const bundleProfile = await resolveProfile({ cwd, profileId: flags.profile });
-
     ctx.tracker.checkpoint('complete');
-
     if (flags.json) {
       ctx.output?.json({
         id: bundleProfile.id,
@@ -77,7 +69,6 @@ export const run = defineCommand({
       ctx.output?.write(`Products: ${Object.keys(bundleProfile.products || {}).join(', ') || 'none'}\n`);
       ctx.output?.write(`Scopes: ${bundleProfile.scopes.map((s) => s.id).join(', ') || 'none'}\n`);
     }
-
     return { ok: true, profile: bundleProfile };
   },
 });
