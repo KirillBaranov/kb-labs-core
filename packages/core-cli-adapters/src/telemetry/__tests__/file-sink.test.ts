@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createFileTelemetrySink } from "../file-sink";
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-cli";
+import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
 
 // Mock fs and path modules
 vi.mock("node:fs", () => ({

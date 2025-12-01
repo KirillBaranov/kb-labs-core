@@ -1,9 +1,7 @@
-// @ts-expect-error - types will be available after command-kit types are generated
 import { defineCommand } from '@kb-labs/shared-command-kit';
 import { loadBundle, type ProductId } from '@kb-labs/core-bundle';
 import { box } from '@kb-labs/shared-cli-ui';
 import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../infra/analytics/events';
-
 export const run = defineCommand({
   name: 'bundle:inspect',
   flags: {
@@ -41,24 +39,18 @@ export const run = defineCommand({
     actor: ANALYTICS_ACTOR.id,
     includeFlags: true,
   },
-  // @ts-expect-error - types will be inferred from schema after types are generated
   async handler(ctx: any, argv: any, flags: any) {
     const cwd = flags.cwd || ctx.cwd || process.cwd();
-    
     ctx.tracker.checkpoint('load');
-
     const bundle = await loadBundle({ cwd, product: flags.product as ProductId, profileId: flags.profile, scopeId: flags.scope });
     const trace = flags.trace ? bundle.trace : undefined;
-
     ctx.tracker.checkpoint('complete');
-
     ctx.logger?.info('Bundle inspected successfully', {
       product: flags.product,
       profileId: bundle.profile?.id,
       scopeId: bundle.profile?.activeScopeId,
       artifactsCount: Object.keys(bundle.artifacts.summary).length,
     });
-
     if (flags.json) {
       ctx.output?.json({ ok: true, product: flags.product, profile: bundle.profile, artifacts: bundle.artifacts.summary, trace });
     } else {
@@ -74,7 +66,6 @@ export const run = defineCommand({
       ];
       ctx.output?.write(box('Bundle Inspect', lines));
     }
-
     return { ok: true, product: flags.product, profile: bundle.profile, artifacts: bundle.artifacts.summary };
   },
 });

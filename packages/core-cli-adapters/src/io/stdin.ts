@@ -1,5 +1,5 @@
-import type { InputSource } from "@kb-labs/core-cli";
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-cli";
+import type { InputSource } from "@kb-labs/core-framework";
+import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
 
 export function stdinSource(): InputSource {
   return {

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { envBool, envNumber, envString } from "../env";
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-cli";
+import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
 
 describe("env helpers", () => {
   const originalEnv = process.env;

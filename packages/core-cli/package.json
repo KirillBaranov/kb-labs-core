@@ -10,7 +10,7 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./manifest": {
+    "./plugin-manifest": {
       "import": "./dist/manifest.v2.js",
       "types": "./dist/manifest.v2.d.ts"
     }
@@ -35,16 +35,16 @@
     "lint:fix": "eslint . --fix --ignore-pattern 'dist/**'"
   },
   "dependencies": {
-    "@kb-labs/analytics-sdk-node": "workspace:*",
+    "@kb-labs/analytics-sdk-node": "link:../../../kb-labs-analytics/packages/analytics-sdk-node",
     "@kb-labs/cli-core": "link:../../../kb-labs-cli/packages/cli-core",
-    "@kb-labs/core-bundle": "link:../core-bundle",
-    "@kb-labs/core-config": "link:../core-config",
+    "@kb-labs/core-bundle": "workspace:*",
+    "@kb-labs/core-config": "workspace:*",
     "@kb-labs/core-contracts": "workspace:*",
-    "@kb-labs/core-policy": "link:../core-policy",
+    "@kb-labs/core-policy": "workspace:*",
     "@kb-labs/core-types": "workspace:*",
-    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/manifest",
-    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/cli-ui",
-    "@kb-labs/shared-command-kit": "workspace:*",
+    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/plugin-manifest",
+    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/shared-cli-ui",
+    "@kb-labs/shared-command-kit": "link:../../../kb-labs-shared/packages/shared-command-kit",
     "yaml": "^2.8.0"
   },
   "devDependencies": {

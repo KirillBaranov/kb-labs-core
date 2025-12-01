@@ -27,7 +27,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@kb-labs/core-cli": "workspace:*"
+    "@kb-labs/core-framework": "workspace:*"
   },
   "devDependencies": {
     "@kb-labs/devkit": "link:../../../kb-labs-devkit",

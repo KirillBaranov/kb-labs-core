@@ -1,7 +1,7 @@
 import path from "node:path";
 import { promises as fsp } from "node:fs";
-import type { TelemetryEvent, TelemetrySink } from "@kb-labs/core-cli";
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-cli";
+import type { TelemetryEvent, TelemetrySink } from "@kb-labs/core-framework";
+import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
 
 export function createFileTelemetrySink(fileOrDir: string): TelemetrySink {
   // if dir passed, we write into <dir>/cli-telemetry.jsonl

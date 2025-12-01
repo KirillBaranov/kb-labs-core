@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { createStaticDiscovery } from "../static";
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-cli";
+import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
 
 describe("static discovery", () => {
   it("should find and load static commands", async () => {

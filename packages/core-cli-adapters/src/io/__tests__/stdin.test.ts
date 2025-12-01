@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { stdinSource } from "../stdin";
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-cli";
+import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
 
 describe("stdin source", () => {
   it("should read from stdin successfully", async () => {

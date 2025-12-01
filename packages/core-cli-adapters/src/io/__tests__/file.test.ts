@@ -3,7 +3,7 @@ import { promises as fsp } from "node:fs";
 import path from "node:path";
 import { tmpdir } from "node:os";
 import { fileSource } from "../file";
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-cli";
+import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
 
 describe("file source", () => {
   let tempDir: string;

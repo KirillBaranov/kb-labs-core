@@ -1,6 +1,6 @@
 import { promises as fsp } from "node:fs";
-import type { InputSource } from "@kb-labs/core-cli";
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-cli";
+import type { InputSource } from "@kb-labs/core-framework";
+import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
 
 export function fileSource(path: string): InputSource {
   return {
