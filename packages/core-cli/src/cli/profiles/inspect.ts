@@ -1,9 +1,7 @@
-// @ts-expect-error - types will be available after command-kit types are generated
 import { defineCommand } from '@kb-labs/shared-command-kit';
 import { readProfilesSection, resolveProfile } from '@kb-labs/core-config';
 import { box, safeSymbols, safeColors } from '@kb-labs/shared-cli-ui';
 import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../infra/analytics/events';
-
 export const run = defineCommand({
   name: 'profiles:inspect',
   flags: {
@@ -27,15 +25,11 @@ export const run = defineCommand({
     actor: ANALYTICS_ACTOR.id,
     includeFlags: true,
   },
-  // @ts-expect-error - types will be inferred from schema after types are generated
   async handler(ctx: any, argv: any, flags: any) {
     const cwd = flags.cwd || ctx.cwd || process.cwd();
-    
     ctx.tracker.checkpoint('load');
-
     const profilesSection = await readProfilesSection(cwd);
     const availableProfiles = profilesSection.profiles.map((p) => p.id);
-
     if (!flags.profile) {
       const msg = `No profile specified. Available profiles: ${availableProfiles.join(', ') || 'none'}`;
       if (flags.json) {
@@ -45,7 +39,6 @@ export const run = defineCommand({
       }
       return 1;
     }
-
     if (!availableProfiles.includes(flags.profile)) {
       const msg = `Profile "${flags.profile}" not found. Available: ${availableProfiles.join(', ') || 'none'}`;
       if (flags.json) {
@@ -55,11 +48,8 @@ export const run = defineCommand({
       }
       return 1;
     }
-
     const bundleProfile = await resolveProfile({ cwd, profileId: flags.profile });
-
     ctx.tracker.checkpoint('complete');
-
     if (flags.json) {
       ctx.output?.json({
         ok: true,
@@ -86,10 +76,8 @@ export const run = defineCommand({
           ? `extends: ${bundleProfile.trace.extends.join(' → ')}`
           : '',
       ].filter(Boolean);
-
       ctx.output?.write(box('Profile Inspect', lines));
     }
-
     return { ok: true, profile: bundleProfile };
   },
 });
