@@ -1,10 +1,8 @@
-// @ts-expect-error - types will be available after command-kit types are generated
 import { defineCommand } from '@kb-labs/shared-command-kit';
 import { loadBundle } from '@kb-labs/core-bundle';
 import YAML from 'yaml';
 import { box } from '@kb-labs/shared-cli-ui';
 import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../infra/analytics/events';
-
 export const run = defineCommand({
   name: 'config:get',
   flags: {
@@ -44,25 +42,20 @@ export const run = defineCommand({
   },
   async handler(ctx: any, argv: any, flags: any) {
     const cwd = flags.cwd || ctx.cwd || process.cwd();
-    
     ctx.tracker.checkpoint('load');
-
     const bundle = await loadBundle({
       cwd,
       product: flags.product as any,
       profileId: flags.profile,
       scopeId: flags.scope,
     });
-    
     ctx.tracker.checkpoint('complete');
-
     ctx.logger?.info('Config loaded successfully', {
       product: flags.product,
       profileId: bundle.profile?.id,
       scopeId: bundle.profile?.activeScopeId,
       format: flags.yaml ? 'yaml' : 'json',
     });
-
     if (flags.json) {
       ctx.output?.json(bundle.config);
     } else {
@@ -76,7 +69,6 @@ export const run = defineCommand({
         : JSON.stringify(bundle.config, null, 2);
       ctx.output?.write(configOutput);
     }
-
     return { ok: true, config: bundle.config };
   },
 });
