@@ -1,10 +1,8 @@
-// @ts-expect-error - types will be available after command-kit types are generated
 import { defineCommand } from '@kb-labs/shared-command-kit';
 import { loadBundle, type ProductId } from '@kb-labs/core-bundle';
 import { validateProductConfig } from '@kb-labs/core-config';
 import { box } from '@kb-labs/shared-cli-ui';
 import { ANALYTICS_EVENTS, ANALYTICS_ACTOR } from '../../infra/analytics/events';
-
 export const run = defineCommand({
   name: 'config:inspect',
   flags: {
@@ -37,18 +35,13 @@ export const run = defineCommand({
     actor: ANALYTICS_ACTOR.id,
     includeFlags: true,
   },
-  // @ts-expect-error - types will be inferred from schema after types are generated
   async handler(ctx: any, argv: any, flags: any) {
     const cwd = flags.cwd || ctx.cwd || process.cwd();
-    
     ctx.tracker.checkpoint('load');
-
     const bundle = await loadBundle({ cwd, product: flags.product as ProductId, profileId: flags.profile, scopeId: flags.scope });
     const cfg = bundle.config;
     const val = validateProductConfig(flags.product as ProductId, cfg);
-
     ctx.tracker.checkpoint('complete');
-
     if (flags.json) {
       ctx.output?.json({ ok: true, product: flags.product, profileId: bundle.profile?.id, topKeys: Object.keys(cfg || {}), validation: val });
     } else {
@@ -60,7 +53,6 @@ export const run = defineCommand({
       ];
       ctx.output?.write(box('Config Inspect', lines));
     }
-
     return { ok: val.ok, product: flags.product, validation: val };
   },
 });
