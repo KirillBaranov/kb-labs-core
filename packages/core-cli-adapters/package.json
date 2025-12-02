@@ -27,15 +27,24 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@kb-labs/core-framework": "workspace:*"
+    "@kb-labs/core-sys": "workspace:*",
+    "@kb-labs/plugin-adapter-rest": "link:../../../kb-labs-plugin/packages/adapters/rest",
+    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/plugin-manifest",
+    "chokidar": "^4.0.3",
+    "colorette": "^2.0.20",
+    "glob": "^11.0.0",
+    "semver": "^7.6.3",
+    "yaml": "^2.8.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@kb-labs/devkit": "link:../../../kb-labs-devkit",
     "@types/node": "^24.3.3",
+    "@types/picomatch": "^4",
+    "@types/semver": "^7.5.8",
+    "rimraf": "^6.0.1",
     "tsup": "^8.5.0",
     "typescript": "^5.6.3",
-    "vitest": "^3.2.4",
-    "@types/picomatch": "^4",
-    "rimraf": "^6.0.1"
+    "vitest": "^3.2.4"
   }
 }

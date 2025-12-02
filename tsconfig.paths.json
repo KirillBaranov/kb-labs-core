@@ -45,12 +45,6 @@
       "@kb-labs/core-contracts/*": [
         "packages/core-contracts/src/*"
       ],
-      "@kb-labs/core-framework": [
-        "packages/core-framework/src/index.ts"
-      ],
-      "@kb-labs/core-framework/*": [
-        "packages/core-framework/src/*"
-      ],
       "@kb-labs/core-policy": [
         "packages/core-policy/src/index.ts"
       ],

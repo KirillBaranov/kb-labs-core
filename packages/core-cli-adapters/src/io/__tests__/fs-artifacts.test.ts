@@ -3,7 +3,7 @@ import { promises as fsp } from "node:fs";
 import path from "node:path";
 import { tmpdir } from "node:os";
 import { ensureDir, writeText, writeJson } from "../fs-artifacts";
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
+import { CliError, CLI_ERROR_CODES } from '../../framework';
 
 describe("fs artifacts", () => {
   let tempDir: string;

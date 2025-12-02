@@ -1,4 +1,4 @@
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
+import { CliError, CLI_ERROR_CODES } from "../framework";
 
 /** Thin helpers around process.env. Use core-config for real config shaping. */
 export function envBool(name: string, def = false): boolean {

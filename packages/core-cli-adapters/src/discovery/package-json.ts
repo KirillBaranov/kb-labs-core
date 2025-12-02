@@ -1,8 +1,8 @@
 import { promises as fsp } from "node:fs";
 import path from "node:path";
-import type { PluginDiscovery } from "@kb-labs/core-framework";
-import type { CliCommand } from "@kb-labs/core-framework";
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
+import type { PluginDiscovery } from "../framework";
+import type { CliCommand } from "../framework";
+import { CliError, CLI_ERROR_CODES } from "../framework";
 
 /** Look up nearest package.json and read kb.commands list. */
 export function createPackageJsonDiscovery(

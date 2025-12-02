@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ensureDir, writeText, writeJson } from "../fs-artifacts";
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
+import { CliError, CLI_ERROR_CODES } from '../../framework';
 
 // Mock fs and path modules
 vi.mock("node:fs", () => ({

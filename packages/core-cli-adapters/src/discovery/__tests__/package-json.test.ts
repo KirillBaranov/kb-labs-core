@@ -3,7 +3,7 @@ import { promises as fsp } from "node:fs";
 import path from "node:path";
 import { tmpdir } from "node:os";
 import { createPackageJsonDiscovery } from "../package-json";
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
+import { CliError, CLI_ERROR_CODES } from '../../framework';
 
 describe("package-json discovery", () => {
   let tempDir: string;

@@ -1,6 +1,6 @@
 import { promises as fsp } from "node:fs";
 import path from "node:path";
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
+import { CliError, CLI_ERROR_CODES } from '../framework';
 
 export async function ensureDir(dir: string): Promise<void> {
   try {

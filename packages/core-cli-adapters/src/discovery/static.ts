@@ -1,5 +1,5 @@
-import type { PluginDiscovery, CliCommand } from "@kb-labs/core-framework";
-import { CliError, CLI_ERROR_CODES } from "@kb-labs/core-framework";
+import type { PluginDiscovery, CliCommand } from '../framework';
+import { CliError, CLI_ERROR_CODES } from '../framework';
 
 /** Use when you want to hardcode a plugin list in CLI. */
 export function createStaticDiscovery(
