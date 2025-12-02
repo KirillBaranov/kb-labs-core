@@ -111,12 +111,6 @@
       "@kb-labs/plugin-manifest/*": [
         "../kb-labs-plugin/packages/plugin-manifest/src/*"
       ],
-      "@kb-labs/plugin-runtime": [
-        "../kb-labs-plugin/packages/plugin-runtime/src/index.ts"
-      ],
-      "@kb-labs/plugin-runtime/*": [
-        "../kb-labs-plugin/packages/plugin-runtime/src/*"
-      ],
       "@kb-labs/shared-cli-ui": [
         "../kb-labs-shared/packages/shared-cli-ui/src/index.ts"
       ],
