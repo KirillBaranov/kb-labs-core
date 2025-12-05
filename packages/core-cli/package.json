@@ -35,7 +35,6 @@
     "lint:fix": "eslint . --fix --ignore-pattern 'dist/**'"
   },
   "dependencies": {
-    "@kb-labs/analytics-sdk-node": "link:../../../kb-labs-analytics/packages/analytics-sdk-node",
     "@kb-labs/cli-core": "link:../../../kb-labs-cli/packages/cli-core",
     "@kb-labs/core-bundle": "workspace:*",
     "@kb-labs/core-config": "workspace:*",
