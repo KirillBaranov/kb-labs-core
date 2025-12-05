@@ -1,0 +1,40 @@
+{
+  "name": "@kb-labs/core-runtime",
+  "version": "0.1.0",
+  "description": "DI Container + Core Features Implementations for KB Labs Platform",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@kb-labs/core-platform": "workspace:*",
+    "glob": "^10.0.0"
+  },
+  "devDependencies": {
+    "@kb-labs/devkit": "workspace:*",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "rimraf": "^5.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "kb-labs",
+    "platform",
+    "runtime",
+    "di",
+    "container"
+  ],
+  "author": "KB Labs Team",
+  "license": "MIT"
+}

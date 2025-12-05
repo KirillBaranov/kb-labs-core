@@ -1,0 +1,63 @@
+{
+  "name": "@kb-labs/core-platform",
+  "version": "0.1.0",
+  "description": "Pure abstractions for KB Labs platform. Zero dependencies.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./adapters": {
+      "types": "./dist/adapters/index.d.ts",
+      "import": "./dist/adapters/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./noop": {
+      "types": "./dist/noop/index.d.ts",
+      "import": "./dist/noop/index.js"
+    },
+    "./noop/adapters": {
+      "types": "./dist/noop/adapters/index.d.ts",
+      "import": "./dist/noop/adapters/index.js"
+    },
+    "./noop/core": {
+      "types": "./dist/noop/core/index.d.ts",
+      "import": "./dist/noop/core/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "clean": "rimraf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "rimraf": "^5.0.0"
+  },
+  "keywords": [
+    "kb-labs",
+    "platform",
+    "abstractions",
+    "interfaces",
+    "hexagonal-architecture"
+  ],
+  "author": "KB Labs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kb-labs/kb-labs-core.git",
+    "directory": "packages/core-platform"
+  }
+}
