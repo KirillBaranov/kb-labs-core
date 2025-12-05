@@ -3,7 +3,7 @@
  * Manifest v2 for Core CLI
  */
 
-import { createManifestV2 } from '@kb-labs/plugin-manifest';
+import { defineManifest } from '@kb-labs/shared-command-kit';
 import { pluginContractsManifest } from '@kb-labs/core-contracts';
 
 /**
@@ -11,7 +11,7 @@ import { pluginContractsManifest } from '@kb-labs/core-contracts';
  * Level 2: Типизация через contracts для автодополнения и проверки ID
  */
 // TODO: Fix type-safe manifest generation - for now use loose typing
-export const manifest = createManifestV2({
+export const manifest = defineManifest({
   schema: 'kb.plugin/2',
   id: '@kb-labs/core',
   version: '0.1.0',
