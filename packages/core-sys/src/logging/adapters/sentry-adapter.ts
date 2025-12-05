@@ -18,10 +18,11 @@ const SENTRY_LEVEL_MAP: Record<LogLevel, string> = {
   info: 'info',
   warn: 'warning',
   error: 'error',
+  silent: 'fatal', // Sentry doesn't have 'silent', map to highest severity
 };
 
 function shouldSkipLevel(level: LogLevel, minLevel: LogLevel): boolean {
-  const levels: LogLevel[] = ['trace', 'debug', 'info', 'warn', 'error'];
+  const levels: LogLevel[] = ['trace', 'debug', 'info', 'warn', 'error', 'silent'];
   return levels.indexOf(level) < levels.indexOf(minLevel);
 }
 
@@ -37,6 +38,7 @@ export async function createSentryAdapter(config: SentryAdapterConfig): Promise<
   // Dynamic import to avoid requiring @sentry/node as a dependency
   let Sentry: any;
   try {
+    // @ts-expect-error - @sentry/node is an optional peer dependency
     Sentry = await import('@sentry/node');
   } catch (error) {
     throw new Error('Sentry adapter requires @sentry/node package. Install it: pnpm add @sentry/node');

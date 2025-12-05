@@ -24,6 +24,7 @@ export async function createElasticsearchAdapter(config: ElasticsearchAdapterCon
   // Dynamic import to avoid requiring @elastic/elasticsearch as a dependency
   let esClient: any;
   try {
+    // @ts-expect-error - @elastic/elasticsearch is an optional peer dependency
     const esModule = await import('@elastic/elasticsearch');
     const { Client } = esModule;
     esClient = new Client({

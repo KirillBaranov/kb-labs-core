@@ -28,6 +28,7 @@ export async function createDatadogAdapter(config: DatadogAdapterConfig): Promis
   // Dynamic import to avoid requiring datadog-logs as a dependency
   let datadogLogs: any;
   try {
+    // @ts-expect-error - datadog-logs is an optional peer dependency
     datadogLogs = await import('datadog-logs');
   } catch (error) {
     throw new Error('Datadog adapter requires datadog-logs package. Install it: pnpm add datadog-logs');

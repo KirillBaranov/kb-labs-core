@@ -9,7 +9,7 @@ import type {
   WorkspaceRootResolution,
 } from './types'
 
-const WORKSPACE_CONFIG_RELATIVE = path.join('.kb', 'kb-labs.config.json')
+const WORKSPACE_CONFIG_RELATIVE = path.join('.kb', 'kb.config.json')
 
 const defaultFs: WorkspaceFs = {
   async exists(target: string): Promise<boolean> {

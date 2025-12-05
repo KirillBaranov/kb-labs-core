@@ -92,7 +92,7 @@ export class OutputImpl implements Output {
                 createSpinner(text, jsonMode || this.isJSON),
             colors: {
                 info: safeColors.info,
-                warn: safeColors.warn,
+                warn: safeColors.warning,
                 error: safeColors.error,
                 success: safeColors.success,
                 muted: safeColors.muted,
@@ -207,7 +207,7 @@ export class OutputImpl implements Output {
         if (this.isQuiet) return;
 
         const output = `${safeSymbols.warning} ${message}`;
-        console.warn(safeColors.warn(output));
+        console.warn(safeColors.warning(output));
 
         if (hint) {
             console.warn(safeColors.muted(`  ${hint}`));
