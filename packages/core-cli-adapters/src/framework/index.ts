@@ -20,9 +20,6 @@ export * from "./presenter/json";
 export * from "./presenter/colors";
 export * from "./presenter/loader";
 
-// Telemetry
-export * from "./telemetry/types";
-
 // Registry
 export * from "./registry";
 export {

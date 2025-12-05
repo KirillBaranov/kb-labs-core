@@ -7,5 +7,3 @@ export * from "./io/fs-artifacts";
 
 export * from "./env/env";
 export * from "./env/repo";
-
-export * from "./telemetry/file-sink";
