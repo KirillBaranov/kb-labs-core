@@ -1,6 +1,6 @@
 // Export manifest
 export { manifest } from './manifest.v2';
-export type { ManifestV2 } from '@kb-labs/plugin-manifest';
+// Keep manifest types internal; public contracts must come from *-contracts.
 
 export * from './application/index';
 export * from './domain/index';

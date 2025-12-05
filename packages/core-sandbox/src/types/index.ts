@@ -94,6 +94,9 @@ export interface ExecutionContext {
   
   /** Remaining timeout in milliseconds (only in inprocess mode) */
   remainingMs?: () => number;
+
+  /** Platform configuration for worker initialization (NEW) */
+  platformConfig?: any; // PlatformConfig from @kb-labs/core-runtime (avoiding type import to prevent circular dep)
 }
 
 /**

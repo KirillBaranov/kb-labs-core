@@ -51,9 +51,7 @@ export {
   getLogContext,
   clearLogContext,
   withLogContext,
-  mergeLogContext,
-  toAbsolute,
-  findRepoRoot
+  mergeLogContext
 } from '@kb-labs/core-sys/logging';
 
 export {

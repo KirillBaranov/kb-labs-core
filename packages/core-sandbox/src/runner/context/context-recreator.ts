@@ -40,6 +40,37 @@ export async function recreateContext(options: ContextRecreatorOptions): Promise
     throw new Error('pluginRoot is required in SerializableContext');
   }
 
+  // Initialize platform in worker if config provided
+  if (serializedCtx.platformConfig) {
+    try {
+      // Import initPlatform dynamically to avoid circular dependencies
+      const { initPlatform } = await import('@kb-labs/core-runtime');
+
+      // Get cwd from serializedCtx (workdir or pluginRoot)
+      const cwd = serializedCtx.workdir || serializedCtx.pluginRoot || process.cwd();
+
+      await initPlatform(serializedCtx.platformConfig, cwd);
+
+      if (debugMode) {
+        sandboxOutput.debug('Platform initialized in worker', {
+          adapters: Object.keys(serializedCtx.platformConfig.adapters ?? {}),
+        });
+      }
+    } catch (error) {
+      sandboxOutput.warn('Failed to initialize platform in worker, using NoOp adapters', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      // Fallback to NoOp adapters
+      try {
+        const { initPlatform } = await import('@kb-labs/core-runtime');
+        await initPlatform({ adapters: {} });
+      } catch {
+        // Ignore fallback errors - platform will use NoOp by default
+      }
+    }
+  }
+
   // Defensive: ensure serializedCtx has all required fields
   const ctx: ExecutionContext = {
     requestId: serializedCtx.requestId || '',

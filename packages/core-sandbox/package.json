@@ -25,6 +25,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@kb-labs/core-runtime": "workspace:*",
     "@kb-labs/core-sys": "workspace:*",
     "@kb-labs/shared-cli-ui": "workspace:*",
     "execa": "^8.0.0"

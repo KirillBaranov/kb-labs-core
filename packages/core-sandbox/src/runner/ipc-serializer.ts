@@ -39,6 +39,9 @@ export interface SerializableContext {
   
   // Extension data (serializable only)
   extensionsData?: Record<string, unknown>;
+
+  // Platform configuration for worker initialization
+  platformConfig?: any; // PlatformConfig from @kb-labs/core-runtime
 }
 
 /**
@@ -131,7 +134,12 @@ export function serializeContext(ctx: ExecutionContext): SerializableContext {
       serializable.extensionsData = extensionsData;
     }
   }
-  
+
+  // Include platform config if available (for worker initialization)
+  if (ctx.platformConfig) {
+    serializable.platformConfig = ctx.platformConfig;
+  }
+
   return serializable;
 }
 
