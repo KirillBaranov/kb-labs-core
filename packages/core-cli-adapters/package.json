@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/core-cli-adapters",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "CLI adapter layer extracted from kb-labs-cli",
   "main": "./dist/index.js",

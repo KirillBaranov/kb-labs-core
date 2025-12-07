@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/core-config",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Core configuration system for KB Labs products, including schema validation, resolution, and merging",
   "type": "module",
   "main": "./dist/index.js",

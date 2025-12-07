@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/core-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "CLI commands for KB Labs core configuration system",
   "main": "./dist/index.js",
