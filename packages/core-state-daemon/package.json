@@ -6,7 +6,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "kb-state-daemon": "./dist/bin.js"
+    "kb-state-daemon": "./dist/bin.cjs"
   },
   "exports": {
     ".": {
@@ -20,12 +20,19 @@
   "sideEffects": false,
   "scripts": {
     "clean": "rimraf dist",
-    "build": "pnpm clean && tsup --config tsup.config.ts",
+    "build": "pnpm clean && tsup --config tsup.bin.config.ts && tsup --config tsup.lib.config.ts",
     "dev": "tsup --config tsup.config.ts --watch",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@kb-labs/core-state-broker": "link:../core-state-broker"
+    "@kb-labs/core-state-broker": "link:../core-state-broker",
+    "@kb-labs/core-runtime": "link:../core-runtime",
+    "@kb-labs/core-platform": "link:../core-platform",
+    "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/plugin-runtime",
+    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/plugin-manifest",
+    "@kb-labs/shared-command-kit": "link:../../../kb-labs-shared/packages/shared-command-kit",
+    "glob": "^10.0.0",
+    "minimatch": "^9.0.3"
   },
   "devDependencies": {
     "@kb-labs/devkit": "link:../../../kb-labs-devkit",

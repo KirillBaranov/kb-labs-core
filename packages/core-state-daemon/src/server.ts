@@ -4,24 +4,47 @@
 
 import { createServer, type Server, type IncomingMessage, type ServerResponse } from 'node:http';
 import { InMemoryStateBroker } from '@kb-labs/core-state-broker';
+import { JobsManager } from './jobs-manager';
 
 export interface StateDaemonConfig {
   port?: number;
   host?: string;
+  enableJobs?: boolean;
 }
 
 export class StateDaemonServer {
   private broker: InMemoryStateBroker;
+  private jobsManager: JobsManager | null = null;
   private server: Server | null = null;
   private isShuttingDown = false;
 
   constructor(private config: StateDaemonConfig = {}) {
     this.broker = new InMemoryStateBroker();
+
+    // Initialize jobs manager if enabled
+    if (this.config.enableJobs !== false) {
+      const createLogger = (prefix: string = '[jobs]'): import('@kb-labs/core-platform').ILogger => ({
+        debug: (msg: string, meta?: Record<string, unknown>) => console.debug(prefix, msg, meta),
+        info: (msg: string, meta?: Record<string, unknown>) => console.log(prefix, msg, meta),
+        warn: (msg: string, meta?: Record<string, unknown>) => console.warn(prefix, msg, meta),
+        error: (msg: string, error?: Error, meta?: Record<string, unknown>) => console.error(prefix, msg, error, meta),
+        child: (bindings: Record<string, unknown>) => createLogger(`${prefix}:${JSON.stringify(bindings)}`),
+      });
+
+      this.jobsManager = new JobsManager({
+        logger: createLogger('[jobs]'),
+      });
+    }
   }
 
   async start(): Promise<void> {
     const port = this.config.port ?? 7777;
     const host = this.config.host ?? 'localhost';
+
+    // Initialize jobs manager if enabled
+    if (this.jobsManager) {
+      await this.jobsManager.initialize();
+    }
 
     this.server = createServer((req, res) => this.handleRequest(req, res));
 
@@ -32,6 +55,9 @@ export class StateDaemonServer {
     return new Promise((resolve, reject) => {
       this.server!.listen(port, host, () => {
         console.log(`State daemon listening on ${host}:${port}`);
+        if (this.jobsManager) {
+          console.log('Jobs manager enabled - HTTP endpoints available at /jobs');
+        }
         resolve();
       });
 
@@ -40,6 +66,11 @@ export class StateDaemonServer {
   }
 
   async stop(): Promise<void> {
+    // Dispose jobs manager
+    if (this.jobsManager) {
+      await this.jobsManager.dispose();
+    }
+
     await this.broker.stop();
 
     if (this.server) {
@@ -134,6 +165,57 @@ export class StateDaemonServer {
 
         res.writeHead(204);
         res.end();
+        return;
+      }
+
+      // GET /jobs - List all registered jobs
+      if (req.method === 'GET' && url.pathname === '/jobs') {
+        if (!this.jobsManager) {
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Jobs manager not enabled' }));
+          return;
+        }
+
+        const jobs = this.jobsManager.listJobs();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ jobs }));
+        return;
+      }
+
+      // POST /jobs/:id/trigger - Manually trigger a job
+      if (req.method === 'POST' && url.pathname.startsWith('/jobs/') && url.pathname.endsWith('/trigger')) {
+        if (!this.jobsManager) {
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Jobs manager not enabled' }));
+          return;
+        }
+
+        const id = decodeURIComponent(url.pathname.slice(6, -8)); // Remove "/jobs/" and "/trigger"
+
+        try {
+          await this.jobsManager.triggerJob(id);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, message: `Job ${id} triggered successfully` }));
+        } catch (error) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: error instanceof Error ? error.message : 'Job not found'
+          }));
+        }
+        return;
+      }
+
+      // GET /jobs/stats - Get jobs statistics
+      if (req.method === 'GET' && url.pathname === '/jobs/stats') {
+        if (!this.jobsManager) {
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Jobs manager not enabled' }));
+          return;
+        }
+
+        const stats = this.jobsManager.getStats();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(stats));
         return;
       }
 

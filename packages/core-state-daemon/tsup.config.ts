@@ -1,10 +1,28 @@
 import { defineConfig } from 'tsup';
 import nodePreset from '@kb-labs/devkit/tsup/node.js';
+import binPreset from '@kb-labs/devkit/tsup/bin.js';
 
-export default defineConfig({
-  ...nodePreset,
-  entry: {
-    index: 'src/index.ts',
-    bin: 'src/bin.ts',
+export default defineConfig([
+  // Bin build (bin.js) - standalone executable (build first to clean)
+  {
+    ...binPreset,
+    tsconfig: "tsconfig.build.json",
+    entry: {
+      bin: 'src/bin.ts',
+    },
+    dts: false, // No types for bin (already set in binPreset but explicit)
+    banner: {
+      js: '#!/usr/bin/env node',
+    },
   },
-});
+
+  // Library build (index.js) - for importing as module
+  {
+    ...nodePreset,
+    tsconfig: "tsconfig.build.json",
+    entry: {
+      index: 'src/index.ts',
+    },
+    clean: false, // Don't clean (already cleaned by bin build)
+  },
+]);
