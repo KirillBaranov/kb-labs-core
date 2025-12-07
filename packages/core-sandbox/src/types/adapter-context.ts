@@ -62,7 +62,7 @@ export interface BaseHandlerContext {
 /**
  * CLI-specific handler context
  */
-export interface CliHandlerContext extends BaseHandlerContext {
+export interface CliHandlerContext<TConfig = any> extends BaseHandlerContext {
   type: 'cli';
   output: Output; // ✅ Unified Output interface (for user-facing messages)
   logger?: Logger; // ✅ Unified Logger interface (for structured logging)
@@ -75,6 +75,16 @@ export interface CliHandlerContext extends BaseHandlerContext {
   cwd: string;
   flags: Record<string, any>;
   argv: string[];
+  /**
+   * Product configuration (auto-loaded from kb.config.json)
+   * Available when command is executed via plugin adapter
+   */
+  config?: TConfig;
+  /**
+   * Active profile ID (Profiles v2)
+   * Auto-selected from KB_PROFILE env var or defaults to "default"
+   */
+  profileId?: string;
   // Note: runtime is available via ctx.extensions (deprecated) in subprocess mode
   // In in-process mode, runtime may be available directly, but use extensions for compatibility
 }

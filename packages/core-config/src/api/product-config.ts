@@ -9,7 +9,7 @@ import path from 'node:path';
 import { readWorkspaceConfig } from './read-config';
 import { layeredMergeWithTrace } from '../merge/layered-merge';
 import { toFsProduct } from '../utils/product-normalize';
-import type { ProductId, ResolveOptions, ProductConfigResult, ConfigLayer } from '../types';
+import type { ResolveOptions, ProductConfigResult, ConfigLayer } from '../types';
 import { computeConfigHash } from '../hash/config-hash';
 import { resolvePreset, getPresetConfigForProduct } from '../preset/resolve-preset';
 import { updateLockfile } from '../lockfile/lockfile';
@@ -39,8 +39,9 @@ export async function getProductConfig<T>(
   
   // 2. Profile defaults
   if (profileLayer && profileLayer.products) {
-    const profileOverlay = (profileLayer.products[product] || profileLayer.products[fsProduct] || {}) as Record<string, unknown>;
-    
+    // profileLayer.products is already the product-specific overlay (not a map of products)
+    const profileOverlay = profileLayer.products as Record<string, unknown>;
+
     layers.push({
       label: 'profile',
       value: profileOverlay,
@@ -48,7 +49,8 @@ export async function getProductConfig<T>(
     });
 
     if (profileLayer.scope && profileLayer.scope.products) {
-      const scopeOverlay = (profileLayer.scope.products[product] || profileLayer.scope.products[fsProduct] || {}) as Record<string, unknown>;
+      // profileLayer.scope.products is already the scope-specific overlay
+      const scopeOverlay = profileLayer.scope.products as Record<string, unknown>;
       layers.push({
         label: 'profile-scope',
         value: scopeOverlay,
@@ -146,7 +148,7 @@ export async function getProductConfig<T>(
     const configHashes: Record<string, any> = {};
     configHashes[product] = configHash;
     await updateLockfile(cwd, {
-      configHashes: configHashes as Record<ProductId, any>
+      configHashes
     });
   } catch (error) {
     // Lockfile update is optional, don't fail the config resolution
@@ -173,8 +175,8 @@ export async function explainProductConfig(
 /**
  * Get runtime defaults for a product
  */
-function getRuntimeDefaults(product: ProductId): any {
-  const defaults: Record<ProductId, any> = {
+function getRuntimeDefaults(product: string): any {
+  const defaults: Record<string, any> = {
     devlink: {
       watch: true,
       build: true,

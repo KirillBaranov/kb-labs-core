@@ -3,14 +3,13 @@
  * Types for init operations
  */
 
-import type { ProductId } from './types';
 
 export interface InitWorkspaceOptions {
   cwd: string;
   format?: 'yaml' | 'json';
   presetRef?: string | null;
   profiles?: Record<string, string>;
-  products?: ProductId[];
+  products?: string[];
   dryRun?: boolean;
   force?: boolean;
 }

@@ -55,34 +55,7 @@ export {
 } from '@kb-labs/core-sys/logging';
 
 export {
-  // Profile Functions
-  loadProfile,
-  validateProfile,
-  mergeProfiles,
-  resolveProfile,
-
-  // Profile Service
-  ProfileService,
-
-  // Types
-  type RawProfile,
-  type ResolvedProfile,
-  type ResolveOptions,
-
-  // Error Classes
-  ProfileNotFoundError,
-  ExtendResolutionError,
-  SchemaValidationError
-} from '@kb-labs/core-profiles';
-
-export {
   resolveWorkspaceRoot,
   type ResolveWorkspaceRootOptions,
   type WorkspaceRootResolution,
 } from '@kb-labs/core-workspace';
-
-export {
-  loadKnowledgeConfig,
-  createKnowledgeClientFromConfig,
-  type KnowledgeClientOptions,
-} from './knowledge';

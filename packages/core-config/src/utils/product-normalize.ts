@@ -3,50 +3,48 @@
  * Product ID normalization between code (camelCase) and filesystem (kebab-case)
  */
 
-import type { ProductId } from '@kb-labs/core-types';
-
-// Re-export ProductId for convenience
-export type { ProductId } from '@kb-labs/core-types';
-
 const FS_MAP = new Map([
   ['aiReview', 'ai-review'],
   ['aiDocs', 'ai-docs'],
   ['devlink', 'devlink'],
   ['release', 'release'],
   ['devkit', 'devkit'],
+  ['mind', 'mind'],
+  ['workflow', 'workflow'],
+  ['analytics', 'analytics'],
 ]);
 
 /**
- * Convert ProductId to filesystem kebab-case format
- * @param id ProductId in camelCase
+ * Convert product ID to filesystem kebab-case format
+ * @param id Product ID (e.g., 'aiReview', 'mind', 'workflow')
  * @returns kebab-case string for filesystem paths
  */
-export function toFsProduct(id: ProductId): string {
+export function toFsProduct(id: string): string {
   return FS_MAP.get(id) ?? id;
 }
 
 /**
- * Convert filesystem kebab-case key to ProductId
+ * Convert filesystem kebab-case key to product ID
  * @param fsKey kebab-case string from filesystem
- * @returns ProductId in camelCase
+ * @returns Product ID (camelCase if mapped, original otherwise)
  */
-export function toConfigProduct(fsKey: string): ProductId {
+export function toConfigProduct(fsKey: string): string {
   for (const [k, v] of FS_MAP) {
-    if (v === fsKey) {return k as ProductId;}
+    if (v === fsKey) {return k;}
   }
-  return fsKey as ProductId;
+  return fsKey;
 }
 
 /**
- * Check if a string is a valid ProductId
+ * Check if a string is a known product ID
  */
-export function isValidProductId(value: string): value is ProductId {
-  return FS_MAP.has(value as ProductId);
+export function isValidProductId(value: string): boolean {
+  return FS_MAP.has(value);
 }
 
 /**
- * Get all valid ProductId values
+ * Get all known product IDs
  */
-export function getAllProductIds(): ProductId[] {
-  return Array.from(FS_MAP.keys()) as ProductId[];
+export function getAllProductIds(): string[] {
+  return Array.from(FS_MAP.keys());
 }

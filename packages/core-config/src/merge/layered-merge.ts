@@ -29,7 +29,6 @@ export function layeredMergeWithTrace(layers: ConfigLayer[]): LayeredMergeResult
         source: layer.source,
         type: 'overwriteArray',
         layer: layer.label,
-        profileKey: layer.source.includes('profile') ? extractProfileKey(layer.source) : undefined,
         profileRef: layer.source.includes('profile') ? extractProfileRef(layer.source) : undefined,
         presetRef: layer.source.includes('preset') ? extractPresetRef(layer.source) : undefined,
         version: extractVersion(layer.source),
@@ -50,7 +49,6 @@ export function layeredMergeWithTrace(layers: ConfigLayer[]): LayeredMergeResult
             source: layer.source,
             type: 'set',
             layer: layer.label,
-            profileKey: layer.source.includes('profile') ? extractProfileKey(layer.source) : undefined,
             profileRef: layer.source.includes('profile') ? extractProfileRef(layer.source) : undefined,
             presetRef: layer.source.includes('preset') ? extractPresetRef(layer.source) : undefined,
             version: extractVersion(layer.source),
@@ -68,7 +66,6 @@ export function layeredMergeWithTrace(layers: ConfigLayer[]): LayeredMergeResult
       source: layer.source,
       type: 'set',
       layer: layer.label,
-      profileKey: layer.source.includes('profile') ? extractProfileKey(layer.source) : undefined,
       profileRef: layer.source.includes('profile') ? extractProfileRef(layer.source) : undefined,
       presetRef: layer.source.includes('preset') ? extractPresetRef(layer.source) : undefined,
       version: extractVersion(layer.source),
@@ -83,14 +80,6 @@ export function layeredMergeWithTrace(layers: ConfigLayer[]): LayeredMergeResult
   }, {});
   
   return { merged, trace };
-}
-
-/**
- * Extract profile key from source string
- */
-function extractProfileKey(source: string): string | undefined {
-  const match = source.match(/profile[^:]*:([^@]+)/);
-  return match?.[1];
 }
 
 /**

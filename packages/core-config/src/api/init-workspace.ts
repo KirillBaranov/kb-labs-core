@@ -11,7 +11,6 @@ import { readWorkspaceConfig, findGitRoot } from './read-config';
 import { writeFileAtomic, ensureWithinWorkspace } from '../utils/fs-atomic';
 import { toFsProduct } from '../utils/product-normalize';
 import type { InitWorkspaceOptions, InitResult, InitAction } from '../types/init';
-import type { ProductId } from '../types/types';
 
 /**
  * Generate diff preview (first ~20 lines) for conflicts

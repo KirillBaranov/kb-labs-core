@@ -8,7 +8,6 @@ import path from 'node:path';
 // Note: KbError and ERROR_HINTS are available if needed for future error handling
 import { computeConfigHash } from '../hash/config-hash';
 import { toFsProduct } from '../utils/product-normalize';
-import type { ProductId } from '../types';
 
 export interface LockfileData {
   $schema?: string;
@@ -108,7 +107,7 @@ export async function updateLockfile(
   // Update config hashes
   if (updates.configHashes) {
     for (const [product, config] of Object.entries(updates.configHashes)) {
-      const fsProduct = toFsProduct(product as ProductId);
+      const fsProduct = toFsProduct(product as string);
       const hash = computeConfigHash(config);
       lockfileData.hashes[fsProduct] = hash;
     }
@@ -121,7 +120,7 @@ export async function updateLockfile(
 /**
  * Get config hash for a product
  */
-export function getLockfileConfigHash(product: ProductId, config: any): string {
+export function getLockfileConfigHash(product: string, config: any): string {
   return computeConfigHash(config);
 }
 
@@ -138,7 +137,7 @@ export async function isLockfileUpToDate(
   }
   
   for (const [product, config] of Object.entries(configs)) {
-    const fsProduct = toFsProduct(product as ProductId);
+    const fsProduct = toFsProduct(product as string);
     const currentHash = computeConfigHash(config);
     const lockfileHash = lockfile.hashes[fsProduct];
     

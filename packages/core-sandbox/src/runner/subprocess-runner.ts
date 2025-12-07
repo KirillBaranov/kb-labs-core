@@ -236,20 +236,37 @@ function findWorkspaceRoot(startDir: string): string | null {
  * Checks known paths in order of preference
  */
 function getBootstrapPath(): string {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
+  // Support both ESM and CJS (CJS when bundled by tsup)
+  let currentFilename: string;
+  let currentDirname: string;
+
+  try {
+    // Try ESM first
+    currentFilename = fileURLToPath(import.meta.url);
+    currentDirname = path.dirname(currentFilename);
+  } catch {
+    // Fall back to CJS globals (when bundled by tsup into bin.cjs)
+    // In CJS, __dirname and __filename are global variables injected by Node.js
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - __dirname exists in CJS but not in ESM types
+    currentDirname = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - __filename exists in CJS but not in ESM types
+    currentFilename = typeof __filename !== 'undefined' ? __filename : '';
+  }
+
   const cwd = process.cwd();
-  
-  // Find workspace root - try both cwd and __dirname
+
+  // Find workspace root - try both cwd and currentDirname
   const workspaceRootFromCwd = findWorkspaceRoot(cwd);
-  const workspaceRootFromDirname = findWorkspaceRoot(__dirname);
+  const workspaceRootFromDirname = findWorkspaceRoot(currentDirname);
   const workspaceRoot = workspaceRootFromCwd || workspaceRootFromDirname;
-  
+
   // Debug info - use compact JSON to prevent memory issues
   if (process.env.KB_PLUGIN_DEV_MODE === 'true') {
     const debugInfo = {
-      __filename,
-      __dirname,
+      currentFilename,
+      currentDirname,
       cwd,
       workspaceRootFromCwd,
       workspaceRootFromDirname,
@@ -274,7 +291,7 @@ function getBootstrapPath(): string {
   }
   
   // 2. Try relative to current file (if we're in sandbox/dist/runner, bootstrap is in same dir)
-  const relativePath = path.join(__dirname, 'bootstrap.js');
+  const relativePath = path.join(currentDirname, 'bootstrap.js');
   const relativeExists = existsSync(relativePath);
   if (process.env.KB_PLUGIN_DEV_MODE === 'true') {
     process.stderr.write(`[getBootstrapPath] Checking relative path: ${relativePath}, exists: ${relativeExists}\n`);
@@ -288,7 +305,7 @@ function getBootstrapPath(): string {
   
   // 3. Try node_modules (for production builds)
   // Traverse up from current file to find node_modules
-  let currentDir = __dirname;
+  let currentDir = currentDirname;
   for (let i = 0; i < 10; i++) {
     const nodeModulesPath = path.join(currentDir, 'node_modules', '@kb-labs', 'sandbox', 'dist', 'runner', 'bootstrap.js');
     const nodeModulesExists = existsSync(nodeModulesPath);
@@ -318,7 +335,7 @@ function getBootstrapPath(): string {
   throw new Error(
     `Bootstrap file not found. Tried:\n` +
     attemptedPaths.map(p => `  - ${p}`).join('\n') +
-    `\n__dirname: ${__dirname}\n` +
+    `\ncurrentDirname: ${currentDirname}\n` +
     `cwd: ${cwd}\n` +
     `workspaceRoot: ${workspaceRoot || 'null'}\n` +
     `Make sure @kb-labs/core-sandbox is built: run 'pnpm build' in kb-labs-core/packages/core-sandbox`

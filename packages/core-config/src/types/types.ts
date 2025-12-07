@@ -1,5 +1,3 @@
-import type { ProductId } from '@kb-labs/core-types';
-
 export type Diagnostic =
     | { level: "warn" | "error"; code: string; message: string; detail?: unknown }
     | { level: "info"; code: string; message: string };
@@ -26,15 +24,11 @@ export interface KBConfig {
 
 // New types for enhanced config system
 
-// Re-export ProductId from core-types for backward compatibility
-export type { ProductId };
-
 export interface MergeTrace {
   path: string;
   source: string;
   type: 'set' | 'overwriteArray';
   layer: string;
-  profileKey?: string;
   profileRef?: string;
   presetRef?: string;
   version?: string;
@@ -53,7 +47,10 @@ export interface ProfileLayerInput {
 
 export interface ResolveOptions {
   cwd: string;
-  product: ProductId;
+  /**
+   * Product identifier (e.g., 'mind', 'aiReview', 'workflow')
+   */
+  product: string;
   cli?: Record<string, unknown>;
   writeFinal?: boolean;
   profileLayer?: ProfileLayerInput;

@@ -3,12 +3,6 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@kb-labs/analytics-sdk-node": [
-        "../kb-labs-analytics/packages/analytics-sdk-node/src/index.ts"
-      ],
-      "@kb-labs/analytics-sdk-node/*": [
-        "../kb-labs-analytics/packages/analytics-sdk-node/src/*"
-      ],
       "@kb-labs/cli-core": [
         "../kb-labs-cli/packages/cli-core/src/index.ts"
       ],
@@ -45,17 +39,23 @@
       "@kb-labs/core-contracts/*": [
         "packages/core-contracts/src/*"
       ],
+      "@kb-labs/core-platform": [
+        "packages/core-platform/src/index.ts"
+      ],
+      "@kb-labs/core-platform/*": [
+        "packages/core-platform/src/*"
+      ],
       "@kb-labs/core-policy": [
         "packages/core-policy/src/index.ts"
       ],
       "@kb-labs/core-policy/*": [
         "packages/core-policy/src/*"
       ],
-      "@kb-labs/core-profiles": [
-        "packages/core-profiles/src/index.ts"
+      "@kb-labs/core-runtime": [
+        "packages/core-runtime/src/index.ts"
       ],
-      "@kb-labs/core-profiles/*": [
-        "packages/core-profiles/src/*"
+      "@kb-labs/core-runtime/*": [
+        "packages/core-runtime/src/*"
       ],
       "@kb-labs/core-state-broker": [
         "packages/core-state-broker/src/index.ts"
@@ -94,16 +94,22 @@
         "../kb-labs-knowledge/packages/knowledge-core/src/*"
       ],
       "@kb-labs/plugin-adapter-rest": [
-        "../kb-labs-plugin/packages/adapters/rest/src/index.ts"
+        "../kb-labs-plugin/packages/plugin-adapters/rest/src/index.ts"
       ],
       "@kb-labs/plugin-adapter-rest/*": [
-        "../kb-labs-plugin/packages/adapters/rest/src/*"
+        "../kb-labs-plugin/packages/plugin-adapters/rest/src/*"
       ],
       "@kb-labs/plugin-manifest": [
         "../kb-labs-plugin/packages/plugin-manifest/src/index.ts"
       ],
       "@kb-labs/plugin-manifest/*": [
         "../kb-labs-plugin/packages/plugin-manifest/src/*"
+      ],
+      "@kb-labs/plugin-runtime": [
+        "../kb-labs-plugin/packages/plugin-runtime/src/index.ts"
+      ],
+      "@kb-labs/plugin-runtime/*": [
+        "../kb-labs-plugin/packages/plugin-runtime/src/*"
       ],
       "@kb-labs/shared-cli-ui": [
         "../kb-labs-shared/packages/shared-cli-ui/src/index.ts"

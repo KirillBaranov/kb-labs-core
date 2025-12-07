@@ -29,7 +29,6 @@
   "dependencies": {
     "@kb-labs/core-config": "link:../core-config",
     "@kb-labs/core-policy": "link:../core-policy",
-    "@kb-labs/core-profiles": "link:../core-profiles",
     "@kb-labs/core-sys": "link:../core-sys",
     "@kb-labs/core-types": "link:../core-types",
     "@kb-labs/core-workspace": "workspace:*"

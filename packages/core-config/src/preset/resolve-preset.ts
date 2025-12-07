@@ -7,7 +7,6 @@ import { promises as fsp } from 'node:fs';
 import path from 'node:path';
 import { KbError, ERROR_HINTS } from '../errors/kb-error';
 import { toFsProduct } from '../utils/product-normalize';
-import type { ProductId } from '../types';
 
 export interface PresetInfo {
   name: string;
@@ -132,7 +131,7 @@ function versionMatches(actualVersion: string, requiredVersion: string): boolean
  */
 export function getPresetConfigForProduct(
   preset: PresetInfo,
-  product: ProductId
+  product: string
 ): any {
   const fsProduct = toFsProduct(product);
   return preset.config.products?.[fsProduct] || {};
