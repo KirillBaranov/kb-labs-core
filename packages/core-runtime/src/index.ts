@@ -49,6 +49,23 @@ export {
   WorkflowEngine,
 } from './core/index.js';
 
+// Transport layer for IPC adapter communication
+export type { ITransport, TransportConfig, PendingRequest } from './transport/transport.js';
+export {
+  TransportError,
+  TimeoutError,
+  CircuitOpenError,
+  isRetryableError,
+} from './transport/transport.js';
+export { IPCTransport, createIPCTransport } from './transport/ipc-transport.js';
+
+// IPC Server (parent process)
+export { IPCServer, createIPCServer } from './ipc/ipc-server.js';
+
+// Proxy adapters (child process)
+export { RemoteAdapter } from './proxy/remote-adapter.js';
+export { VectorStoreProxy, createVectorStoreProxy } from './proxy/vector-store-proxy.js';
+
 export type {
   ResourceManagerConfig,
   JobSchedulerConfig,

@@ -3,33 +3,44 @@
   "version": "0.1.3",
   "description": "Pure abstractions for KB Labs platform. Zero dependencies.",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./adapters": {
       "types": "./dist/adapters/index.d.ts",
-      "import": "./dist/adapters/index.js"
+      "import": "./dist/adapters/index.js",
+      "require": "./dist/adapters/index.cjs"
     },
     "./core": {
       "types": "./dist/core/index.d.ts",
-      "import": "./dist/core/index.js"
+      "import": "./dist/core/index.js",
+      "require": "./dist/core/index.cjs"
+    },
+    "./serializable": {
+      "types": "./dist/serializable/index.d.ts",
+      "import": "./dist/serializable/index.js",
+      "require": "./dist/serializable/index.cjs"
     },
     "./noop": {
       "types": "./dist/noop/index.d.ts",
-      "import": "./dist/noop/index.js"
+      "import": "./dist/noop/index.js",
+      "require": "./dist/noop/index.cjs"
     },
     "./noop/adapters": {
       "types": "./dist/noop/adapters/index.d.ts",
-      "import": "./dist/noop/adapters/index.js"
+      "import": "./dist/noop/adapters/index.js",
+      "require": "./dist/noop/adapters/index.cjs"
     },
     "./noop/core": {
       "types": "./dist/noop/core/index.d.ts",
-      "import": "./dist/noop/core/index.js"
+      "import": "./dist/noop/core/index.js",
+      "require": "./dist/noop/core/index.cjs"
     }
   },
   "files": [

@@ -151,9 +151,29 @@ export async function resolveAdapter(
 ): Promise<((config?: any) => any) | null> {
   // Try workspace discovery first
   const discovered = await discoverAdapters(cwd);
-  const adapter = discovered.get(adapterPath);
 
-  if (adapter) {
+  // Check for subpath exports (e.g., "@kb-labs/adapters-openai/embeddings")
+  const basePkgName = adapterPath.split('/').slice(0, 2).join('/'); // "@kb-labs/adapters-openai"
+  const subpath = adapterPath.includes('/') ? adapterPath.split('/').slice(2).join('/') : null; // "embeddings"
+
+  const adapter = discovered.get(basePkgName);
+
+  if (adapter && subpath) {
+    // Load subpath export from workspace adapter
+    const subpathFile = path.join(adapter.pkgRoot, 'dist', `${subpath}.js`);
+    try {
+      await fs.access(subpathFile);
+      const module = await loadAdapterModule(subpathFile);
+      if (typeof module.createAdapter === 'function') {
+        return module.createAdapter;
+      }
+      if (typeof module.default === 'function') {
+        return module.default;
+      }
+    } catch (error: any) {
+      console.warn(`[adapter-discovery] Failed to load subpath ${subpath}: ${error.message}`);
+    }
+  } else if (adapter) {
     return adapter.createAdapter;
   }
 

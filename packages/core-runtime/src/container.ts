@@ -265,6 +265,67 @@ export class PlatformContainer {
 }
 
 /**
- * Global platform container singleton.
+ * Cross-realm Symbol for platform singleton.
+ *
+ * Uses Symbol.for() which creates a GLOBAL symbol that works across:
+ * - CJS (require('@kb-labs/core-runtime'))
+ * - ESM (import '@kb-labs/core-runtime')
+ * - Worker Threads (sandbox workers)
+ *
+ * Symbol.for() is the standard way to create cross-realm symbols:
+ * - React uses Symbol.for('react.element')
+ * - Redux uses Symbol.for('redux.observable')
+ * - This is NOT a hack - it's official JavaScript API
+ *
+ * Storage: We use `process` instead of `globalThis` because:
+ * - `globalThis` is DIFFERENT between CJS and ESM module realms
+ * - `process` is the ONLY object shared across all module types in Node.js
+ * - This ensures true singleton behavior across the entire Node.js process
  */
-export const platform = new PlatformContainer();
+const PLATFORM_SINGLETON_KEY = Symbol.for('kb.platform');
+
+/**
+ * Type augmentation for process to track platform singleton.
+ * This makes TypeScript aware of our platform storage.
+ */
+declare global {
+  var __KB_PLATFORM_SINGLETON__: PlatformContainer | undefined;
+}
+
+// Helper to access the singleton via Symbol.for()
+function getPlatformFromProcess(): PlatformContainer | undefined {
+  return (process as any)[PLATFORM_SINGLETON_KEY];
+}
+
+function setPlatformInProcess(platform: PlatformContainer): void {
+  (process as any)[PLATFORM_SINGLETON_KEY] = platform;
+}
+
+/**
+ * Global platform container singleton.
+ *
+ * Uses Symbol.for() + process for TRUE cross-realm singleton:
+ * - Works across CJS (CLI bin.cjs) and ESM (sandbox workers)
+ * - All worker threads share the same process object
+ * - Each Docker container gets its own process (correct isolation!)
+ *
+ * This ensures:
+ * ✅ One QdrantVectorStore instance per Node.js process
+ * ✅ One Logger instance per Node.js process
+ * ✅ One Analytics adapter per Node.js process
+ * ✅ All sandbox workers share adapters (resource efficiency)
+ * ✅ Docker containers are isolated (security for paranoid mode)
+ */
+export const platform: PlatformContainer = (() => {
+  // Check if singleton already exists
+  const existing = getPlatformFromProcess();
+
+  if (existing && typeof existing.setAdapter === 'function' && typeof existing.getAdapter === 'function') {
+    return existing;
+  }
+
+  // Create new singleton and store in process
+  const newPlatform = new PlatformContainer();
+  setPlatformInProcess(newPlatform);
+  return newPlatform;
+})();
