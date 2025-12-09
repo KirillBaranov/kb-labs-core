@@ -280,10 +280,16 @@ products:
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines and contribution process.
 
-## 📄 License
+## License
 
-MIT © KB Labs
+KB Public License v1.1 - see [LICENSE](LICENSE) for details.
 
----
+This is open source software with some restrictions on:
+- Offering as a hosted service (SaaS/PaaS)
+- Creating competing platform products
 
-**See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines and contribution process.**
+For commercial licensing inquiries: contact@kblabs.dev
+
+**User Guides:**
+- [English Guide](../LICENSE-GUIDE.en.md)
+- [Русское руководство](../LICENSE-GUIDE.ru.md)
