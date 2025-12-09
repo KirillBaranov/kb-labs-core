@@ -91,6 +91,26 @@ export class PlatformContainer {
   }
 
   /**
+   * Check if a service is explicitly configured (not using fallback).
+   * @param service - Service name (e.g., 'llm', 'vectorStore', 'workflows')
+   * @returns true if service is configured, false if using NoOp/fallback
+   */
+  isConfigured(service: string): boolean {
+    // Check if it's an adapter
+    if (this.adapters.has(service)) {
+      return true;
+    }
+    // Check core features
+    if (this.initialized) {
+      const coreFeatures = ['workflows', 'jobScheduler', 'cron', 'resources', 'jobs'];
+      if (coreFeatures.includes(service)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Get list of all configured services (adapters + core features).
    * Used for validating plugin platform requirements.
    */
