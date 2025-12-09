@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/core-state-daemon",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "State daemon server for persistent cross-invocation state",
   "type": "module",
   "main": "./dist/index.js",

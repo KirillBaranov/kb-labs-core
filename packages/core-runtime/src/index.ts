@@ -58,3 +58,14 @@ export type {
   WorkflowStepDefinition,
   WorkflowStepContext,
 } from './core/index.js';
+
+// Monitoring helpers
+export {
+  getMonitoringSnapshot,
+  getDegradedStatus,
+  type MonitoringSnapshot,
+  type MonitoringOptions,
+  type DegradedLevel,
+  type DegradedStatus,
+  type DegradedOptions,
+} from './monitoring.js';
