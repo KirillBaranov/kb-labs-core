@@ -136,18 +136,20 @@ export async function initPlatform(
     // Create IPC proxy adapters that forward calls to parent process.
     // This eliminates adapter duplication - only parent has real adapters.
 
-    console.error('[initPlatform] Child process detected - creating IPC proxy adapters');
+    console.error('[initPlatform] Child process detected - creating proxy adapters');
 
-    // Dynamically import IPC classes (avoid circular deps)
-    const { createIPCTransport } = await import('./transport/ipc-transport.js');
+    // Use Unix Socket transport by default (100-1000x faster than IPC for large messages)
+    const { UnixSocketTransport } = await import('./transport/unix-socket-transport.js');
     const { VectorStoreProxy } = await import('./proxy/vector-store-proxy.js');
     const { CacheProxy } = await import('./proxy/cache-proxy.js');
+    const { ConfigProxy } = await import('./proxy/config-proxy.js');
     const { LLMProxy } = await import('./proxy/llm-proxy.js');
     const { EmbeddingsProxy } = await import('./proxy/embeddings-proxy.js');
     const { StorageProxy } = await import('./proxy/storage-proxy.js');
 
     // Create single transport for all adapters
-    const transport = createIPCTransport();
+    const transport = new UnixSocketTransport();
+    console.error('[initPlatform] Using Unix Socket transport');
 
     // Create proxy adapters (replace real adapters with IPC proxies)
     if (adapters.vectorStore) {
@@ -160,13 +162,19 @@ export async function initPlatform(
       console.error('[initPlatform] Created CacheProxy');
     }
 
+    // Config adapter is ALWAYS created (not optional like other adapters)
+    platform.setAdapter('config', new ConfigProxy(transport));
+    console.error('[initPlatform] Created ConfigProxy');
+
     if (adapters.llm) {
       platform.setAdapter('llm', new LLMProxy(transport));
       console.error('[initPlatform] Created LLMProxy');
     }
 
     if (adapters.embeddings) {
-      platform.setAdapter('embeddings', new EmbeddingsProxy(transport));
+      const embeddingsProxy = new EmbeddingsProxy(transport);
+      await embeddingsProxy.getDimensions(); // Initialize dimensions before use
+      platform.setAdapter('embeddings', embeddingsProxy);
       console.error('[initPlatform] Created EmbeddingsProxy');
     }
 
@@ -213,6 +221,11 @@ export async function initPlatform(
 
     await Promise.all(loadPromises);
 
+    // Create ConfigAdapter (ALWAYS present, not loaded dynamically)
+    const { ConfigAdapter } = await import('./adapters/config-adapter.js');
+    platform.setAdapter('config', new ConfigAdapter());
+    console.error('[initPlatform] Created ConfigAdapter');
+
     // Initialize core features
     const coreFeatures = initializeCoreFeatures(platform, core);
     platform.initCoreFeatures(
@@ -222,10 +235,10 @@ export async function initPlatform(
       coreFeatures.resources
     );
 
-    // Start IPC server to handle adapter calls from children
-    const { createIPCServer } = await import('./ipc/ipc-server.js');
-    const ipcServer = createIPCServer(platform);
-    console.error('[initPlatform] Started IPC server for child processes');
+    // Start Unix Socket server to handle adapter calls from children
+    const { createUnixSocketServer } = await import('./ipc/unix-socket-server.js');
+    const socketServer = await createUnixSocketServer(platform);
+    console.error('[initPlatform] Started Unix Socket server for child processes');
 
     console.error('[initPlatform] Parent process initialization complete');
   }

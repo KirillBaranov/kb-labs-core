@@ -49,6 +49,10 @@ export {
   WorkflowEngine,
 } from './core/index.js';
 
+// Transport utilities
+export { BulkTransferHelper } from './transport/bulk-transfer.js';
+export type { BulkTransfer, BulkTransferOptions } from './transport/bulk-transfer.js';
+
 // Transport layer for IPC adapter communication
 export type { ITransport, TransportConfig, PendingRequest } from './transport/transport.js';
 export {
@@ -58,6 +62,9 @@ export {
   isRetryableError,
 } from './transport/transport.js';
 export { IPCTransport, createIPCTransport } from './transport/ipc-transport.js';
+export { UnixSocketTransport, createUnixSocketTransport } from './transport/unix-socket-transport.js';
+export type { UnixSocketConfig } from './transport/unix-socket-transport.js';
+export { selectTimeout, getOperationTimeout, OPERATION_TIMEOUTS } from './transport/timeout-config.js';
 
 // IPC Server (parent process)
 export { IPCServer, createIPCServer } from './ipc/ipc-server.js';

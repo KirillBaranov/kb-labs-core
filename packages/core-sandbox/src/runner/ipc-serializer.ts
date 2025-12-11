@@ -20,6 +20,7 @@ export interface SerializableContext {
   pluginRoot?: string;
   pluginId?: string;
   pluginVersion?: string;
+  configSection?: string; // Config section for useConfig() auto-detection
   traceId?: string;
   spanId?: string;
   parentSpanId?: string;
@@ -27,16 +28,16 @@ export interface SerializableContext {
   debugLevel?: 'verbose' | 'inspect' | 'profile';
   dryRun?: boolean;
   user?: { id?: string };
-  
+
   // Adapter metadata (serializable)
   adapterMeta?: AdapterMetadata;
-  
+
   // Serialized adapter context (no functions)
   adapterContextData?: Record<string, unknown>;
-  
+
   // Context version for compatibility checking
   version?: string;
-  
+
   // Extension data (serializable only)
   extensionsData?: Record<string, unknown>;
 
@@ -61,6 +62,7 @@ export function serializeContext(ctx: ExecutionContext): SerializableContext {
     pluginRoot: ctx.pluginRoot,
     pluginId: ctx.pluginId,
     pluginVersion: ctx.pluginVersion,
+    configSection: ctx.configSection, // For useConfig() auto-detection
     traceId: ctx.traceId,
     spanId: ctx.spanId,
     parentSpanId: ctx.parentSpanId,

@@ -37,6 +37,8 @@ export interface ExecutionContext {
   pluginId?: string;
   /** Plugin version */
   pluginVersion?: string;
+  /** Config section identifier (for useConfig() auto-detection) */
+  configSection?: string;
   /** User context (optional) */
   user?: {
     id?: string;

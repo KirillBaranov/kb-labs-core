@@ -37,6 +37,8 @@ export type { IEmbeddings } from './adapters/embeddings.js';
 
 export type { ICache } from './adapters/cache.js';
 
+export type { IConfig } from './adapters/config.js';
+
 export type { IStorage } from './adapters/storage.js';
 
 export type { ILogger } from './adapters/logger.js';

@@ -15,6 +15,7 @@ export {
   MockLLM,
   MockEmbeddings,
   MemoryCache,
+  NoOpConfig,
   MemoryStorage,
   ConsoleLogger,
   NoOpLogger,

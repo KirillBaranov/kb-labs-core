@@ -15,5 +15,7 @@
  * ```
  */
 
-export * from './transport';
-export * from './ipc-transport';
+export * from './transport.js';
+export * from './ipc-transport.js';
+export * from './unix-socket-transport.js';
+export * from './timeout-config.js';

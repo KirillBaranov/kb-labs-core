@@ -71,6 +71,11 @@ export async function recreateContext(options: ContextRecreatorOptions): Promise
     }
   }
 
+  // Set __KB_CONFIG_SECTION__ for useConfig() auto-detection
+  if (serializedCtx.configSection) {
+    (globalThis as any).__KB_CONFIG_SECTION__ = serializedCtx.configSection;
+  }
+
   // Defensive: ensure serializedCtx has all required fields
   const ctx: ExecutionContext = {
     requestId: serializedCtx.requestId || '',
@@ -79,6 +84,7 @@ export async function recreateContext(options: ContextRecreatorOptions): Promise
     pluginRoot: serializedCtx.pluginRoot, // Required field
     pluginId: serializedCtx.pluginId || '',
     pluginVersion: serializedCtx.pluginVersion || '',
+    configSection: serializedCtx.configSection, // For useConfig() auto-detection
     traceId: serializedCtx.traceId,
     spanId: serializedCtx.spanId,
     parentSpanId: serializedCtx.parentSpanId,

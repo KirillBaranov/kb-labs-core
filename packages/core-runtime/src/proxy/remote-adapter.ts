@@ -95,6 +95,7 @@ export abstract class RemoteAdapter<T> {
    *
    * @param method - Method name to call on the adapter
    * @param args - Method arguments (will be serialized)
+   * @param timeout - Optional timeout in milliseconds (overrides transport default)
    * @returns Promise resolving to deserialized result
    * @throws Error if remote method throws or communication fails
    *
@@ -102,9 +103,12 @@ export abstract class RemoteAdapter<T> {
    * ```typescript
    * // In VectorStoreProxy.search():
    * return this.callRemote('search', [query, limit, filter]);
+   *
+   * // With custom timeout for bulk operations:
+   * return this.callRemote('upsert', [vectors], 120000); // 2 min timeout
    * ```
    */
-  protected async callRemote(method: string, args: unknown[]): Promise<unknown> {
+  protected async callRemote(method: string, args: unknown[], timeout?: number): Promise<unknown> {
     // Generate unique request ID
     const requestId = randomUUID();
 
@@ -116,6 +120,7 @@ export abstract class RemoteAdapter<T> {
       adapter: this.adapterName,
       method,
       args: args.map((arg) => serialize(arg)),
+      timeout, // Optional timeout for this specific call
       context: this.context, // Include execution context for tracing/debugging
     };
 

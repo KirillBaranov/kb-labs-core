@@ -8,6 +8,7 @@ export { MemoryVectorStore } from './vector-store.js';
 export { MockLLM } from './llm.js';
 export { MockEmbeddings } from './embeddings.js';
 export { MemoryCache } from './cache.js';
+export { NoOpConfig } from './config.js';
 export { MemoryStorage } from './storage.js';
 export { ConsoleLogger, NoOpLogger } from './logger.js';
 export { MemoryEventBus, NoOpEventBus } from './event-bus.js';

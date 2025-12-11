@@ -68,4 +68,20 @@ export interface IVectorStore {
    * Get total count of vectors in the store.
    */
   count(): Promise<number>;
+
+  /**
+   * Get vectors by IDs (optional method for bulk retrieval).
+   * Allows any plugin to retrieve multiple vectors efficiently.
+   * @param ids - Array of vector IDs to retrieve
+   * @returns Array of vector records
+   */
+  get?(ids: string[]): Promise<VectorRecord[]>;
+
+  /**
+   * Query vectors by metadata filter (optional method for advanced filtering).
+   * Allows any plugin to retrieve vectors based on custom metadata criteria.
+   * @param filter - Metadata filter to apply
+   * @returns Array of matching vector records
+   */
+  query?(filter: VectorFilter): Promise<VectorRecord[]>;
 }

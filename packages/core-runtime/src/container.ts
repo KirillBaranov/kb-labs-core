@@ -9,6 +9,7 @@ import type {
   ILLM,
   IEmbeddings,
   ICache,
+  IConfig,
   IStorage,
   ILogger,
   IEventBus,
@@ -26,6 +27,7 @@ import {
   MockLLM,
   MockEmbeddings,
   MemoryCache,
+  NoOpConfig,
   MemoryStorage,
   ConsoleLogger,
   MemoryEventBus,
@@ -46,6 +48,7 @@ export interface AdapterTypes {
   llm: ILLM;
   embeddings: IEmbeddings;
   cache: ICache;
+  config: IConfig;
   storage: IStorage;
   logger: ILogger;
   eventBus: IEventBus;
@@ -156,6 +159,11 @@ export class PlatformContainer {
   /** Cache adapter (fallback: MemoryCache) */
   get cache(): ICache {
     return (this.adapters.get('cache') as ICache) ?? new MemoryCache();
+  }
+
+  /** Config adapter (fallback: NoOpConfig) */
+  get config(): IConfig {
+    return (this.adapters.get('config') as IConfig) ?? new NoOpConfig();
   }
 
   /** Storage adapter (fallback: MemoryStorage) */

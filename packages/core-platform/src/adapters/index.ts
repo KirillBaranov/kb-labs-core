@@ -23,6 +23,9 @@ export type { IEmbeddings } from './embeddings.js';
 // Cache
 export type { ICache } from './cache.js';
 
+// Config
+export type { IConfig } from './config.js';
+
 // Storage
 export type { IStorage } from './storage.js';
 

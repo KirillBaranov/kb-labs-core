@@ -40,6 +40,7 @@ import {
   TransportError,
   TimeoutError,
 } from './transport';
+import { selectTimeout } from './timeout-config.js';
 
 /**
  * IPC transport using process.send/process.on('message').
@@ -82,8 +83,8 @@ export class IPCTransport implements ITransport {
       throw new TransportError('Transport is closed');
     }
 
-    // Determine timeout (call-specific > config default > 30s)
-    const timeout = call.timeout ?? this.config.timeout ?? 30000;
+    // Smart timeout selection based on operation type
+    const timeout = selectTimeout(call, this.config.timeout);
 
     return new Promise((resolve, reject) => {
       // Create timeout timer
@@ -95,30 +96,62 @@ export class IPCTransport implements ITransport {
       // Store pending request
       this.pending.set(call.requestId, { resolve, reject, timer });
 
-      // Send call to parent
-      try {
-        // process.send() is guaranteed to exist (checked in constructor)
-        // Returns false if message couldn't be sent (channel closed)
-        const sent = process.send!(call);
-        if (!sent) {
-          // Channel closed or backpressure - clean up and reject
-          const pending = this.pending.get(call.requestId);
-          if (pending) {
-            clearTimeout(pending.timer);
-            this.pending.delete(call.requestId);
-            reject(new TransportError('Failed to send IPC message: channel closed or backpressure'));
-          }
-        }
-      } catch (error) {
-        // Synchronous error (e.g., message too large, serialization error)
+      // Try to send message, with backpressure handling
+      this.trySendWithBackpressure(call, 0).catch((error) => {
         const pending = this.pending.get(call.requestId);
         if (pending) {
           clearTimeout(pending.timer);
           this.pending.delete(call.requestId);
-          reject(new TransportError(`Failed to send IPC message: ${error}`, error as Error));
+          reject(error);
         }
-      }
+      });
     });
+  }
+
+  /**
+   * Try to send IPC message with backpressure handling.
+   * If backpressure detected, waits and retries with exponential backoff.
+   *
+   * Note: Node.js IPC 'drain' event is unreliable, so we use sleep-based backoff instead.
+   *
+   * @param call - Adapter call to send
+   * @param retryCount - Current retry attempt (for exponential backoff)
+   */
+  private async trySendWithBackpressure(call: AdapterCall, retryCount: number): Promise<void> {
+    const maxRetries = 20;
+    const baseDelayMs = 50;
+
+    try {
+      // process.send() is guaranteed to exist (checked in constructor)
+      // Returns false if backpressure detected (buffer full)
+      const sent = process.send!(call);
+
+      if (sent) {
+        // Message sent successfully
+        return;
+      }
+
+      // Backpressure detected
+      if (retryCount >= maxRetries) {
+        throw new TransportError(
+          `Failed to send IPC message after ${maxRetries} retries: persistent backpressure`
+        );
+      }
+
+      // Wait with exponential backoff (sleep instead of drain event)
+      const delay = Math.min(baseDelayMs * Math.pow(1.5, retryCount), 5000); // Cap at 5s
+      await new Promise(resolve => setTimeout(resolve, delay));
+
+      // Retry sending
+      return this.trySendWithBackpressure(call, retryCount + 1);
+
+    } catch (error) {
+      // Synchronous error (e.g., message too large, serialization error, channel closed)
+      if (error instanceof TransportError) {
+        throw error;
+      }
+      throw new TransportError(`Failed to send IPC message: ${error}`, error as Error);
+    }
   }
 
   private handleMessage(msg: unknown) {
