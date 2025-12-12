@@ -1,15 +1,14 @@
 /**
  * Jobs manager - integrates CronManager with plugin job loading
  *
- * SECURITY: Uses execute() with sandbox for job isolation
+ * SECURITY: Uses executePlugin() with sandbox for job isolation
  */
 
 import { CronManager } from '@kb-labs/core-runtime';
 import type { ILogger } from '@kb-labs/core-platform';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
-import { execute } from '@kb-labs/plugin-runtime';
-import type { ExecutionContext } from '@kb-labs/plugin-runtime';
+import { executePlugin, createPluginContextWithPlatform, createNoopUI } from '@kb-labs/plugin-runtime';
 import { permissions } from '@kb-labs/shared-command-kit';
 
 export interface JobsManagerConfig {
@@ -123,62 +122,49 @@ export class JobsManager {
                   const isDebugMode = process.env.KB_LOG_LEVEL === 'debug' || process.env.KB_JOBS_DEBUG === 'true';
                   const requestId = `job-${jobId}-${Date.now()}`;
 
-                  const executionContext: ExecutionContext = {
+                  // Create PluginContextV2 for job execution
+                  const pluginContext = createPluginContextWithPlatform({
+                    host: 'cli', // Jobs are CLI-like execution
                     requestId,
                     pluginId,
                     pluginVersion: manifest.version,
-                    routeOrCommand: jobId,
-                    workdir: process.cwd(),
-                    pluginRoot,
-                    outdir: path.join('.kb', pluginId.replace('@kb-labs/', '')),
-                    // Enable debug for better error visibility
-                    debug: isDebugMode,
-                    debugLevel: isDebugMode ? 'verbose' : undefined,
-                    debugFormat: 'human',
-                    // ✅ CRITICAL: Add adapter metadata so execute() builds full ctx.runtime
-                    adapterMeta: {
-                      type: 'job' as any, // Job adapter type (not in enum yet)
-                      signature: 'cron',
-                      version: '1.0.0',
-                      meta: {
-                        jobId,
-                        schedule: job.schedule,
-                      },
-                    },
-                    adapterContext: {
-                      type: 'cli' as const, // Use 'cli' type for now (job type not in enum yet)
-                      requestId,
-                      workdir: process.cwd(),
-                      outdir: path.join('.kb', pluginId.replace('@kb-labs/', '')),
-                      pluginId,
-                      pluginVersion: manifest.version,
-                      debug: isDebugMode,
-                      // Job-specific context fields
+                    cwd: process.cwd(),      // V2: promoted to top-level
+                    outdir: path.join('.kb', pluginId.replace('@kb-labs/', '')),  // V2: promoted
+                    config: {},
+                    ui: createNoopUI(), // Jobs don't have UI
+                    metadata: {
+                      // Job-specific fields
+                      scheduledJob: true,  // Mark as scheduled job (not interactive CLI)
                       jobId: ctx.jobId,
                       executedAt: ctx.executedAt,
                       runCount: ctx.runCount,
-                    } as any,
-                  };
+                      schedule: job.schedule,
+                      routeOrCommand: jobId,
+                      debug: isDebugMode,
+                    },
+                  });
 
                   // Get permissions from manifest or use readonly default
                   const jobPermissions = job.permissions ?? permissions.presets.pluginWorkspace(
                     pluginId.replace('@kb-labs/', '')
                   );
 
-                  // Execute with sandbox
-                  const result = await execute(
-                    {
-                      handler: { file: handlerFile, export: handlerExport },
-                      input: {
-                        jobId: ctx.jobId,
-                        executedAt: ctx.executedAt,
-                        runCount: ctx.runCount,
-                      },
-                      manifest,
-                      perms: jobPermissions,
+                  // Execute via new executePlugin architecture
+                  const result = await executePlugin({
+                    context: pluginContext,
+                    handlerRef: { file: handlerFile, export: handlerExport },
+                    argv: [], // Jobs don't use argv
+                    flags: {
+                      jobId: ctx.jobId,
+                      executedAt: ctx.executedAt,
+                      runCount: ctx.runCount,
                     },
-                    executionContext
-                  );
+                    manifest,
+                    permissions: jobPermissions,
+                    grantedCapabilities: manifest.capabilities || [],
+                    pluginRoot: path.join(pluginRoot, 'dist'),
+                    registry: undefined, // Jobs don't need registry
+                  });
 
                   if (!result.ok) {
                     // Log detailed error information
@@ -186,7 +172,7 @@ export class JobsManager {
                       errorMessage: result.error?.message,
                       errorCode: result.error?.code,
                       handler: `${handlerFile}#${handlerExport}`,
-                      requestId: executionContext.requestId,
+                      requestId: pluginContext.requestId,
                     }, null, 2);
 
                     this.logger.error(
