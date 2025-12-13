@@ -16,7 +16,7 @@ import { createSubprocessRunner } from './runner/subprocess-runner';
 export function createSandboxRunner(config: SandboxConfig): SandboxRunner {
   // devMode is a hint, but inspect mode (subprocess) takes priority
   // If mode is explicitly set to subprocess, don't override it
-  const forceInprocess = (config.devMode || process.env.KB_PLUGIN_DEV_MODE === 'true') 
+  const forceInprocess = (config.devMode || process.env.KB_PLUGIN_DEV_MODE === 'true')
     && config.mode !== 'subprocess';
 
   if (forceInprocess && config.mode === 'inprocess') {

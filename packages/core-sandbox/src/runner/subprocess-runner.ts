@@ -70,10 +70,18 @@ function setupLogPipes(
   config: SandboxConfig,
   quiet: boolean
 ): RingBuffer {
+  // DEBUG: Log setupLogPipes called
+  require('fs').appendFileSync('/tmp/subprocess-runner-debug.log',
+    `[SETUP-LOG-PIPES] Called, child.stdout exists: ${!!child.stdout}\n`
+  );
+
   const bufferSizeMb = config.monitoring.logBufferSizeMb || 1;
   const ringBuffer = new RingBuffer(bufferSizeMb * 1024 * 1024);
 
   if (child.stdout) {
+    require('fs').appendFileSync('/tmp/subprocess-runner-debug.log',
+      `[SETUP-LOG-PIPES] Attaching stdout listener\n`
+    );
     child.stdout.setEncoding('utf8');
     child.stdout.on('data', (dataRaw: string) => {
       // CRITICAL OOM FIX: Limit data size BEFORE split() to prevent OOM on huge logs
@@ -470,12 +478,21 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
         ctx.onLog(`[SUBPROCESS] Workdir: ${ctx.workdir}`, 'debug');
       }
       
+      // DEBUG: Log before fork
+      require('fs').appendFileSync('/tmp/subprocess-runner-debug.log',
+        `[SUBPROCESS-RUNNER] About to fork child process\n`
+      );
+
       const child = fork(bootstrapPath, [], {
         execArgv,
         env,
         stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
         cwd: ctx.workdir,
       });
+
+      require('fs').appendFileSync('/tmp/subprocess-runner-debug.log',
+        `[SUBPROCESS-RUNNER] Child forked, PID: ${child.pid}\n`
+      );
 
       // DIAGNOSTIC: Test if stderr works at all (only in debug mode)
       const DEBUG_MODE = process.env.DEBUG_SANDBOX === '1' || process.env.NODE_ENV === 'development';
