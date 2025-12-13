@@ -116,14 +116,14 @@ export async function initPlatform(
 ): Promise<PlatformContainer> {
   // ✅ Idempotent: If already initialized, return existing singleton
   // This prevents duplicate adapter instances across CLI and sandbox processes
-  console.error(`[initPlatform] isInitialized=${platform.isInitialized}, pid=${process.pid}`);
+  platform.logger.debug(`initPlatform isInitialized=${platform.isInitialized} pid=${process.pid}`);
 
   if (platform.isInitialized) {
-    console.error(`[initPlatform] Returning existing platform (pid=${process.pid})`);
+    platform.logger.debug(`initPlatform returning existing platform pid=${process.pid}`);
     return platform;
   }
 
-  console.error(`[initPlatform] Initializing NEW platform (pid=${process.pid})`);
+  platform.logger.debug(`initPlatform initializing NEW platform pid=${process.pid}`);
   const { adapters = {}, adapterOptions = {}, core = {} } = config;
 
   // 🔍 Detect if running in child process (sandbox worker)
@@ -136,7 +136,7 @@ export async function initPlatform(
     // Create IPC proxy adapters that forward calls to parent process.
     // This eliminates adapter duplication - only parent has real adapters.
 
-    console.error('[initPlatform] Child process detected - creating proxy adapters');
+    platform.logger.debug('initPlatform child process detected - creating proxy adapters');
 
     // Use Unix Socket transport by default (100-1000x faster than IPC for large messages)
     const { UnixSocketTransport } = await import('./transport/unix-socket-transport.js');
@@ -149,38 +149,38 @@ export async function initPlatform(
 
     // Create single transport for all adapters
     const transport = new UnixSocketTransport();
-    console.error('[initPlatform] Using Unix Socket transport');
+    platform.logger.debug('initPlatform using Unix Socket transport');
 
     // Create proxy adapters (replace real adapters with IPC proxies)
     if (adapters.vectorStore) {
       platform.setAdapter('vectorStore', new VectorStoreProxy(transport));
-      console.error('[initPlatform] Created VectorStoreProxy');
+      platform.logger.debug('initPlatform created VectorStoreProxy');
     }
 
     if (adapters.cache) {
       platform.setAdapter('cache', new CacheProxy(transport));
-      console.error('[initPlatform] Created CacheProxy');
+      platform.logger.debug('initPlatform created CacheProxy');
     }
 
     // Config adapter is ALWAYS created (not optional like other adapters)
     platform.setAdapter('config', new ConfigProxy(transport));
-    console.error('[initPlatform] Created ConfigProxy');
+    platform.logger.debug('initPlatform created ConfigProxy');
 
     if (adapters.llm) {
       platform.setAdapter('llm', new LLMProxy(transport));
-      console.error('[initPlatform] Created LLMProxy');
+      platform.logger.debug('initPlatform created LLMProxy');
     }
 
     if (adapters.embeddings) {
       const embeddingsProxy = new EmbeddingsProxy(transport);
       await embeddingsProxy.getDimensions(); // Initialize dimensions before use
       platform.setAdapter('embeddings', embeddingsProxy);
-      console.error('[initPlatform] Created EmbeddingsProxy');
+      platform.logger.debug('initPlatform created EmbeddingsProxy');
     }
 
     if (adapters.storage) {
       platform.setAdapter('storage', new StorageProxy(transport));
-      console.error('[initPlatform] Created StorageProxy');
+      platform.logger.debug('initPlatform created StorageProxy');
     }
 
     // Core features are initialized normally (they don't duplicate resources)
@@ -192,7 +192,7 @@ export async function initPlatform(
       coreFeatures.resources
     );
 
-    console.error('[initPlatform] Child process initialization complete');
+    platform.logger.debug('initPlatform child process initialization complete');
 
   } else {
     // ══════════════════════════════════════════════════════════════════════
@@ -201,7 +201,7 @@ export async function initPlatform(
     // Load real adapters (Qdrant, Redis, OpenAI, etc.)
     // Start IPC server to handle calls from child processes.
 
-    console.error('[initPlatform] Parent process detected - loading real adapters');
+    platform.logger.debug('initPlatform parent process detected - loading real adapters');
 
     // Load adapters in parallel
     const adapterKeys = Object.keys(adapters) as (keyof typeof adapters)[];
@@ -215,7 +215,7 @@ export async function initPlatform(
         const instance = await loadAdapter<AdapterTypes[typeof key]>(adapterPath, cwd, optionsForAdapter);
         if (instance) {
           platform.setAdapter(key as keyof AdapterTypes, instance);
-          console.error(`[initPlatform] Loaded adapter: ${key} → ${instance.constructor.name}`);
+          platform.logger.debug(`initPlatform loaded adapter: ${key} → ${instance.constructor.name}`);
         }
       });
 
@@ -224,7 +224,7 @@ export async function initPlatform(
     // Create ConfigAdapter (ALWAYS present, not loaded dynamically)
     const { ConfigAdapter } = await import('./adapters/config-adapter.js');
     platform.setAdapter('config', new ConfigAdapter());
-    console.error('[initPlatform] Created ConfigAdapter');
+    platform.logger.debug('initPlatform created ConfigAdapter');
 
     // Initialize core features
     const coreFeatures = initializeCoreFeatures(platform, core);
@@ -238,9 +238,9 @@ export async function initPlatform(
     // Start Unix Socket server to handle adapter calls from children
     const { createUnixSocketServer } = await import('./ipc/unix-socket-server.js');
     const socketServer = await createUnixSocketServer(platform);
-    console.error('[initPlatform] Started Unix Socket server for child processes');
+    platform.logger.debug('initPlatform started Unix Socket server for child processes');
 
-    console.error('[initPlatform] Parent process initialization complete');
+    platform.logger.debug('initPlatform parent process initialization complete');
   }
 
   return platform;

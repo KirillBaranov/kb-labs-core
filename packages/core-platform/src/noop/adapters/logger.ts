@@ -6,14 +6,39 @@
 import type { ILogger } from '../../adapters/logger.js';
 
 /**
- * Simple console logger.
+ * Log level type.
+ */
+type LogLevel = 'silent' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
+
+/**
+ * Simple console logger with log level support.
+ * Respects KB_LOG_LEVEL environment variable.
  * Outputs to console.log/warn/error/debug with JSON metadata.
  */
 export class ConsoleLogger implements ILogger {
   private bindings: Record<string, unknown>;
+  private level: LogLevel;
 
-  constructor(bindings: Record<string, unknown> = {}) {
+  constructor(bindings: Record<string, unknown> = {}, level?: LogLevel) {
     this.bindings = bindings;
+    // Read from env or use provided level (default: 'info')
+    this.level = level ?? (process.env.KB_LOG_LEVEL as LogLevel) ?? 'info';
+  }
+
+  private shouldLog(messageLevel: LogLevel): boolean {
+    const levels: Record<LogLevel, number> = {
+      silent: 0,
+      error: 1,
+      warn: 2,
+      info: 3,
+      debug: 4,
+      trace: 5,
+    };
+
+    const currentLevel = levels[this.level] ?? 3; // Default to info
+    const targetLevel = levels[messageLevel] ?? 3;
+
+    return targetLevel <= currentLevel;
   }
 
   private formatMeta(meta?: Record<string, unknown>): string {
@@ -25,26 +50,41 @@ export class ConsoleLogger implements ILogger {
   }
 
   info(message: string, meta?: Record<string, unknown>): void {
-    console.log(`[INFO] ${message}${this.formatMeta(meta)}`);
+    if (this.shouldLog('info')) {
+      console.log(`[INFO] ${message}${this.formatMeta(meta)}`);
+    }
   }
 
   warn(message: string, meta?: Record<string, unknown>): void {
-    console.warn(`[WARN] ${message}${this.formatMeta(meta)}`);
+    if (this.shouldLog('warn')) {
+      console.warn(`[WARN] ${message}${this.formatMeta(meta)}`);
+    }
   }
 
   error(message: string, error?: Error, meta?: Record<string, unknown>): void {
-    const errorMeta = error
-      ? { ...meta, error: { message: error.message, stack: error.stack } }
-      : meta;
-    console.error(`[ERROR] ${message}${this.formatMeta(errorMeta)}`);
+    if (this.shouldLog('error')) {
+      const errorMeta = error
+        ? { ...meta, error: { message: error.message, stack: error.stack } }
+        : meta;
+      console.error(`[ERROR] ${message}${this.formatMeta(errorMeta)}`);
+    }
   }
 
   debug(message: string, meta?: Record<string, unknown>): void {
-    console.debug(`[DEBUG] ${message}${this.formatMeta(meta)}`);
+    if (this.shouldLog('debug')) {
+      console.debug(`[DEBUG] ${message}${this.formatMeta(meta)}`);
+    }
+  }
+
+  trace(message: string, meta?: Record<string, unknown>): void {
+    if (this.shouldLog('trace')) {
+      console.debug(`[TRACE] ${message}${this.formatMeta(meta)}`);
+    }
   }
 
   child(bindings: Record<string, unknown>): ILogger {
-    return new ConsoleLogger({ ...this.bindings, ...bindings });
+    // Child logger inherits parent's level
+    return new ConsoleLogger({ ...this.bindings, ...bindings }, this.level);
   }
 }
 
@@ -66,6 +106,10 @@ export class NoOpLogger implements ILogger {
   }
 
   debug(_message: string, _meta?: Record<string, unknown>): void {
+    // No-op
+  }
+
+  trace(_message: string, _meta?: Record<string, unknown>): void {
     // No-op
   }
 

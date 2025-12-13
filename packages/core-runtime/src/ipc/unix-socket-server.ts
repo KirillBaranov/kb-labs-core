@@ -84,7 +84,7 @@ export class UnixSocketServer {
         // Set socket permissions (readable/writable by all)
         fs.chmodSync(this.socketPath, 0o666);
         this.started = true;
-        console.error('[UnixSocketServer] Started listening for adapter calls');
+        this.platform.logger.debug('UnixSocketServer started listening for adapter calls');
         resolve();
       });
     });

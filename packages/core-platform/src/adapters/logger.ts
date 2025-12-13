@@ -38,6 +38,13 @@ export interface ILogger {
   debug(message: string, meta?: Record<string, unknown>): void;
 
   /**
+   * Log trace message (most verbose).
+   * @param message - Log message
+   * @param meta - Optional metadata
+   */
+  trace(message: string, meta?: Record<string, unknown>): void;
+
+  /**
    * Create a child logger with additional context.
    * @param bindings - Context bindings (e.g., { plugin: 'mind', tenant: 'acme' })
    */

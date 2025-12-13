@@ -8,6 +8,7 @@ import type { SerializableContext } from '../ipc-serializer';
 
 /**
  * IPC message from parent process
+ * Note: UI_EVENT removed - stdout piping is used instead (ADR-0013)
  */
 export interface IpcMessage {
   type: 'RUN' | 'READY' | 'LOG' | 'ERR' | 'CRASH';
