@@ -65,4 +65,4 @@ packages/*/coverage/
 *.db
 
 # kb-labs
-.kb/devkit/tmp/
+.kb/devkit/tmp/.npmrc
