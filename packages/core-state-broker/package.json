@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/core-state-broker",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "Universal state broker for persistent cross-invocation state",
   "type": "module",
   "main": "./dist/index.js",

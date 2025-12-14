@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/core-platform",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "Pure abstractions for KB Labs platform. Zero dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",

@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/core-bundle",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "Bundle resolution system for KB Labs products, combining profiles, config, and artifacts",
   "type": "module",
   "main": "./dist/index.js",

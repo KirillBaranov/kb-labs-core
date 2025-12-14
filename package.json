@@ -1,7 +1,7 @@
 {
   "name": "@kb-labs/core",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.2.0",
+  "private": false,
   "description": "Core utilities and system interfaces for KB Labs ecosystem",
   "type": "module",
   "main": "./dist/index.js",
