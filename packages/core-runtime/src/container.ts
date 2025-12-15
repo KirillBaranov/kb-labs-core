@@ -21,6 +21,8 @@ import type {
   IResourceManager,
 } from '@kb-labs/core-platform';
 
+import type { IResourceBroker } from '@kb-labs/core-resource-broker';
+
 import {
   NoOpAnalytics,
   MemoryVectorStore,
@@ -133,6 +135,11 @@ export class PlatformContainer {
       services.add('resources');
     }
 
+    // Resource broker (if initialized)
+    if (this._resourceBroker) {
+      services.add('resourceBroker');
+    }
+
     return services;
   }
 
@@ -199,6 +206,7 @@ export class PlatformContainer {
   private _jobs?: IJobScheduler;
   private _cron?: ICronManager;
   private _resources?: IResourceManager;
+  private _resourceBroker?: IResourceBroker;
 
   /** Workflow engine (throws if not initialized) */
   get workflows(): IWorkflowEngine {
@@ -234,6 +242,24 @@ export class PlatformContainer {
   }
 
   /**
+   * Resource broker for rate limiting, queueing, and retry.
+   * @throws Error if not initialized
+   */
+  get resourceBroker(): IResourceBroker {
+    if (!this._resourceBroker) {
+      throw new Error('ResourceBroker not initialized. Call initPlatform() first.');
+    }
+    return this._resourceBroker;
+  }
+
+  /**
+   * Check if resource broker is initialized.
+   */
+  get hasResourceBroker(): boolean {
+    return this._resourceBroker !== undefined;
+  }
+
+  /**
    * Initialize core features.
    * Called internally by initPlatform().
    */
@@ -248,6 +274,14 @@ export class PlatformContainer {
     this._cron = cron;
     this._resources = resources;
     this.initialized = true;
+  }
+
+  /**
+   * Initialize resource broker.
+   * Called internally by initPlatform().
+   */
+  initResourceBroker(broker: IResourceBroker): void {
+    this._resourceBroker = broker;
   }
 
   /**
@@ -268,6 +302,7 @@ export class PlatformContainer {
     this._jobs = undefined;
     this._cron = undefined;
     this._resources = undefined;
+    this._resourceBroker = undefined;
     this.initialized = false;
   }
 }

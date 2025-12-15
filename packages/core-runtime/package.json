@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@kb-labs/core-platform": "workspace:*",
+    "@kb-labs/core-resource-broker": "workspace:*",
     "glob": "^10.0.0"
   },
   "devDependencies": {

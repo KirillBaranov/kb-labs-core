@@ -4,6 +4,7 @@
  */
 
 import type { TenantQuotas } from '@kb-labs/core-platform';
+import type { RateLimitConfig, RateLimitPreset } from '@kb-labs/core-resource-broker';
 
 /**
  * Platform adapter configuration.
@@ -57,6 +58,55 @@ export interface WorkflowsConfig {
 }
 
 /**
+ * Resource broker configuration for rate limiting and queue management.
+ */
+export interface ResourceBrokerConfig {
+  /**
+   * Use distributed backend via StateBroker.
+   * false = InMemoryRateLimitBackend (single process)
+   * true = StateBrokerRateLimitBackend (distributed, requires StateBroker daemon)
+   * @default false
+   */
+  distributed?: boolean;
+
+  /**
+   * LLM resource configuration.
+   */
+  llm?: {
+    /** Rate limits (preset name or custom config) */
+    rateLimits?: RateLimitConfig | RateLimitPreset;
+    /** Maximum retry attempts */
+    maxRetries?: number;
+    /** Request timeout in ms */
+    timeout?: number;
+  };
+
+  /**
+   * Embeddings resource configuration.
+   */
+  embeddings?: {
+    /** Rate limits (preset name or custom config) */
+    rateLimits?: RateLimitConfig | RateLimitPreset;
+    /** Maximum retry attempts */
+    maxRetries?: number;
+    /** Request timeout in ms */
+    timeout?: number;
+  };
+
+  /**
+   * Vector store resource configuration.
+   */
+  vectorStore?: {
+    /** Maximum concurrent requests */
+    maxConcurrent?: number;
+    /** Maximum retry attempts */
+    maxRetries?: number;
+    /** Request timeout in ms */
+    timeout?: number;
+  };
+}
+
+/**
  * Core features configuration.
  */
 export interface CoreFeaturesConfig {
@@ -66,6 +116,8 @@ export interface CoreFeaturesConfig {
   jobs?: JobsConfig;
   /** Workflow engine configuration */
   workflows?: WorkflowsConfig;
+  /** Resource broker configuration */
+  resourceBroker?: ResourceBrokerConfig;
 }
 
 /**

@@ -4,7 +4,7 @@
  */
 
 import type { AdapterTypes, PlatformContainer } from './container.js';
-import type { PlatformConfig, CoreFeaturesConfig } from './config.js';
+import type { PlatformConfig, CoreFeaturesConfig, ResourceBrokerConfig } from './config.js';
 import { platform } from './container.js';
 import { resolveAdapter } from './discover-adapters.js';
 
@@ -12,6 +12,17 @@ import { ResourceManager } from './core/resource-manager.js';
 import { JobScheduler } from './core/job-scheduler.js';
 import { CronManager } from './core/cron-manager.js';
 import { WorkflowEngine } from './core/workflow-engine.js';
+
+import {
+  ResourceBroker,
+  InMemoryRateLimitBackend,
+  StateBrokerRateLimitBackend,
+  createQueuedLLM,
+  createQueuedEmbeddings,
+  createQueuedVectorStore,
+  getRateLimitConfig,
+} from '@kb-labs/core-resource-broker';
+import type { RateLimitBackend, ResourceConfig } from '@kb-labs/core-resource-broker';
 
 /**
  * Adapter factory function type.
@@ -85,6 +96,116 @@ function initializeCoreFeatures(
   );
 
   return { workflows, jobs, cron, resources };
+}
+
+/**
+ * Initialize resource broker with queue and rate limiting.
+ * Wraps existing adapters with Queued versions for transparent integration.
+ * Plugins use useLLM(), useEmbeddings() as before - they don't know about queuing.
+ */
+function initializeResourceBroker(
+  container: PlatformContainer,
+  config: ResourceBrokerConfig = {}
+): ResourceBroker {
+  // Create backend (distributed or in-memory)
+  let backend: RateLimitBackend;
+
+  if (config.distributed) {
+    // For distributed mode, we need StateBroker
+    // This will be implemented when StateBroker is available
+    platform.logger.warn('Distributed ResourceBroker not yet implemented, using InMemory');
+    backend = new InMemoryRateLimitBackend();
+  } else {
+    backend = new InMemoryRateLimitBackend();
+  }
+
+  const broker = new ResourceBroker(backend);
+
+  // Register LLM resource and wrap adapter
+  if (container.hasAdapter('llm')) {
+    const llmConfig = config.llm ?? {};
+    const realLLM = container.llm; // Save reference to real adapter
+
+    broker.register('llm', {
+      rateLimits: llmConfig.rateLimits ?? 'openai-tier-1',
+      maxRetries: llmConfig.maxRetries ?? 3,
+      timeout: llmConfig.timeout ?? 60000,
+      executor: async (operation: string, args: unknown[]) => {
+        if (operation === 'complete') {
+          return realLLM.complete(args[0] as string, args[1] as any);
+        }
+        throw new Error(`Unknown LLM operation: ${operation}`);
+      },
+    });
+
+    // Replace adapter with Queued version - plugins see same interface
+    const queuedLLM = createQueuedLLM(broker, realLLM);
+    container.setAdapter('llm', queuedLLM);
+    platform.logger.debug('ResourceBroker: LLM adapter wrapped with queue');
+  }
+
+  // Register Embeddings resource and wrap adapter
+  if (container.hasAdapter('embeddings')) {
+    const embeddingsConfig = config.embeddings ?? {};
+    const realEmbeddings = container.embeddings; // Save reference to real adapter
+
+    broker.register('embeddings', {
+      rateLimits: embeddingsConfig.rateLimits ?? 'openai-tier-1',
+      maxRetries: embeddingsConfig.maxRetries ?? 3,
+      timeout: embeddingsConfig.timeout ?? 60000,
+      executor: async (operation: string, args: unknown[]) => {
+        if (operation === 'embed') {
+          return realEmbeddings.embed(args[0] as string);
+        }
+        if (operation === 'embedBatch') {
+          return realEmbeddings.embedBatch(args[0] as string[]);
+        }
+        throw new Error(`Unknown Embeddings operation: ${operation}`);
+      },
+    });
+
+    // Replace adapter with Queued version - plugins see same interface
+    const queuedEmbeddings = createQueuedEmbeddings(broker, realEmbeddings);
+    container.setAdapter('embeddings', queuedEmbeddings);
+    platform.logger.debug('ResourceBroker: Embeddings adapter wrapped with queue');
+  }
+
+  // Register VectorStore resource and wrap adapter
+  if (container.hasAdapter('vectorStore')) {
+    const vsConfig = config.vectorStore ?? {};
+    const realVectorStore = container.vectorStore; // Save reference to real adapter
+
+    broker.register('vectorStore', {
+      rateLimits: vsConfig.maxConcurrent ? { maxConcurrentRequests: vsConfig.maxConcurrent } : {},
+      maxRetries: vsConfig.maxRetries ?? 3,
+      timeout: vsConfig.timeout ?? 30000,
+      executor: async (operation: string, args: unknown[]) => {
+        switch (operation) {
+          case 'search':
+            return realVectorStore.search(args[0] as number[], args[1] as number, args[2] as any);
+          case 'upsert':
+            return realVectorStore.upsert(args[0] as any[]);
+          case 'delete':
+            return realVectorStore.delete(args[0] as string[]);
+          case 'count':
+            return realVectorStore.count();
+          case 'get':
+            return realVectorStore.get?.(args[0] as string[]);
+          case 'query':
+            return realVectorStore.query?.(args[0] as any);
+          default:
+            throw new Error(`Unknown VectorStore operation: ${operation}`);
+        }
+      },
+    });
+
+    // Replace adapter with Queued version - plugins see same interface
+    const queuedVectorStore = createQueuedVectorStore(broker, realVectorStore);
+    container.setAdapter('vectorStore', queuedVectorStore);
+    platform.logger.debug('ResourceBroker: VectorStore adapter wrapped with queue');
+  }
+
+  return broker;
 }
 
 /**
@@ -191,6 +312,11 @@ export async function initPlatform(
       coreFeatures.resources
     );
 
+    // Initialize ResourceBroker for queue and rate limiting
+    const resourceBroker = initializeResourceBroker(platform, core.resourceBroker);
+    platform.initResourceBroker(resourceBroker);
+    platform.logger.debug('initPlatform initialized ResourceBroker');
+
     platform.logger.debug('initPlatform child process initialization complete');
 
   } else {
@@ -233,6 +359,11 @@ export async function initPlatform(
       coreFeatures.cron,
       coreFeatures.resources
     );
+
+    // Initialize ResourceBroker for queue and rate limiting
+    const resourceBroker = initializeResourceBroker(platform, core.resourceBroker);
+    platform.initResourceBroker(resourceBroker);
+    platform.logger.debug('initPlatform initialized ResourceBroker');
 
     // Start Unix Socket server to handle adapter calls from children
     const { createUnixSocketServer } = await import('./ipc/unix-socket-server.js');
