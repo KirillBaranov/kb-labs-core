@@ -98,9 +98,29 @@ export interface RestHandlerContext extends BaseHandlerContext {
 }
 
 /**
+ * Job-specific handler context (for cron jobs and scheduled tasks)
+ */
+export interface JobHandlerContext extends BaseHandlerContext {
+  type: 'job';
+  /** Sandboxed runtime APIs (fs, fetch, env) */
+  runtime?: RuntimeAPI;
+  /** Output interface for logging */
+  output?: Output;
+  /** API groups from buildRuntime */
+  api?: any;
+}
+
+/**
  * Union type for all adapter contexts
  */
-export type HandlerContext = CliHandlerContext | RestHandlerContext;
+export type HandlerContext = CliHandlerContext | RestHandlerContext | JobHandlerContext;
+
+/**
+ * Type guard for job context
+ */
+export function isJobContext(ctx: HandlerContext): ctx is JobHandlerContext {
+  return ctx.type === 'job';
+}
 
 /**
  * Adapter metadata

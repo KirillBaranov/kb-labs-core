@@ -35,6 +35,12 @@ export interface ResolvedPath {
 export async function resolveHandlerPath(options: PathResolverOptions): Promise<ResolvedPath> {
   const { pluginRoot, handlerRef } = options;
 
+  // Debug log
+  const debugMode = process.env.KB_LOG_LEVEL === 'debug' || process.env.KB_JOBS_DEBUG === 'true';
+  if (debugMode) {
+    console.error(`[path-resolver] Resolving handler: file=${handlerRef.file}, pluginRoot=${pluginRoot}`);
+  }
+
   // Remove leading './' if present
   const handlerFile = handlerRef.file.replace(/^\.\//, '');
 
@@ -48,6 +54,10 @@ export async function resolveHandlerPath(options: PathResolverOptions): Promise<
   const distPath = path.join(pluginRoot, 'dist', handlerFileExt);
   const relativePath = path.join(pluginRoot, handlerFileExt);
   const directPath = path.resolve(pluginRoot, handlerRef.file.endsWith('.js') ? handlerRef.file : handlerRef.file + '.js');
+
+  if (debugMode) {
+    console.error(`[path-resolver] Trying paths: dist=${distPath}, relative=${relativePath}, direct=${directPath}`);
+  }
 
   // Try to find which path exists
   let finalHandlerPath: string;

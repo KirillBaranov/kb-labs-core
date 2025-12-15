@@ -226,5 +226,95 @@ export async function recreateContext(options: ContextRecreatorOptions): Promise
     };
   }
 
+  // Build runtime if manifest and perms are provided (for Jobs/REST handlers)
+  // This creates ctx.runtime.fs, ctx.runtime.fetch, ctx.runtime.env
+  const manifest = ctx.extensions?.manifest;
+  const perms = ctx.extensions?.perms;
+
+  if (manifest && perms) {
+    try {
+      // Import buildRuntime from plugin-runtime
+      const { buildRuntime, pickEnv } = await import('@kb-labs/plugin-runtime');
+
+      // Debug: log what we have
+      sandboxOutput.debug('Building runtime with:', {
+        hasManifest: !!manifest,
+        manifestId: manifest?.id,
+        hasPerms: !!perms,
+        permsFs: perms?.fs ? 'present' : 'absent',
+        permsNet: perms?.net ? 'present' : 'absent',
+        ctxPluginRoot: ctx.pluginRoot,
+        ctxWorkdir: ctx.workdir,
+      });
+
+      // Get filtered environment
+      const env = pickEnv(process.env, perms.env?.allow);
+
+      // Build runtime with sandboxed APIs
+      const builtRuntime = buildRuntime(
+        perms,
+        ctx,
+        env,
+        manifest,
+        ctx.extensions?.invoke,
+        ctx.extensions?.artifacts,
+        ctx.extensions?.shell
+      );
+
+      // Create adapterContext for job handlers if not already created
+      // Job handlers don't have adapterContextData from parent, so create it here
+      if (!ctx.adapterContext && ctx.adapterMeta?.signature === 'job') {
+        // Create Output for job handler
+        const pluginOutput = createSandboxOutput({
+          verbosity: ctx.debug ? 'debug' : 'normal',
+          category: `job:${ctx.pluginId || 'unknown'}`,
+          format: 'human',
+          context: {
+            plugin: ctx.pluginId,
+            job: true,
+            trace: ctx.traceId,
+          },
+        });
+
+        ctx.adapterContext = {
+          type: 'job',
+          requestId: ctx.requestId,
+          workdir: ctx.workdir,
+          outdir: ctx.outdir,
+          pluginId: ctx.pluginId,
+          pluginVersion: ctx.pluginVersion,
+          traceId: ctx.traceId,
+          spanId: ctx.spanId,
+          parentSpanId: ctx.parentSpanId,
+          debug: ctx.debug,
+          output: pluginOutput,
+          runtime: builtRuntime.runtime,
+          api: builtRuntime.api,
+        } as any;
+      }
+
+      // Merge runtime into adapterContext for handler access
+      if (ctx.adapterContext) {
+        (ctx.adapterContext as any).runtime = builtRuntime.runtime;
+        (ctx.adapterContext as any).output = builtRuntime.output;
+        (ctx.adapterContext as any).api = builtRuntime.api;
+      }
+
+      if (debugMode) {
+        sandboxOutput.debug('Built runtime for handler', {
+          hasFs: !!builtRuntime.runtime?.fs,
+          hasFetch: !!builtRuntime.runtime?.fetch,
+          hasEnv: !!builtRuntime.runtime?.env,
+        });
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      const errorStack = error instanceof Error ? error.stack : new Error().stack;
+      console.error(`[context-recreator] buildRuntime FAILED: ${errorMsg}`);
+      console.error(`[context-recreator] Stack: ${errorStack}`);
+      sandboxOutput.warn(`Failed to build runtime, handler may not have runtime APIs: ${errorMsg}`);
+    }
+  }
+
   return ctx;
 }

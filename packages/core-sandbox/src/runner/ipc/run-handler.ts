@@ -46,7 +46,17 @@ export async function handleRunMessage(options: RunHandlerOptions): Promise<void
     executeHandler,
   } = options;
 
-  const { handlerRef, input, ctx: rawCtx } = payload;
+  const { handlerRef, input, ctx: rawCtx, perms, manifest } = payload;
+
+  // Inject manifest and perms into ctx.extensions for buildRuntime() in context-recreator
+  if (manifest || perms) {
+    const ctxWithExtensions = rawCtx as any;
+    ctxWithExtensions.extensionsData = {
+      ...(ctxWithExtensions.extensionsData || {}),
+      manifest,
+      perms,
+    };
+  }
 
   // Start trace recording for this handler
   if (traceRecorder) {

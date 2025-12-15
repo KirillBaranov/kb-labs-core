@@ -4,7 +4,7 @@
  */
 
 import type { ExecutionContext } from '../../types/index';
-import type { CliHandlerContext, RestHandlerContext } from '../../types/adapter-context';
+import type { CliHandlerContext, RestHandlerContext, JobHandlerContext } from '../../types/adapter-context';
 import type { Output } from '@kb-labs/core-sys/output';
 import { SANDBOX_ERROR_CODES } from '../../errors/error-codes';
 
@@ -22,8 +22,9 @@ export type HandlerResult =
 /**
  * Execute handler function based on adapter signature
  *
- * Handles two signatures:
+ * Handles three signatures:
  * - CLI command: (ctx, argv, flags) - for CLI commands
+ * - Job: (input, ctx) - for scheduled jobs with runtime APIs
  * - Request/REST: (input, ctx) - for REST handlers or basic execution
  *
  * @param options - Executor options
@@ -53,6 +54,43 @@ export async function executeHandlerFn(options: HandlerExecutorOptions): Promise
         }
         throw error;
       }
+    } else if (adapterMeta?.signature === 'job') {
+      // Job signature: (input, ctx) with runtime APIs
+      // Input contains: { jobId, executedAt (ISO string), runCount }
+      // Context has: runtime.fs, runtime.fetch, runtime.env (from buildRuntime in context-recreator)
+      const jobInput = input as { jobId?: string; executedAt?: string; runCount?: number };
+
+      // Parse executedAt back to Date if it's a string
+      const parsedInput = {
+        ...jobInput,
+        executedAt: jobInput.executedAt ? new Date(jobInput.executedAt) : new Date(),
+      };
+
+      // Build job context with runtime from adapterContext (set by context-recreator)
+      const jobCtx: JobHandlerContext = {
+        type: 'job',
+        requestId: ctx.requestId,
+        workdir: ctx.workdir,
+        outdir: ctx.outdir,
+        pluginId: ctx.pluginId,
+        pluginVersion: ctx.pluginVersion,
+        traceId: ctx.traceId,
+        spanId: ctx.spanId,
+        parentSpanId: ctx.parentSpanId,
+        debug: ctx.debug,
+        // Runtime APIs from buildRuntime() (set in context-recreator)
+        runtime: (ctx.adapterContext as any)?.runtime,
+        output: (ctx.adapterContext as any)?.output,
+        api: (ctx.adapterContext as any)?.api,
+      };
+
+      output.debug('Executing job handler', {
+        jobId: parsedInput.jobId,
+        hasRuntime: !!jobCtx.runtime,
+        hasFs: !!jobCtx.runtime?.fs,
+      });
+
+      result = await handlerFn(parsedInput, jobCtx);
     } else {
       // REST/Request signature: (input, ctx)
       const restCtx = ctx.adapterContext as RestHandlerContext | undefined;

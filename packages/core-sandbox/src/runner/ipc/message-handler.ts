@@ -41,6 +41,8 @@ export function setupMessageHandler(options: MessageHandlerOptions): void {
             handlerRef: payload.handlerRef,
             input: payload.input,
             ctx: payload.ctx,
+            perms: payload.perms,
+            manifest: payload.manifest,
           },
         });
       } else if (message?.type && message.type !== 'READY' && message.type !== 'LOG') {

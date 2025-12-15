@@ -5,6 +5,7 @@
 
 import type { HandlerRef, ExecutionContext } from '../../types/index';
 import type { SerializableContext } from '../ipc-serializer';
+import type { PermissionSpec, ManifestV2 } from '@kb-labs/plugin-manifest';
 
 /**
  * IPC message from parent process
@@ -16,6 +17,8 @@ export interface IpcMessage {
     handlerRef?: HandlerRef;
     input?: unknown;
     ctx?: SerializableContext | ExecutionContext;
+    perms?: PermissionSpec;
+    manifest?: ManifestV2;
     error?: {
       code: string;
       message: string;
@@ -36,4 +39,6 @@ export interface RunMessagePayload {
   handlerRef: HandlerRef;
   input: unknown;
   ctx: SerializableContext | ExecutionContext;
+  perms?: PermissionSpec;
+  manifest?: ManifestV2;
 }
