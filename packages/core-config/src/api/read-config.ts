@@ -83,12 +83,9 @@ async function findNearestConfig(
 
   // Default filenames if not provided: prioritize .kb/ location
   const defaultFilenames = [
-    '.kb/kb-labs.config.yaml',
-    '.kb/kb-labs.config.yml',
-    '.kb/kb-labs.config.json',
-    'kb-labs.config.yaml',
-    'kb-labs.config.yml',
-    'kb-labs.config.json',
+    '.kb/kb.config.yaml',
+    '.kb/kb.config.yml',
+    '.kb/kb.config.json',
   ];
   const searchFilenames = filenames.length > 0 ? filenames : defaultFilenames;
 
@@ -99,13 +96,6 @@ async function findNearestConfig(
       
       try {
         await fsp.access(candidate);
-        // Warn if using old location (only in debug mode)
-        if (!candidate.includes('.kb/')) {
-          const DEBUG_MODE = process.env.DEBUG_SANDBOX === '1' || process.env.NODE_ENV === 'development';
-          if (DEBUG_MODE) {
-            console.warn('[kb-labs] DEPRECATED: Move config to .kb/kb-labs.config.yaml');
-          }
-        }
         return { path: candidate, tried };
       } catch {
         // Continue to next filename

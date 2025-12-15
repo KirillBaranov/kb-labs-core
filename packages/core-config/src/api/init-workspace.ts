@@ -46,12 +46,9 @@ async function findWorkspaceConfig(
   cwd: string
 ): Promise<{ path: string; format: 'yaml' | 'json' } | null> {
   const filenames = [
-    '.kb/kb-labs.config.yaml',
-    '.kb/kb-labs.config.yml',
-    '.kb/kb-labs.config.json',
-    'kb-labs.config.yaml',
-    'kb-labs.config.yml',
-    'kb-labs.config.json',
+    '.kb/kb.config.yaml',
+    '.kb/kb.config.yml',
+    '.kb/kb.config.json',
   ];
   const gitRoot = await findGitRoot(cwd);
   const stopDir = gitRoot || path.parse(cwd).root;
@@ -104,7 +101,7 @@ export async function initWorkspaceConfig(
   // Find existing config
   const existing = await findWorkspaceConfig(cwd);
   const format = existing?.format || opts.format || 'yaml';
-  const configFileName = format === 'json' ? 'kb-labs.config.json' : 'kb-labs.config.yaml';
+  const configFileName = format === 'json' ? 'kb.config.json' : 'kb.config.yaml';
   // Create .kb directory if needed for new configs
   const configPath = existing?.path || path.join(cwd, '.kb', configFileName);
   

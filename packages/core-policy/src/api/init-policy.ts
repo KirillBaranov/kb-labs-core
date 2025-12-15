@@ -37,7 +37,7 @@ const POLICY_SCAFFOLD_YAML = `
 async function findWorkspaceConfig(
   cwd: string
 ): Promise<{ path: string; format: 'yaml' | 'json' } | null> {
-  const filenames = ['kb-labs.config.yaml', 'kb-labs.config.yml', 'kb-labs.config.json'];
+  const filenames = ['.kb/kb.config.yaml', '.kb/kb.config.yml', '.kb/kb.config.json'];
   
   for (const filename of filenames) {
     const candidate = path.join(cwd, filename);
