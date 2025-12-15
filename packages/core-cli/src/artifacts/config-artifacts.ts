@@ -33,7 +33,7 @@ export async function detectConfigArtifacts(cwd: string): Promise<ConfigArtifact
   };
   
   // Check workspace config
-  const configFiles = ['kb-labs.config.yaml', 'kb-labs.config.json'];
+  const configFiles = ['.kb/kb.config.yaml', '.kb/kb.config.json'];
   const hasConfig = await Promise.allSettled(
     configFiles.map(f => fsp.access(join(cwd, f)).then(() => true))
   );
@@ -46,7 +46,7 @@ export async function detectConfigArtifacts(cwd: string): Promise<ConfigArtifact
     // Check if lockfile is outdated by comparing with config files
     try {
       const lockfileStat = await stat(lockPath);
-      const configFiles = ['kb.config.json', 'kb-labs.config.json', 'kb-labs.config.yaml'];
+      const configFiles = ['.kb/kb.config.json', '.kb/kb.config.yaml'];
       const configPaths = configFiles.map(f => join(cwd, f));
       
       for (const configPath of configPaths) {
