@@ -51,6 +51,12 @@
       "@kb-labs/core-policy/*": [
         "packages/core-policy/src/*"
       ],
+      "@kb-labs/core-resource-broker": [
+        "packages/core-resource-broker/src/index.ts"
+      ],
+      "@kb-labs/core-resource-broker/*": [
+        "packages/core-resource-broker/src/*"
+      ],
       "@kb-labs/core-runtime": [
         "packages/core-runtime/src/index.ts"
       ],
