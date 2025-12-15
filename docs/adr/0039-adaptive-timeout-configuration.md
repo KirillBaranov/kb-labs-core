@@ -4,6 +4,7 @@
 **Date:** 2025-12-11
 **Authors:** KB Labs Team
 **Context:** TASK-002 - Mind RAG Not Using Platform Adapters
+**Tags:** `ipc`, `timeout`, `performance`, `configuration`, `transport`, `scalability`
 
 ## Context
 

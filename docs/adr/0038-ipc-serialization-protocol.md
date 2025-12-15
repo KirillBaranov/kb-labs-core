@@ -4,6 +4,7 @@
 **Date:** 2025-12-09
 **Author:** KB Labs Team
 **Context:** KB Labs Multi-Process Architecture, Adapter Duplication Problem
+**Tags:** `ipc`, `serialization`, `protocol`, `adapters`, `proxy-pattern`, `scalability`
 
 ## Context and Problem Statement
 
@@ -88,18 +89,18 @@ KB Labs uses `child_process.fork()` to execute plugins in isolated sandbox worke
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  Real Adapters                                              │
-│  ┌─────────────────────────────────────────────┐          │
-│  │ • QdrantVectorStore (1 instance)            │          │
-│  │ • RedisCacheAdapter (1 instance)            │          │
-│  │ • OpenAILLM (1 instance)                    │          │
-│  │ • OpenAIEmbeddings (1 instance)             │          │
-│  └───────────────────┬─────────────────────────┘          │
+│  ┌─────────────────────────────────────────────┐            │
+│  │ • QdrantVectorStore (1 instance)            │            │
+│  │ • RedisCacheAdapter (1 instance)            │            │
+│  │ • OpenAILLM (1 instance)                    │            │
+│  │ • OpenAIEmbeddings (1 instance)             │            │
+│  └───────────────────┬─────────────────────────┘            │
 │                      │                                      │
 │  IPCServer           │                                      │
-│  ├─ process.on('message', handleAdapterCall)               │
-│  ├─ Deserialize args: Buffer, Date, Error                  │
-│  ├─ Execute method on real adapter                         │
-│  └─ Serialize result, send response                        │
+│  ├─ process.on('message', handleAdapterCall)                │
+│  ├─ Deserialize args: Buffer, Date, Error                   │
+│  ├─ Execute method on real adapter                          │
+│  └─ Serialize result, send response                         │
 │                      │                                      │
 └──────────────────────┼──────────────────────────────────────┘
                        │
@@ -119,18 +120,18 @@ KB Labs uses `child_process.fork()` to execute plugins in isolated sandbox worke
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  Proxy Adapters                                             │
-│  ┌─────────────────────────────────────────────┐          │
-│  │ • VectorStoreProxy (lightweight)            │          │
-│  │ • CacheProxy (lightweight)                  │          │
-│  │ • LLMProxy (lightweight)                    │          │
-│  │ • EmbeddingsProxy (lightweight)             │          │
-│  └───────────────────┬─────────────────────────┘          │
+│  ┌─────────────────────────────────────────────┐            │
+│  │ • VectorStoreProxy (lightweight)            │            │
+│  │ • CacheProxy (lightweight)                  │            │
+│  │ • LLMProxy (lightweight)                    │            │
+│  │ • EmbeddingsProxy (lightweight)             │            │
+│  └───────────────────┬─────────────────────────┘            │
 │                      │                                      │
 │  IPCTransport        │                                      │
-│  ├─ Serialize args                                         │
-│  ├─ process.send(AdapterCall)                              │
-│  ├─ await response with timeout                            │
-│  └─ Deserialize result or throw error                      │
+│  ├─ Serialize args                                          │
+│  ├─ process.send(AdapterCall)                               │
+│  ├─ await response with timeout                             │
+│  └─ Deserialize result or throw error                       │
 │                      │                                      │
 └──────────────────────┼──────────────────────────────────────┘
                        │

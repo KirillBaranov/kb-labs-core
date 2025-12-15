@@ -4,6 +4,7 @@
 **Date:** 2025-12-04
 **Author:** KB Labs Team
 **Context:** KB Labs Platform Architecture, Layer Violations, Hexagonal Architecture
+**Tags:** `platform`, `hexagonal-architecture`, `adapters`, `dependency-injection`, `clean-architecture`
 
 ## Context and Problem Statement
 

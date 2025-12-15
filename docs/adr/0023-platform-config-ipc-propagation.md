@@ -4,6 +4,7 @@
 **Date:** 2025-12-06
 **Author:** KB Labs Team
 **Context:** KB Labs Sandbox Worker Isolation, Platform Adapter Availability
+**Tags:** `platform`, `ipc`, `sandbox`, `workers`, `serialization`, `adapters`
 
 ## Context and Problem Statement
 
