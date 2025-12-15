@@ -8,7 +8,7 @@ import { CronManager } from '@kb-labs/core-runtime';
 import type { ILogger } from '@kb-labs/core-platform';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
-import { executePlugin, createPluginContextWithPlatform, createNoopUI } from '@kb-labs/plugin-runtime';
+import { nodeSubprocRunner } from '@kb-labs/plugin-runtime';
 import { permissions } from '@kb-labs/shared-command-kit';
 
 export interface JobsManagerConfig {
@@ -113,57 +113,45 @@ export class JobsManager {
               let [handlerFile, handlerExport = 'run'] = job.handler.split('#');
               handlerFile = handlerFile.replace(/\.js$/, ''); // Remove .js extension
 
-              // ✅ SECURITY: Create handler wrapper with execute() and sandbox
+              // ✅ SECURITY: Create handler wrapper with subprocess sandbox
+              // Uses nodeSubprocRunner for full process isolation and buildRuntime()
               const handler = async (ctx: any) => {
                 this.logger.info(`Executing job: ${jobId}`);
 
                 try {
-                  // Build execution context (with sandbox!)
                   const isDebugMode = process.env.KB_LOG_LEVEL === 'debug' || process.env.KB_JOBS_DEBUG === 'true';
                   const requestId = `job-${jobId}-${Date.now()}`;
-
-                  // Create PluginContextV2 for job execution
-                  const pluginContext = createPluginContextWithPlatform({
-                    host: 'cli', // Jobs are CLI-like execution
-                    requestId,
-                    pluginId,
-                    pluginVersion: manifest.version,
-                    cwd: process.cwd(),      // V2: promoted to top-level
-                    outdir: path.join('.kb', pluginId.replace('@kb-labs/', '')),  // V2: promoted
-                    config: {},
-                    ui: createNoopUI(), // Jobs don't have UI
-                    metadata: {
-                      // Job-specific fields
-                      scheduledJob: true,  // Mark as scheduled job (not interactive CLI)
-                      jobId: ctx.jobId,
-                      executedAt: ctx.executedAt,
-                      runCount: ctx.runCount,
-                      schedule: job.schedule,
-                      routeOrCommand: jobId,
-                      debug: isDebugMode,
-                    },
-                  });
 
                   // Get permissions from manifest or use readonly default
                   const jobPermissions = job.permissions ?? permissions.presets.pluginWorkspace(
                     pluginId.replace('@kb-labs/', '')
                   );
 
-                  // Execute via new executePlugin architecture
-                  const result = await executePlugin({
-                    context: pluginContext,
-                    handlerRef: { file: handlerFile, export: handlerExport },
-                    argv: [], // Jobs don't use argv
-                    flags: {
+                  // Create subprocess runner (false = production mode with fork isolation)
+                  const runner = nodeSubprocRunner(false);
+
+                  // Execute via subprocess with full sandbox isolation
+                  // This ensures fork() → buildRuntime() → handler path
+                  // Handler will receive ctx.runtime.fs, ctx.runtime.fetch, ctx.runtime.env
+                  const result = await runner.run({
+                    handler: { file: handlerFile, export: handlerExport },
+                    input: {
                       jobId: ctx.jobId,
-                      executedAt: ctx.executedAt,
+                      executedAt: ctx.executedAt.toISOString(), // ISO string for IPC serialization
                       runCount: ctx.runCount,
                     },
+                    ctx: {
+                      requestId,
+                      pluginId,
+                      pluginVersion: manifest.version,
+                      pluginRoot, // path-resolver will add /dist automatically
+                      workdir: process.cwd(),
+                      outdir: path.join('.kb', pluginId.replace('@kb-labs/', '')),
+                      adapterMeta: { signature: 'job' }, // Tells handler-executor to use job signature
+                      debug: isDebugMode,
+                    },
+                    perms: jobPermissions,
                     manifest,
-                    permissions: jobPermissions,
-                    grantedCapabilities: manifest.capabilities || [],
-                    pluginRoot: path.join(pluginRoot, 'dist'),
-                    registry: undefined, // Jobs don't need registry
                   });
 
                   if (!result.ok) {
@@ -172,7 +160,7 @@ export class JobsManager {
                       errorMessage: result.error?.message,
                       errorCode: result.error?.code,
                       handler: `${handlerFile}#${handlerExport}`,
-                      requestId: pluginContext.requestId,
+                      requestId,
                     }, null, 2);
 
                     this.logger.error(

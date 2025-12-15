@@ -24,6 +24,7 @@ export class StateDaemonServer {
     // Initialize jobs manager if enabled
     if (this.config.enableJobs !== false) {
       const createLogger = (prefix: string = '[jobs]'): import('@kb-labs/core-platform').ILogger => ({
+        trace: (msg: string, meta?: Record<string, unknown>) => console.debug(prefix, '[trace]', msg, meta),
         debug: (msg: string, meta?: Record<string, unknown>) => console.debug(prefix, msg, meta),
         info: (msg: string, meta?: Record<string, unknown>) => console.log(prefix, msg, meta),
         warn: (msg: string, meta?: Record<string, unknown>) => console.warn(prefix, msg, meta),

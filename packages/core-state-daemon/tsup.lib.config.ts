@@ -8,4 +8,7 @@ export default defineConfig({
     index: 'src/index.ts',
   },
   clean: false, // Don't clean (already cleaned by bin build)
+  // TODO: docs/tasks/TASK-003-shared-command-kit-dts.md
+  // Temporarily disabled until shared-command-kit exports types
+  dts: false,
 });
