@@ -22,7 +22,9 @@
     "clean": "rimraf dist",
     "build": "pnpm clean && tsup --config tsup.bin.config.ts && tsup --config tsup.lib.config.ts",
     "dev": "tsup --config tsup.config.ts --watch",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@kb-labs/core-state-broker": "link:../core-state-broker",
@@ -39,6 +41,7 @@
     "@types/node": "^24.3.3",
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^3.0.0"
   }
 }
