@@ -63,6 +63,14 @@ export class UnixSocketServer {
   }
 
   /**
+   * Get the socket path.
+   * Used by parent process to pass to child processes via env var.
+   */
+  getSocketPath(): string {
+    return this.socketPath;
+  }
+
+  /**
    * Start listening for connections.
    */
   async start(): Promise<void> {

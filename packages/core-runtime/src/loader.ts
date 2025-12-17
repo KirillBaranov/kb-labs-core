@@ -368,6 +368,7 @@ export async function initPlatform(
     // Start Unix Socket server to handle adapter calls from children
     const { createUnixSocketServer } = await import('./ipc/unix-socket-server.js');
     const socketServer = await createUnixSocketServer(platform);
+    platform.initSocketServer(socketServer);
     platform.logger.debug('initPlatform started Unix Socket server for child processes');
 
     platform.logger.debug('initPlatform parent process initialization complete');

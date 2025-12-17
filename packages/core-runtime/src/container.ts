@@ -207,6 +207,7 @@ export class PlatformContainer {
   private _cron?: ICronManager;
   private _resources?: IResourceManager;
   private _resourceBroker?: IResourceBroker;
+  private _socketServer?: { getSocketPath(): string };
 
   /** Workflow engine (throws if not initialized) */
   get workflows(): IWorkflowEngine {
@@ -285,6 +286,22 @@ export class PlatformContainer {
   }
 
   /**
+   * Initialize Unix socket server.
+   * Called internally by initPlatform() in parent process.
+   */
+  initSocketServer(server: { getSocketPath(): string }): void {
+    this._socketServer = server;
+  }
+
+  /**
+   * Get socket path for IPC communication.
+   * Returns undefined if not running in parent process.
+   */
+  getSocketPath(): string | undefined {
+    return this._socketServer?.getSocketPath();
+  }
+
+  /**
    * Check if platform is initialized.
    */
   get isInitialized(): boolean {
@@ -303,6 +320,7 @@ export class PlatformContainer {
     this._cron = undefined;
     this._resources = undefined;
     this._resourceBroker = undefined;
+    this._socketServer = undefined;
     this.initialized = false;
   }
 }
