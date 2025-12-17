@@ -26,4 +26,11 @@ export interface IEmbeddings {
    * Dimension of the embedding vectors.
    */
   readonly dimensions: number;
+
+  /**
+   * Get the dimensions of the embeddings.
+   * This method is needed for IPC/Unix Socket transport to access the dimensions property.
+   * Implementations should return the same value as the dimensions property.
+   */
+  getDimensions(): Promise<number>;
 }

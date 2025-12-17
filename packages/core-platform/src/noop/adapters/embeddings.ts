@@ -50,4 +50,12 @@ export class MockEmbeddings implements IEmbeddings {
   async embedBatch(texts: string[]): Promise<number[][]> {
     return texts.map((text) => this.generateVector(text));
   }
+
+  /**
+   * Get the dimensions of the embeddings.
+   * This method is needed for IPC/Unix Socket transport to access the dimensions property.
+   */
+  async getDimensions(): Promise<number> {
+    return this.dimensions;
+  }
 }

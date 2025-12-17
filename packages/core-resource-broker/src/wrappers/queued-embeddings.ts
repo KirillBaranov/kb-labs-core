@@ -110,6 +110,14 @@ export class QueuedEmbeddings implements IEmbeddings {
 
     return response.data!;
   }
+
+  /**
+   * Get the dimensions of the embeddings.
+   * This method is needed for IPC/Unix Socket transport to access the dimensions property.
+   */
+  async getDimensions(): Promise<number> {
+    return this.realEmbeddings.dimensions;
+  }
 }
 
 /**
