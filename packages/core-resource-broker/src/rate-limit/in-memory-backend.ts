@@ -127,26 +127,26 @@ export class InMemoryRateLimitBackend implements RateLimitBackend {
     const delays: number[] = [];
 
     // Check TPM
-    if (effectiveTPM && state.tokensThisMinute + tokens > effectiveTPM) {
+    if (effectiveTPM !== undefined && state.tokensThisMinute + tokens > effectiveTPM) {
       const timeUntilMinuteReset = 60_000 - (now - state.minuteWindowStart);
       delays.push(Math.max(100, timeUntilMinuteReset + 100));
     }
 
     // Check RPM
-    if (effectiveRPM && state.requestsThisMinute >= effectiveRPM) {
+    if (effectiveRPM !== undefined && state.requestsThisMinute >= effectiveRPM) {
       const timeUntilMinuteReset = 60_000 - (now - state.minuteWindowStart);
       delays.push(Math.max(100, timeUntilMinuteReset + 100));
     }
 
     // Check RPS
-    if (effectiveRPS && state.requestsThisSecond >= effectiveRPS) {
+    if (effectiveRPS !== undefined && state.requestsThisSecond >= effectiveRPS) {
       const timeUntilSecondReset = 1_000 - (now - state.secondWindowStart);
       delays.push(Math.max(50, timeUntilSecondReset + 50));
     }
 
     // Check concurrent requests
     if (
-      config.maxConcurrentRequests &&
+      config.maxConcurrentRequests !== undefined &&
       state.activeRequests >= config.maxConcurrentRequests
     ) {
       delays.push(100); // Check every 100ms for slot availability
