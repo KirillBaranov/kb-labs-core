@@ -15,7 +15,9 @@
   },
   "scripts": {
     "build": "tsup",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@kb-labs/core-platform": "workspace:*",
@@ -24,8 +26,10 @@
   },
   "devDependencies": {
     "@kb-labs/devkit": "workspace:*",
+    "@types/node": "^24.3.3",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
+    "vitest": "^3.0.0",
     "rimraf": "^5.0.0"
   },
   "files": [
