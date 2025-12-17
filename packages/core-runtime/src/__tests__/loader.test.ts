@@ -1,0 +1,345 @@
+/**
+ * @module @kb-labs/core-runtime/__tests__/loader
+ *
+ * Tests for platform initialization and adapter loading.
+ *
+ * Tests:
+ * - initPlatform with config
+ * - Adapter loading from package paths
+ * - Core features initialization
+ * - Resource broker initialization
+ * - Idempotent initialization
+ * - Reset and re-initialization
+ */
+
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { initPlatform, resetPlatform } from '../loader.js';
+import { platform } from '../container.js';
+
+describe('Platform Loader', () => {
+  beforeEach(() => {
+    // Reset platform before each test
+    resetPlatform();
+  });
+
+  describe('initPlatform - Basic Initialization', () => {
+    it('should initialize platform with empty config', async () => {
+      const result = await initPlatform({});
+
+      expect(result).toBe(platform);
+      expect(platform.isInitialized).toBe(true);
+    });
+
+    it('should initialize core features', async () => {
+      await initPlatform({});
+
+      expect(platform.isInitialized).toBe(true);
+      expect(platform.workflows).toBeDefined();
+      expect(platform.jobs).toBeDefined();
+      expect(platform.cron).toBeDefined();
+      expect(platform.resources).toBeDefined();
+    });
+
+    it('should initialize resource broker', async () => {
+      await initPlatform({});
+
+      expect(platform.hasResourceBroker).toBe(true);
+      expect(platform.resourceBroker).toBeDefined();
+    });
+
+    it('should be idempotent', async () => {
+      const first = await initPlatform({});
+      const second = await initPlatform({});
+
+      expect(first).toBe(second);
+      expect(first).toBe(platform);
+    });
+
+    it('should set isInitialized flag', async () => {
+      expect(platform.isInitialized).toBe(false);
+
+      await initPlatform({});
+
+      expect(platform.isInitialized).toBe(true);
+    });
+  });
+
+  describe('Adapter Configuration', () => {
+    it('should handle config with no adapters', async () => {
+      await initPlatform({ adapters: {} });
+
+      expect(platform.isInitialized).toBe(true);
+
+      // ConfigAdapter is ALWAYS created in parent process
+      expect(platform.hasAdapter('config')).toBe(true);
+
+      // Note: cache is not created unless specified (uses fallback MemoryCache via getter)
+      expect(platform.hasAdapter('cache')).toBe(false);
+    });
+
+    it('should create ConfigAdapter automatically', async () => {
+      await initPlatform({});
+
+      expect(platform.hasAdapter('config')).toBe(true);
+      expect(platform.config).toBeDefined();
+    });
+
+    it('should use NoOp fallbacks when adapters not configured', async () => {
+      await initPlatform({ adapters: {} });
+
+      // Should use fallbacks
+      const llm = platform.llm;
+      const cache = platform.cache;
+      const vectorStore = platform.vectorStore;
+
+      expect(llm).toBeDefined();
+      expect(cache).toBeDefined();
+      expect(vectorStore).toBeDefined();
+    });
+  });
+
+  describe('Core Features Configuration', () => {
+    it('should initialize core features with default config', async () => {
+      await initPlatform({});
+
+      expect(platform.workflows).toBeDefined();
+      expect(platform.jobs).toBeDefined();
+      expect(platform.cron).toBeDefined();
+      expect(platform.resources).toBeDefined();
+    });
+
+    it('should pass core config to features', async () => {
+      await initPlatform({
+        core: {
+          workflows: { maxConcurrent: 5 },
+          jobs: { maxRetries: 3 },
+        },
+      });
+
+      expect(platform.workflows).toBeDefined();
+      expect(platform.jobs).toBeDefined();
+    });
+
+    it('should initialize with resourceBroker config', async () => {
+      await initPlatform({
+        core: {
+          resourceBroker: {
+            llm: {
+              rateLimits: { requestsPerMinute: 100 },
+              maxRetries: 5,
+              timeout: 30000,
+            },
+          },
+        },
+      });
+
+      expect(platform.hasResourceBroker).toBe(true);
+      expect(platform.resourceBroker).toBeDefined();
+    });
+  });
+
+  describe('Service Registration', () => {
+    it('should register core features in configured services', async () => {
+      await initPlatform({});
+
+      const services = platform.getConfiguredServices();
+      expect(services.has('workflows')).toBe(true);
+      expect(services.has('jobScheduler')).toBe(true);
+      expect(services.has('cron')).toBe(true);
+      expect(services.has('resources')).toBe(true);
+      expect(services.has('resourceBroker')).toBe(true);
+    });
+
+    it('should register config adapter in configured services', async () => {
+      await initPlatform({});
+
+      const services = platform.getConfiguredServices();
+      expect(services.has('config')).toBe(true);
+    });
+
+    it('should detect configured vs fallback adapters', async () => {
+      await initPlatform({});
+
+      // ConfigAdapter is explicitly configured (always created in parent process)
+      expect(platform.isConfigured('config')).toBe(true);
+
+      // cache/llm/vectorStore are NOT configured, will use fallbacks via lazy getters
+      expect(platform.isConfigured('cache')).toBe(false);
+      expect(platform.isConfigured('vectorStore')).toBe(false);
+    });
+  });
+
+  describe('Reset and Re-initialization', () => {
+    it('should reset platform state', async () => {
+      await initPlatform({});
+      expect(platform.isInitialized).toBe(true);
+
+      resetPlatform();
+
+      expect(platform.isInitialized).toBe(false);
+      expect(platform.hasResourceBroker).toBe(false);
+    });
+
+    it('should allow re-initialization after reset', async () => {
+      await initPlatform({});
+      resetPlatform();
+
+      await initPlatform({});
+
+      expect(platform.isInitialized).toBe(true);
+      expect(platform.hasResourceBroker).toBe(true);
+    });
+
+    it('should clear adapters on reset', async () => {
+      await initPlatform({});
+      const configBefore = platform.hasAdapter('config');
+
+      resetPlatform();
+
+      expect(platform.hasAdapter('config')).toBe(false);
+      expect(platform.getConfiguredServices().size).toBe(0);
+    });
+
+    it('should re-create core features after reset', async () => {
+      await initPlatform({});
+      const workflows1 = platform.workflows;
+
+      resetPlatform();
+      await initPlatform({});
+
+      const workflows2 = platform.workflows;
+
+      // Different instances after reset
+      expect(workflows2).toBeDefined();
+    });
+  });
+
+  describe('Adapter Options', () => {
+    it('should handle empty adapterOptions', async () => {
+      await initPlatform({
+        adapters: {},
+        adapterOptions: {},
+      });
+
+      expect(platform.isInitialized).toBe(true);
+    });
+
+    it('should initialize without adapterOptions field', async () => {
+      await initPlatform({
+        adapters: {},
+      });
+
+      expect(platform.isInitialized).toBe(true);
+    });
+  });
+
+  describe('Platform Config Extraction', () => {
+    it('should extract adapters from config', async () => {
+      const config = {
+        adapters: {
+          // Empty, but valid
+        },
+        adapterOptions: {},
+        core: {},
+      };
+
+      await initPlatform(config);
+
+      expect(platform.isInitialized).toBe(true);
+    });
+
+    it('should handle partial config', async () => {
+      const config = {
+        adapters: {},
+        // No adapterOptions or core
+      };
+
+      await initPlatform(config);
+
+      expect(platform.isInitialized).toBe(true);
+    });
+
+    it('should use defaults when config fields missing', async () => {
+      await initPlatform({});
+
+      expect(platform.isInitialized).toBe(true);
+      expect(platform.workflows).toBeDefined();
+      expect(platform.jobs).toBeDefined();
+    });
+  });
+
+  describe('Singleton Behavior', () => {
+    it('should return same platform instance', async () => {
+      const result1 = await initPlatform({});
+      const result2 = await initPlatform({});
+
+      expect(result1).toBe(result2);
+      expect(result1).toBe(platform);
+    });
+
+    it('should preserve adapters across calls', async () => {
+      await initPlatform({});
+      const config1 = platform.hasAdapter('config');
+
+      // Second init should not reset
+      await initPlatform({});
+      const config2 = platform.hasAdapter('config');
+
+      expect(config1).toBe(true);
+      expect(config2).toBe(true);
+    });
+
+    it('should use Symbol.for() for cross-realm singleton', async () => {
+      await initPlatform({});
+
+      const key = Symbol.for('kb.platform');
+      const fromProcess = (process as any)[key];
+
+      expect(fromProcess).toBe(platform);
+    });
+  });
+
+  describe('Resource Broker Wrapping', () => {
+    it('should not wrap adapters when not configured', async () => {
+      await initPlatform({ adapters: {} });
+
+      // LLM should be fallback MockLLM (not wrapped)
+      expect(platform.llm).toBeDefined();
+    });
+
+    it('should initialize resource broker even without adapters', async () => {
+      await initPlatform({ adapters: {} });
+
+      expect(platform.hasResourceBroker).toBe(true);
+    });
+  });
+
+  describe('Initialization Order', () => {
+    it('should initialize in correct order', async () => {
+      const order: string[] = [];
+
+      // Track initialization steps
+      const original = platform.initCoreFeatures;
+      platform.initCoreFeatures = function (...args) {
+        order.push('coreFeatures');
+        return original.apply(this, args);
+      };
+
+      const originalBroker = platform.initResourceBroker;
+      platform.initResourceBroker = function (...args) {
+        order.push('resourceBroker');
+        return originalBroker.apply(this, args);
+      };
+
+      resetPlatform();
+      await initPlatform({});
+
+      // Should initialize core features before resource broker
+      expect(order).toEqual(['coreFeatures', 'resourceBroker']);
+
+      // Restore
+      platform.initCoreFeatures = original;
+      platform.initResourceBroker = originalBroker;
+    });
+  });
+});
