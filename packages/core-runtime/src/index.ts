@@ -68,6 +68,8 @@ export { selectTimeout, getOperationTimeout, OPERATION_TIMEOUTS } from './transp
 
 // IPC Server (parent process)
 export { IPCServer, createIPCServer } from './ipc/ipc-server.js';
+export { UnixSocketServer } from './ipc/unix-socket-server.js';
+export type { UnixSocketServerConfig } from './ipc/unix-socket-server.js';
 
 // Proxy adapters (child process)
 export { RemoteAdapter } from './proxy/remote-adapter.js';
