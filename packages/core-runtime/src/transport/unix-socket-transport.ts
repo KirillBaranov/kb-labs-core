@@ -134,7 +134,6 @@ export class UnixSocketTransport implements ITransport {
 
     // Smart timeout selection based on operation type
     const timeout = selectTimeout(call, this.config.timeout);
-    console.error(`[UnixSocketTransport] ${call.adapter}.${call.method} timeout=${timeout}ms (config=${this.config.timeout})`);
 
     return new Promise((resolve, reject) => {
       // Create timeout timer
@@ -190,8 +189,8 @@ export class UnixSocketTransport implements ITransport {
       try {
         const msg = JSON.parse(line);
         this.handleMessage(msg);
-      } catch (error) {
-        console.error('[UnixSocketTransport] Failed to parse message:', error);
+      } catch {
+        // Ignore parse errors - corrupt message or incomplete fragment
       }
     }
   }

@@ -11,7 +11,8 @@ import { resolveAdapter } from './discover-adapters.js';
 import { ResourceManager } from './core/resource-manager.js';
 import { JobScheduler } from './core/job-scheduler.js';
 import { CronManager } from './core/cron-manager.js';
-import { WorkflowEngine } from './core/workflow-engine.js';
+// TODO: Re-enable when workflow-engine is ported to V3
+// import { WorkflowEngine } from './core/workflow-engine.js';
 
 import {
   ResourceBroker,
@@ -66,7 +67,7 @@ function initializeCoreFeatures(
   container: PlatformContainer,
   config: CoreFeaturesConfig = {}
 ): {
-  workflows: WorkflowEngine;
+  workflows: any; // TODO: Re-enable when workflow-engine is ported to V3
   jobs: JobScheduler;
   cron: CronManager;
   resources: ResourceManager;
@@ -87,13 +88,15 @@ function initializeCoreFeatures(
 
   const cron = new CronManager(container.logger);
 
-  const workflows = new WorkflowEngine(
-    resources,
-    container.storage,
-    container.eventBus,
-    container.logger,
-    config.workflows
-  );
+  // TODO: Re-enable when workflow-engine is ported to V3
+  // const workflows = new WorkflowEngine(
+  //   resources,
+  //   container.storage,
+  //   container.eventBus,
+  //   container.logger,
+  //   config.workflows
+  // );
+  const workflows = null; // Placeholder until V3 workflow-engine is ready
 
   return { workflows, jobs, cron, resources };
 }
@@ -330,6 +333,7 @@ export async function initPlatform(
 
     // Load adapters in parallel
     const adapterKeys = Object.keys(adapters) as (keyof typeof adapters)[];
+
     const loadPromises = adapterKeys
       .filter((key) => adapters[key]) // Only load non-null adapters
       .map(async (key) => {
@@ -338,6 +342,7 @@ export async function initPlatform(
 
         const optionsForAdapter = adapterOptions[key];
         const instance = await loadAdapter<AdapterTypes[typeof key]>(adapterPath, cwd, optionsForAdapter);
+
         if (instance) {
           platform.setAdapter(key as keyof AdapterTypes, instance);
           platform.logger.debug(`initPlatform loaded adapter: ${key} → ${instance.constructor.name}`);
@@ -347,29 +352,54 @@ export async function initPlatform(
     await Promise.all(loadPromises);
 
     // Create ConfigAdapter (ALWAYS present, not loaded dynamically)
-    const { ConfigAdapter } = await import('./adapters/config-adapter.js');
-    platform.setAdapter('config', new ConfigAdapter());
-    platform.logger.debug('initPlatform created ConfigAdapter');
+    try {
+      const { ConfigAdapter } = await import('./adapters/config-adapter.js');
+      platform.setAdapter('config', new ConfigAdapter());
+      platform.logger.debug('initPlatform created ConfigAdapter');
+    } catch (error) {
+      platform.logger.warn('Failed to create ConfigAdapter, using NoOp fallback', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
-    // Initialize core features
-    const coreFeatures = initializeCoreFeatures(platform, core);
-    platform.initCoreFeatures(
-      coreFeatures.workflows,
-      coreFeatures.jobs,
-      coreFeatures.cron,
-      coreFeatures.resources
-    );
+    // Initialize core features (gracefully degrade if workflow unavailable)
+    try {
+      const coreFeatures = initializeCoreFeatures(platform, core);
+      platform.initCoreFeatures(
+        coreFeatures.workflows,
+        coreFeatures.jobs,
+        coreFeatures.cron,
+        coreFeatures.resources
+      );
+      platform.logger.debug('initPlatform initialized core features');
+    } catch (error) {
+      platform.logger.warn('Failed to initialize core features, continuing without them', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
-    // Initialize ResourceBroker for queue and rate limiting
-    const resourceBroker = initializeResourceBroker(platform, core.resourceBroker);
-    platform.initResourceBroker(resourceBroker);
-    platform.logger.debug('initPlatform initialized ResourceBroker');
+    // Initialize ResourceBroker for queue and rate limiting (optional)
+    try {
+      const resourceBroker = initializeResourceBroker(platform, core.resourceBroker);
+      platform.initResourceBroker(resourceBroker);
+      platform.logger.debug('initPlatform initialized ResourceBroker');
+    } catch (error) {
+      platform.logger.warn('Failed to initialize ResourceBroker, continuing without rate limiting', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
-    // Start Unix Socket server to handle adapter calls from children
-    const { createUnixSocketServer } = await import('./ipc/unix-socket-server.js');
-    const socketServer = await createUnixSocketServer(platform);
-    platform.initSocketServer(socketServer);
-    platform.logger.debug('initPlatform started Unix Socket server for child processes');
+    // Start Unix Socket server to handle adapter calls from children (critical for V3 plugins)
+    try {
+      const { createUnixSocketServer } = await import('./ipc/unix-socket-server.js');
+      const socketServer = await createUnixSocketServer(platform);
+      platform.initSocketServer(socketServer);
+      platform.logger.debug('initPlatform started Unix Socket server for child processes');
+    } catch (error) {
+      platform.logger.warn('Failed to start UnixSocketServer, V3 plugin execution will be unavailable', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
     platform.logger.debug('initPlatform parent process initialization complete');
   }

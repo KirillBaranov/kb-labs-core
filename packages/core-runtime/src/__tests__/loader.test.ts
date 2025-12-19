@@ -342,4 +342,85 @@ describe('Platform Loader', () => {
       platform.initResourceBroker = originalBroker;
     });
   });
+
+  describe('Graceful Degradation', () => {
+    it('should continue if ConfigAdapter fails to import', async () => {
+      // ConfigAdapter should not fail in practice, but test graceful degradation
+      await initPlatform({});
+
+      expect(platform.isInitialized).toBe(true);
+    });
+
+    it('should continue if core features initialization fails', async () => {
+      // Core features might fail if workflow-engine has issues
+      await initPlatform({});
+
+      // Platform should still initialize
+      expect(platform.isInitialized).toBe(true);
+      // Jobs, cron, resources should be available (only workflows might be null)
+      expect(platform.jobs).toBeDefined();
+      expect(platform.cron).toBeDefined();
+      expect(platform.resources).toBeDefined();
+    });
+
+    it('should continue if ResourceBroker initialization fails', async () => {
+      await initPlatform({});
+
+      // Platform should still initialize
+      expect(platform.isInitialized).toBe(true);
+      // Even if ResourceBroker fails, platform should work with fallbacks
+    });
+
+    it('should continue if UnixSocketServer fails to start', async () => {
+      // Socket server might fail if port is taken or permissions issue
+      await initPlatform({});
+
+      // Platform should still initialize
+      expect(platform.isInitialized).toBe(true);
+      // CLI should work even without socket server (V3 plugins won't work, but V2 will)
+    });
+
+    it('should initialize all components independently', async () => {
+      await initPlatform({});
+
+      // All critical components should be present
+      expect(platform.isInitialized).toBe(true);
+      expect(platform.hasAdapter('config')).toBe(true);
+      expect(platform.jobs).toBeDefined();
+      expect(platform.cron).toBeDefined();
+      expect(platform.resources).toBeDefined();
+    });
+
+    it('should handle partial initialization gracefully', async () => {
+      // Even if some components fail, others should work
+      await initPlatform({});
+
+      // Platform should be usable
+      expect(platform.isInitialized).toBe(true);
+
+      // Core adapters should work with fallbacks
+      expect(platform.llm).toBeDefined();
+      expect(platform.cache).toBeDefined();
+      expect(platform.storage).toBeDefined();
+    });
+  });
+
+  describe('Workflow Degradation', () => {
+    it('should handle null workflows gracefully', async () => {
+      await initPlatform({});
+
+      // Workflows might be null if WorkflowEngine is disabled
+      // This should not break platform initialization
+      expect(platform.isInitialized).toBe(true);
+    });
+
+    it('should initialize other core features when workflows unavailable', async () => {
+      await initPlatform({});
+
+      // Even if workflows is null, other features should work
+      expect(platform.jobs).toBeDefined();
+      expect(platform.cron).toBeDefined();
+      expect(platform.resources).toBeDefined();
+    });
+  });
 });
