@@ -1,5 +1,39 @@
-## @kb-labs/core 0.6.0
+## @kb-labs/core 0.9.0
 
+**0.8.0 → 0.9.0** (minor: new features)
+
+### ✨ New Features
+
+- **core-runtime**: Introduces TypeScript configuration for project paths, enhancing code maintainability and developer experience by ensuring consistent path resolutions across the project.
+- **core-runtime**: Initializes the core runtime index and configuration, providing a foundational setup that simplifies the integration of new features and improves overall system organization.
+- **core-runtime**: Adds core runtime loader and transport functionality, allowing for more efficient data handling and communication, which ultimately speeds up application performance.
+- **core-runtime**: Implements Unix socket server functionality, enabling seamless inter-process communication that enhances the system's responsiveness and reliability.
+- **core-platform**: Introduces a new `getDimensions` method to embeddings interfaces and implementations, allowing users to easily retrieve relevant size metrics, improving usability in managing data structures.
+- **core-runtime**: Integrates the resource broker into the core runtime, streamlining resource management and allocation, which enhances the system's efficiency and reduces potential resource conflicts.
+- **core-resource-broker**: Launches the core resource broker package with its initial implementation, empowering users with better control over resource distribution and improving overall resource utilization.
+- **core-config**: Refactors workspace configuration handling to new paths, improving clarity and organization, which simplifies the configuration process for users.
+- **core-cli**: Updates configuration artifact detection to new paths, ensuring that users can easily locate and manage their configuration files, enhancing the overall user experience.
+
+### 🐛 Bug Fixes
+
+- **core-resource-broker**: Enhances the reliability of the in-memory rate limit backend by fixing condition checks, ensuring a smoother user experience without unexpected request denials.
+
+### ♻️ Code Refactoring
+
+- **state-daemon**: Enhances the jobs manager and server, leading to improved stability and performance during task execution, which means users can rely on the system to handle jobs more efficiently.
+- **sandbox**: Refines execution handlers and IPC messaging, resulting in faster and more reliable communication between processes, ensuring a smoother user experience when running sandboxed applications.
+
+### 📝 Documentation
+
+- **adr**: Updates to the platform and IPC (Inter-Process Communication) architecture ensure better compatibility and performance, allowing users to enjoy a more reliable and efficient experience.
+- **changelog**: The changelog has been updated to clearly reflect all recent changes, helping users easily track improvements and new features in the software.
+
+---
+
+*Generated automatically by [**@kb-labs/release-manager**](https://github.com/kb-labs/kb-labs)*
+*Part of the **KB Labs Platform** — Professional developer tools ecosystem*
+
+<sub>© 2025 KB Labs. Released under KB Public License v1.1</sub>
 **0.5.0 → 0.6.0** (minor: new features)
 
 ### ✨ New Features
