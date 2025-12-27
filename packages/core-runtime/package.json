@@ -21,7 +21,9 @@
   },
   "dependencies": {
     "@kb-labs/core-platform": "workspace:*",
+    "@kb-labs/core-ipc": "workspace:*",
     "@kb-labs/core-resource-broker": "workspace:*",
+    "@kb-labs/plugin-execution": "link:../../../kb-labs-plugin/packages/plugin-execution",
     "glob": "^10.0.0"
   },
   "devDependencies": {

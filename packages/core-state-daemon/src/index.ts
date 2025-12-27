@@ -5,5 +5,5 @@
 
 export { StateDaemonServer } from './server';
 export type { StateDaemonConfig } from './server';
-export { JobsManager } from './jobs-manager';
-export type { JobsManagerConfig } from './jobs-manager';
+// export { JobsManager } from './jobs-manager'; // DISABLED: missing dependencies
+// export type { JobsManagerConfig } from './jobs-manager';

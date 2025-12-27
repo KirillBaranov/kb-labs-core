@@ -49,27 +49,34 @@ export {
   WorkflowEngine,
 } from './core/index.js';
 
-// Transport utilities
-export { BulkTransferHelper } from './transport/bulk-transfer.js';
-export type { BulkTransfer, BulkTransferOptions } from './transport/bulk-transfer.js';
+// ═══════════════════════════════════════════════════════════════════════════
+// IPC & TRANSPORT (Re-exported from @kb-labs/core-ipc)
+// ═══════════════════════════════════════════════════════════════════════════
 
-// Transport layer for IPC adapter communication
-export type { ITransport, TransportConfig, PendingRequest } from './transport/transport.js';
+// IPC Servers (Parent Process Side)
+export { UnixSocketServer, type UnixSocketServerConfig, IPCServer, createIPCServer } from '@kb-labs/core-ipc';
+
+// Transport Layer (Child Process Side)
 export {
+  type ITransport,
+  type TransportConfig,
+  type PendingRequest,
   TransportError,
   TimeoutError,
   CircuitOpenError,
   isRetryableError,
-} from './transport/transport.js';
-export { IPCTransport, createIPCTransport } from './transport/ipc-transport.js';
-export { UnixSocketTransport, createUnixSocketTransport } from './transport/unix-socket-transport.js';
-export type { UnixSocketConfig } from './transport/unix-socket-transport.js';
-export { selectTimeout, getOperationTimeout, OPERATION_TIMEOUTS } from './transport/timeout-config.js';
+  IPCTransport,
+  createIPCTransport,
+  UnixSocketTransport,
+  createUnixSocketTransport,
+  type UnixSocketConfig,
+} from '@kb-labs/core-ipc';
 
-// IPC Server (parent process)
-export { IPCServer, createIPCServer } from './ipc/ipc-server.js';
-export { UnixSocketServer } from './ipc/unix-socket-server.js';
-export type { UnixSocketServerConfig } from './ipc/unix-socket-server.js';
+// Bulk Transfer (Large Message Optimization)
+export { BulkTransferHelper, type BulkTransfer, type BulkTransferOptions } from '@kb-labs/core-ipc';
+
+// Timeout Configuration
+export { selectTimeout, getOperationTimeout, OPERATION_TIMEOUTS } from '@kb-labs/core-ipc';
 
 // Proxy adapters (child process)
 export { RemoteAdapter } from './proxy/remote-adapter.js';

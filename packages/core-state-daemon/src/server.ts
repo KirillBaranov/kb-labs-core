@@ -4,7 +4,7 @@
 
 import { createServer, type Server, type IncomingMessage, type ServerResponse } from 'node:http';
 import { InMemoryStateBroker } from '@kb-labs/core-state-broker';
-import { JobsManager } from './jobs-manager';
+// import { JobsManager } from './jobs-manager'; // DISABLED: missing dependencies
 
 export interface StateDaemonConfig {
   port?: number;
@@ -14,7 +14,7 @@ export interface StateDaemonConfig {
 
 export class StateDaemonServer {
   private broker: InMemoryStateBroker;
-  private jobsManager: JobsManager | null = null;
+  private jobsManager: any | null = null; // DISABLED: JobsManager has missing dependencies
   private server: Server | null = null;
   private isShuttingDown = false;
 
@@ -22,20 +22,21 @@ export class StateDaemonServer {
     this.broker = new InMemoryStateBroker();
 
     // Initialize jobs manager if enabled
-    if (this.config.enableJobs !== false) {
-      const createLogger = (prefix: string = '[jobs]'): import('@kb-labs/core-platform').ILogger => ({
-        trace: (msg: string, meta?: Record<string, unknown>) => console.debug(prefix, '[trace]', msg, meta),
-        debug: (msg: string, meta?: Record<string, unknown>) => console.debug(prefix, msg, meta),
-        info: (msg: string, meta?: Record<string, unknown>) => console.log(prefix, msg, meta),
-        warn: (msg: string, meta?: Record<string, unknown>) => console.warn(prefix, msg, meta),
-        error: (msg: string, error?: Error, meta?: Record<string, unknown>) => console.error(prefix, msg, error, meta),
-        child: (bindings: Record<string, unknown>) => createLogger(`${prefix}:${JSON.stringify(bindings)}`),
-      });
+    // DISABLED: JobsManager has missing dependencies
+    // if (this.config.enableJobs !== false) {
+    //   const createLogger = (prefix: string = '[jobs]'): import('@kb-labs/core-platform').ILogger => ({
+    //     trace: (msg: string, meta?: Record<string, unknown>) => console.debug(prefix, '[trace]', msg, meta),
+    //     debug: (msg: string, meta?: Record<string, unknown>) => console.debug(prefix, msg, meta),
+    //     info: (msg: string, meta?: Record<string, unknown>) => console.log(prefix, msg, meta),
+    //     warn: (msg: string, meta?: Record<string, unknown>) => console.warn(prefix, msg, meta),
+    //     error: (msg: string, error?: Error, meta?: Record<string, unknown>) => console.error(prefix, msg, error, meta),
+    //     child: (bindings: Record<string, unknown>) => createLogger(`${prefix}:${JSON.stringify(bindings)}`),
+    //   });
 
-      this.jobsManager = new JobsManager({
-        logger: createLogger('[jobs]'),
-      });
-    }
+    //   this.jobsManager = new JobsManager({
+    //     logger: createLogger('[jobs]'),
+    //   });
+    // }
   }
 
   async start(): Promise<void> {

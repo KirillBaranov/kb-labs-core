@@ -1,7 +1,7 @@
 {
-  "name": "@kb-labs/core-contracts",
+  "name": "@kb-labs/core-ipc",
   "version": "0.1.0",
-  "description": "Contracts for KB Labs Core plugin.",
+  "description": "IPC transport layer for KB Labs platform (Unix sockets, process IPC)",
   "type": "module",
   "private": true,
   "main": "./dist/index.js",
@@ -28,7 +28,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/kirill-baranov/kb-labs-core.git",
-    "directory": "packages/core-contracts"
+    "directory": "packages/core-ipc"
   },
   "scripts": {
     "clean": "rimraf dist",
@@ -36,10 +36,12 @@
     "dev": "tsup --watch",
     "type-check": "tsc --noEmit",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
-    "@kb-labs/plugin-contracts": "link:../../../kb-labs-plugin/packages/plugin-contracts"
+    "@kb-labs/core-platform": "workspace:*"
   },
   "devDependencies": {
     "@kb-labs/devkit": "link:../../../kb-labs-devkit",
@@ -47,7 +49,8 @@
     "eslint": "^9",
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^3.0.0"
   },
   "engines": {
     "node": ">=18.18.0",

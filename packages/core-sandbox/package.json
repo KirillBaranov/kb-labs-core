@@ -27,8 +27,8 @@
   "dependencies": {
     "@kb-labs/core-runtime": "workspace:*",
     "@kb-labs/core-sys": "workspace:*",
-    "@kb-labs/plugin-runtime": "workspace:*",
-    "@kb-labs/shared-cli-ui": "workspace:*",
+    "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/plugin-runtime",
+    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/shared-cli-ui",
     "execa": "^8.0.0"
   },
   "devDependencies": {

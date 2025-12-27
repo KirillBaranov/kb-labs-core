@@ -58,6 +58,61 @@ export interface WorkflowsConfig {
 }
 
 /**
+ * Execution backend configuration.
+ * Determines how plugins execute (in-process, worker-pool, remote).
+ */
+export interface ExecutionConfig {
+  /**
+   * Execution mode:
+   * - 'auto' (default): Auto-detect from environment (EXECUTION_MODE, KUBERNETES_SERVICE_HOST)
+   * - 'in-process': Same process, no isolation (dev mode, fast iteration)
+   * - 'worker-pool': Worker pool with fault isolation (production, single-node)
+   * - 'remote': Remote executor service (Phase 3, distributed fleet)
+   * @default 'auto'
+   */
+  mode?: 'auto' | 'in-process' | 'worker-pool' | 'remote';
+
+  /**
+   * Worker pool options (used when mode=worker-pool or auto-detected).
+   */
+  workerPool?: {
+    /** Minimum workers to keep alive @default 2 */
+    min?: number;
+    /** Maximum concurrent workers @default 10 */
+    max?: number;
+    /** Max requests per worker before recycling @default 1000 */
+    maxRequestsPerWorker?: number;
+    /** Max worker uptime before recycling (ms) @default 1800000 (30min) */
+    maxUptimeMsPerWorker?: number;
+    /** Max concurrent requests per plugin (optional) */
+    maxConcurrentPerPlugin?: number;
+    /** Warmup policy */
+    warmup?: {
+      /**
+       * Warmup mode (matches plugin-execution types):
+       * - 'none': No warmup (cold start on first request)
+       * - 'top-n': Warmup top N most-used handlers
+       * - 'marked': Warmup handlers marked with warmup: true in manifest
+       * @default 'none'
+       */
+      mode?: 'none' | 'top-n' | 'marked';
+      /** Warmup top N most used handlers (for top-n mode) @default 5 */
+      topN?: number;
+      /** Max handlers to warmup (safety limit) @default 20 */
+      maxHandlers?: number;
+    };
+  };
+
+  /**
+   * Remote executor options (used when mode=remote, Phase 3).
+   */
+  remote?: {
+    /** Remote executor service endpoint (gRPC or HTTP) */
+    endpoint?: string;
+  };
+}
+
+/**
  * Resource broker configuration for rate limiting and queue management.
  */
 export interface ResourceBrokerConfig {
@@ -130,4 +185,6 @@ export interface PlatformConfig {
   adapterOptions?: Partial<Record<keyof AdaptersConfig, unknown>>;
   /** Core features configuration */
   core?: CoreFeaturesConfig;
+  /** Execution backend configuration (NEW: unified plugin execution) */
+  execution?: ExecutionConfig;
 }

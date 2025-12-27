@@ -39,6 +39,12 @@
       "@kb-labs/core-contracts/*": [
         "packages/core-contracts/src/*"
       ],
+      "@kb-labs/core-ipc": [
+        "packages/core-ipc/src/index.ts"
+      ],
+      "@kb-labs/core-ipc/*": [
+        "packages/core-ipc/src/*"
+      ],
       "@kb-labs/core-platform": [
         "packages/core-platform/src/index.ts"
       ],
@@ -98,6 +104,12 @@
       ],
       "@kb-labs/knowledge-core/*": [
         "../kb-labs-knowledge/packages/knowledge-core/src/*"
+      ],
+      "@kb-labs/plugin-execution": [
+        "../kb-labs-plugin/packages/plugin-execution/src/index.ts"
+      ],
+      "@kb-labs/plugin-execution/*": [
+        "../kb-labs-plugin/packages/plugin-execution/src/*"
       ],
       "@kb-labs/plugin-runtime": [
         "../kb-labs-plugin/packages/plugin-runtime/src/index.ts"

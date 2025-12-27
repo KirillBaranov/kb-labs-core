@@ -10,7 +10,6 @@
   ],
   "exclude": [
     "dist",
-    "node_modules",
-    "src/jobs-manager.ts"
+    "node_modules"
   ]
 }

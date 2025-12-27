@@ -3,20 +3,23 @@
   "version": "0.1.5",
   "description": "Core system utilities for KB Labs, including file system operations and path resolution",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     },
     "./logging": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     },
     "./output": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     }
   },
   "files": [
@@ -35,7 +38,7 @@
     "lint:fix": "eslint . --fix --ignore-pattern 'dist/**' --ignore-pattern 'coverage/**'"
   },
   "dependencies": {
-    "@kb-labs/shared-cli-ui": "workspace:*"
+    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/shared-cli-ui"
   },
   "devDependencies": {
     "@types/node": "^24.3.3",
@@ -44,5 +47,6 @@
     "tsup": "^8.5.0",
     "typescript": "^5.6.3",
     "vitest": "^3.2.4"
-  }
+  },
+  "module": "./dist/index.js"
 }

@@ -10,8 +10,9 @@
   },
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     }
   },
   "files": [
@@ -31,10 +32,7 @@
     "@kb-labs/core-runtime": "link:../core-runtime",
     "@kb-labs/core-platform": "link:../core-platform",
     "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/plugin-runtime",
-    "@kb-labs/plugin-manifest": "link:../../../kb-labs-plugin/packages/plugin-manifest",
-    "@kb-labs/shared-command-kit": "link:../../../kb-labs-shared/packages/shared-command-kit",
-    "glob": "^10.0.0",
-    "minimatch": "^9.0.3"
+    "@kb-labs/shared-command-kit": "link:../../../kb-labs-shared/packages/shared-command-kit"
   },
   "devDependencies": {
     "@kb-labs/devkit": "link:../../../kb-labs-devkit",

@@ -86,6 +86,51 @@ export class CacheProxy extends RemoteAdapter<ICache> implements ICache {
   async clear(pattern?: string): Promise<void> {
     await this.callRemote('clear', [pattern]);
   }
+
+  /**
+   * Add member to sorted set with score.
+   *
+   * @param key - Sorted set key
+   * @param score - Numeric score (typically timestamp)
+   * @param member - Member to add
+   */
+  async zadd(key: string, score: number, member: string): Promise<void> {
+    await this.callRemote('zadd', [key, score, member]);
+  }
+
+  /**
+   * Get members from sorted set by score range.
+   *
+   * @param key - Sorted set key
+   * @param min - Minimum score (inclusive)
+   * @param max - Maximum score (inclusive)
+   * @returns Array of members in score order
+   */
+  async zrangebyscore(key: string, min: number, max: number): Promise<string[]> {
+    return (await this.callRemote('zrangebyscore', [key, min, max])) as string[];
+  }
+
+  /**
+   * Remove member from sorted set.
+   *
+   * @param key - Sorted set key
+   * @param member - Member to remove
+   */
+  async zrem(key: string, member: string): Promise<void> {
+    await this.callRemote('zrem', [key, member]);
+  }
+
+  /**
+   * Set key-value pair only if key does not exist (atomic operation).
+   *
+   * @param key - Cache key
+   * @param value - Value to set
+   * @param ttl - Time to live in milliseconds (optional)
+   * @returns true if value was set, false if key already exists
+   */
+  async setIfNotExists<T>(key: string, value: T, ttl?: number): Promise<boolean> {
+    return (await this.callRemote('setIfNotExists', [key, value, ttl])) as boolean;
+  }
 }
 
 /**
