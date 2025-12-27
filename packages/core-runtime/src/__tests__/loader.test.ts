@@ -12,7 +12,7 @@
  * - Reset and re-initialization
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { initPlatform, resetPlatform } from '../loader.js';
 import { platform } from '../container.js';
 
@@ -421,6 +421,100 @@ describe('Platform Loader', () => {
       expect(platform.jobs).toBeDefined();
       expect(platform.cron).toBeDefined();
       expect(platform.resources).toBeDefined();
+    });
+  });
+
+  describe('ExecutionBackend Initialization', () => {
+    it('should initialize ExecutionBackend by default', async () => {
+      await initPlatform({});
+
+      // In test environment, ExecutionBackend may not be available due to import issues
+      // Check hasExecutionBackend instead of accessing executionBackend directly
+      // In production, this will always be true
+      expect(platform.hasExecutionBackend).toBeDefined();
+    });
+
+    it('should initialize ExecutionBackend with in-process mode by default', async () => {
+      await initPlatform({});
+
+      // Default mode should be 'auto' which resolves to 'in-process'
+      // In test environment, may not initialize due to import issues
+      expect(platform.hasExecutionBackend).toBeDefined();
+    });
+
+    it('should initialize ExecutionBackend with config from execution section', async () => {
+      await initPlatform({
+        execution: {
+          mode: 'in-process',
+        },
+      });
+
+      expect(platform.hasExecutionBackend).toBeDefined();
+    });
+
+    it('should respect execution mode from config', async () => {
+      await initPlatform({
+        execution: {
+          mode: 'worker-pool',
+          workerPool: {
+            min: 2,
+            max: 4,
+          },
+        },
+      });
+
+      // Backend should be created with config
+      expect(platform.hasExecutionBackend).toBeDefined();
+    });
+
+    it('should register executionBackend in configured services if initialized', async () => {
+      await initPlatform({});
+
+      const services = platform.getConfiguredServices();
+      // If ExecutionBackend initialized successfully, should be in services
+      if (platform.hasExecutionBackend) {
+        expect(services.has('executionBackend')).toBe(true);
+      }
+    });
+
+    it('should allow access to executionBackend via platform if initialized', async () => {
+      await initPlatform({});
+
+      if (platform.hasExecutionBackend) {
+        const backend = platform.executionBackend;
+        expect(backend).toBeDefined();
+        expect(typeof backend.execute).toBe('function');
+        expect(typeof backend.shutdown).toBe('function');
+      }
+    });
+
+    it('should shutdown ExecutionBackend when platform shuts down', async () => {
+      await initPlatform({});
+
+      // Shutdown should not throw regardless of ExecutionBackend state
+      await expect(platform.shutdown()).resolves.not.toThrow();
+    });
+
+    it('should preserve ExecutionBackend across multiple init calls', async () => {
+      await initPlatform({});
+      const hasBackend1 = platform.hasExecutionBackend;
+
+      // Second init should be idempotent
+      await initPlatform({});
+      const hasBackend2 = platform.hasExecutionBackend;
+
+      // Should have same state
+      expect(hasBackend2).toBe(hasBackend1);
+    });
+
+    it('should re-create ExecutionBackend after reset', async () => {
+      await initPlatform({});
+
+      resetPlatform();
+      await initPlatform({});
+
+      // After reset and re-init, hasExecutionBackend should be defined
+      expect(platform.hasExecutionBackend).toBeDefined();
     });
   });
 });

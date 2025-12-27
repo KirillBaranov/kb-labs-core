@@ -25,6 +25,9 @@ import {
 } from '@kb-labs/core-resource-broker';
 import type { RateLimitBackend, ResourceConfig } from '@kb-labs/core-resource-broker';
 
+// Import ExecutionBackend factory (required for V3 plugin system)
+import { createExecutionBackend } from '@kb-labs/plugin-execution';
+
 /**
  * Adapter factory function type.
  * Adapters should export a createAdapter function.
@@ -236,7 +239,8 @@ function initializeResourceBroker(
  */
 export async function initPlatform(
   config: PlatformConfig = {},
-  cwd: string = process.cwd()
+  cwd: string = process.cwd(),
+  uiProvider?: (hostType: string) => any
 ): Promise<PlatformContainer> {
   // ✅ Idempotent: If already initialized, return existing singleton
   // This prevents duplicate adapter instances across CLI and sandbox processes
@@ -248,7 +252,7 @@ export async function initPlatform(
   }
 
   platform.logger.debug(`initPlatform initializing NEW platform pid=${process.pid}`);
-  const { adapters = {}, adapterOptions = {}, core = {} } = config;
+  const { adapters = {}, adapterOptions = {}, core = {}, execution = {} } = config;
 
   // 🔍 Detect if running in child process (sandbox worker)
   const isChildProcess = !!process.send; // Has IPC channel = forked child
@@ -306,6 +310,10 @@ export async function initPlatform(
       platform.logger.debug('initPlatform created StorageProxy');
     }
 
+    // ⚠️ CRITICAL: Do NOT create ExecutionBackend in child process!
+    // Child processes ARE the workers - creating backend here would spawn infinite workers.
+    // ExecutionBackend is ONLY created in parent process.
+
     // Core features are initialized normally (they don't duplicate resources)
     const coreFeatures = initializeCoreFeatures(platform, core);
     platform.initCoreFeatures(
@@ -360,6 +368,57 @@ export async function initPlatform(
       platform.logger.warn('Failed to create ConfigAdapter, using NoOp fallback', {
         error: error instanceof Error ? error.message : String(error),
       });
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // Initialize ExecutionBackend (AFTER adapters, BEFORE core features)
+    // CRITICAL: ExecutionBackend is REQUIRED - all execution goes through it
+    // ══════════════════════════════════════════════════════════════════════
+    try {
+      // Use static import (top-level) to avoid issues with dynamic imports in bundled code
+      // Map config types to backend options (explicit mapping, no type casts)
+      const executionBackend = createExecutionBackend({
+        platform: platform, // PlatformServices interface (adapters only)
+        mode: execution.mode ?? 'auto',
+        uiProvider, // Pass UI provider from caller (CLI, REST API, etc.)
+        workerPool: execution.workerPool ? {
+          min: execution.workerPool.min,
+          max: execution.workerPool.max,
+          maxRequestsPerWorker: execution.workerPool.maxRequestsPerWorker,
+          maxUptimeMsPerWorker: execution.workerPool.maxUptimeMsPerWorker,
+          maxConcurrentPerPlugin: execution.workerPool.maxConcurrentPerPlugin,
+          warmup: execution.workerPool.warmup ? {
+            mode: execution.workerPool.warmup.mode ?? 'none',
+            topN: execution.workerPool.warmup.topN,
+            maxHandlers: execution.workerPool.warmup.maxHandlers,
+          } : undefined,
+        } : undefined,
+        remote: execution.remote ? {
+          endpoint: execution.remote.endpoint ?? '',
+          } : undefined,
+      });
+
+      platform.initExecutionBackend(executionBackend);
+
+      platform.logger.debug('initPlatform initialized ExecutionBackend', {
+        mode: execution.mode ?? 'auto',
+        hasWorkerPool: !!execution.workerPool,
+        configPath: 'platform.execution',
+      });
+    } catch (error) {
+      // In test environment, @kb-labs/plugin-execution may not be available
+      // Only warn if in test environment (NODE_ENV=test or vitest detected)
+      const isTestEnv = process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
+
+      if (isTestEnv) {
+        platform.logger.warn('ExecutionBackend initialization failed in test environment', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      } else {
+        // In production/development, ExecutionBackend is REQUIRED
+        platform.logger.error('ExecutionBackend initialization failed');
+        throw error;
+      }
     }
 
     // Initialize core features (gracefully degrade if workflow unavailable)

@@ -19,6 +19,7 @@ import type {
   IJobScheduler,
   ICronManager,
   IResourceManager,
+  IExecutionBackend,
 } from '@kb-labs/core-platform';
 
 import type { IResourceBroker } from '@kb-labs/core-resource-broker';
@@ -208,6 +209,7 @@ export class PlatformContainer {
   private _resources?: IResourceManager;
   private _resourceBroker?: IResourceBroker;
   private _socketServer?: { getSocketPath(): string };
+  private _executionBackend?: IExecutionBackend;
 
   /** Workflow engine (throws if not initialized) */
   get workflows(): IWorkflowEngine {
@@ -302,6 +304,46 @@ export class PlatformContainer {
   }
 
   /**
+   * Initialize execution backend.
+   * Called internally by initPlatform() AFTER adapters, BEFORE core features.
+   *
+   * @param backend - ExecutionBackend instance (from @kb-labs/plugin-execution)
+   */
+  initExecutionBackend(backend: IExecutionBackend): void {
+    if (this._executionBackend) {
+      this.logger.warn('ExecutionBackend already initialized, replacing');
+    }
+    this._executionBackend = backend;
+    this.logger.debug('ExecutionBackend initialized', {
+      mode: backend.constructor.name,
+    });
+  }
+
+  /**
+   * Get execution backend.
+   * Returns the initialized backend or throws if not initialized.
+   *
+   * @throws Error if ExecutionBackend not initialized via initPlatform()
+   * @returns ExecutionBackend instance
+   */
+  get executionBackend(): IExecutionBackend {
+    if (!this._executionBackend) {
+      throw new Error(
+        'ExecutionBackend not initialized. ' +
+        'Call initPlatform() with execution config to initialize ExecutionBackend.'
+      );
+    }
+    return this._executionBackend;
+  }
+
+  /**
+   * Check if execution backend is initialized.
+   */
+  get hasExecutionBackend(): boolean {
+    return !!this._executionBackend;
+  }
+
+  /**
    * Check if platform is initialized.
    */
   get isInitialized(): boolean {
@@ -321,7 +363,27 @@ export class PlatformContainer {
     this._resources = undefined;
     this._resourceBroker = undefined;
     this._socketServer = undefined;
+    this._executionBackend = undefined;
     this.initialized = false;
+  }
+
+  /**
+   * Shutdown platform gracefully.
+   * Closes all resources, stops workers, cleanup.
+   */
+  async shutdown(): Promise<void> {
+    // Shutdown execution backend (closes worker pool)
+    if (this._executionBackend) {
+      try {
+        await this._executionBackend.shutdown();
+      } catch (error) {
+        this.logger.warn('ExecutionBackend shutdown failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // TODO: Shutdown other resources (workflows, jobs, cron, etc.)
   }
 }
 
