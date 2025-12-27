@@ -44,3 +44,11 @@ export type {
   ArtifactMeta,
   ArtifactWriteOptions,
 } from './artifacts.js';
+
+// Execution Backend (plugin execution layer)
+export type {
+  IExecutionBackend,
+  ExecutionRequest,
+  ExecutionResult,
+  ExecuteOptions,
+} from './execution.js';

@@ -79,6 +79,13 @@ export type {
   ArtifactWriteOptions,
 } from './adapters/artifacts.js';
 
+export type {
+  IExecutionBackend,
+  ExecutionRequest,
+  ExecutionResult,
+  ExecuteOptions,
+} from './adapters/execution.js';
+
 // ═══════════════════════════════════════════════════════════════════════════
 // CORE FEATURE INTERFACES (built-in, not replaceable)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -115,3 +122,4 @@ export type {
   ResourceAvailability,
   TenantQuotas,
 } from './core/resources.js';
+export type { IPlatformAdapters } from './platform-adapters.js';
