@@ -4,36 +4,10 @@
  * Execution response types for the execution layer.
  */
 
-/**
- * Execution metadata from runner layer.
- *
- * This is the canonical type. Other packages should import from core-contracts.
- */
-export interface ExecutionMeta {
-  /** Execution start time (Unix timestamp ms) */
-  startTime: number;
+import type { ExecutionMeta } from '@kb-labs/plugin-contracts';
 
-  /** Execution end time (Unix timestamp ms) */
-  endTime: number;
-
-  /** Execution duration in milliseconds */
-  duration: number;
-
-  /** Plugin ID that was executed */
-  pluginId: string;
-
-  /** Plugin version */
-  pluginVersion: string;
-
-  /** Handler ID (command, route, etc.) */
-  handlerId?: string;
-
-  /** Request ID for distributed tracing */
-  requestId: string;
-
-  /** Tenant ID (for multi-tenancy) */
-  tenantId?: string;
-}
+// Re-export for convenience
+export type { ExecutionMeta } from '@kb-labs/plugin-contracts';
 
 /**
  * Execution metadata - additional info about the execution.

@@ -4,19 +4,10 @@
  * Subprocess runner interface - contract for running handlers in subprocesses.
  */
 
-import type { PluginContextDescriptor } from '@kb-labs/plugin-contracts';
-import type { ExecutionMeta } from './execution-response.js';
+import type { RunResult, ExecutionMeta, PluginContextDescriptor } from '@kb-labs/plugin-contracts';
 
-/**
- * Result from subprocess execution.
- */
-export interface RunResult<T> {
-  /** Result data from handler */
-  data: T;
-
-  /** Execution metadata */
-  executionMeta: ExecutionMeta;
-}
+// Re-export for convenience
+export type { RunResult, ExecutionMeta, PluginContextDescriptor } from '@kb-labs/plugin-contracts';
 
 /**
  * Options for subprocess execution.
@@ -45,6 +36,12 @@ export interface SubprocessRunOptions {
 
   /** Abort signal for cancellation */
   signal?: AbortSignal;
+
+  /** Current working directory for handler execution */
+  cwd: string;
+
+  /** Output directory (optional, defaults to ${cwd}/.kb/output) */
+  outdir?: string;
 }
 
 /**

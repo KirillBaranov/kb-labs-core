@@ -11,9 +11,6 @@
  * Future: Platform contracts, Workflow contracts, etc.
  */
 
-// Re-export plugin contracts types used in core contracts
-export type { HostType, HostContext, PermissionSpec, PluginContextDescriptor } from '@kb-labs/plugin-contracts';
-
 // Execution request/response types
 export * from './execution-request.js';
 export * from './execution-response.js';
