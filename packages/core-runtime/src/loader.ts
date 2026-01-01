@@ -7,12 +7,22 @@ import type { AdapterTypes, PlatformContainer } from './container.js';
 import type { PlatformConfig, CoreFeaturesConfig, ResourceBrokerConfig } from './config.js';
 import { platform } from './container.js';
 import { resolveAdapter } from './discover-adapters.js';
+import { createAnalyticsContext } from './analytics-context.js';
 
 import { ResourceManager } from './core/resource-manager.js';
 import { JobScheduler } from './core/job-scheduler.js';
 import { CronManager } from './core/cron-manager.js';
 // TODO: Re-enable when workflow-engine is ported to V3
 // import { WorkflowEngine } from './core/workflow-engine.js';
+
+// Import analytics wrappers for transparent metrics collection
+import {
+  AnalyticsLLM,
+  AnalyticsEmbeddings,
+  AnalyticsVectorStore,
+  AnalyticsCache,
+  AnalyticsStorage,
+} from '@kb-labs/core-platform';
 
 import {
   ResourceBroker,
@@ -25,8 +35,8 @@ import {
 } from '@kb-labs/core-resource-broker';
 import type { RateLimitBackend, ResourceConfig } from '@kb-labs/core-resource-broker';
 
-// Import ExecutionBackend factory (required for V3 plugin system)
-import { createExecutionBackend } from '@kb-labs/plugin-execution';
+// Import ExecutionBackend type only (implementation loaded dynamically to break circular dependency)
+import type { IExecutionBackend } from '@kb-labs/core-contracts';
 
 /**
  * Adapter factory function type.
@@ -60,6 +70,47 @@ async function loadAdapter<T>(adapterPath: string, cwd: string, options?: unknow
       error: error instanceof Error ? error.message : String(error)
     });
     return undefined;
+  }
+}
+
+
+/**
+ * Wrap an adapter with analytics tracking.
+ * Returns the wrapped adapter if analytics is available, otherwise returns the original adapter.
+ *
+ * @param key - Adapter type key
+ * @param instance - Real adapter instance
+ * @returns Wrapped adapter with analytics or original adapter
+ */
+function wrapWithAnalytics<K extends keyof AdapterTypes>(
+  key: K,
+  instance: AdapterTypes[K]
+): AdapterTypes[K] {
+  const analytics = platform.analytics;
+
+  // If no analytics adapter, return original (graceful degradation)
+  if (!analytics || analytics.constructor.name === 'NoOpAnalytics') {
+    return instance;
+  }
+
+  // Wrap each adapter type with its corresponding analytics wrapper
+  switch (key) {
+    case 'llm':
+      return new AnalyticsLLM(instance as any, analytics) as unknown as AdapterTypes[K];
+    case 'embeddings':
+      console.log('[wrapWithAnalytics] Wrapping embeddings adapter:', instance.constructor.name, '→ AnalyticsEmbeddings');
+      const wrapped = new AnalyticsEmbeddings(instance as any, analytics) as unknown as AdapterTypes[K];
+      console.log('[wrapWithAnalytics] Wrapped embeddings adapter:', wrapped.constructor.name);
+      return wrapped;
+    case 'vectorStore':
+      return new AnalyticsVectorStore(instance as any, analytics) as unknown as AdapterTypes[K];
+    case 'cache':
+      return new AnalyticsCache(instance as any, analytics) as unknown as AdapterTypes[K];
+    case 'storage':
+      return new AnalyticsStorage(instance as any, analytics) as unknown as AdapterTypes[K];
+    default:
+      // For adapters without analytics wrappers (config, etc.), return original
+      return instance;
   }
 }
 
@@ -154,6 +205,7 @@ function initializeResourceBroker(
   if (container.hasAdapter('embeddings')) {
     const embeddingsConfig = config.embeddings ?? {};
     const realEmbeddings = container.embeddings; // Save reference to real adapter
+    console.log('[initializeResourceBroker] realEmbeddings type:', realEmbeddings.constructor.name);
 
     broker.register('embeddings', {
       rateLimits: embeddingsConfig.rateLimits ?? 'openai-tier-1',
@@ -161,10 +213,14 @@ function initializeResourceBroker(
       timeout: embeddingsConfig.timeout ?? 60000,
       executor: async (operation: string, args: unknown[]) => {
         if (operation === 'embed') {
+          console.log('[embeddings executor] Calling realEmbeddings.embed(), realEmbeddings type:', realEmbeddings.constructor.name);
           return realEmbeddings.embed(args[0] as string);
         }
         if (operation === 'embedBatch') {
-          return realEmbeddings.embedBatch(args[0] as string[]);
+          console.log('[embeddings executor] Calling realEmbeddings.embedBatch(), realEmbeddings type:', realEmbeddings.constructor.name);
+          const result = await realEmbeddings.embedBatch(args[0] as string[]);
+          console.log('[embeddings executor] embedBatch completed, vectors count:', result.length);
+          return result;
         }
         throw new Error(`Unknown Embeddings operation: ${operation}`);
       },
@@ -339,11 +395,47 @@ export async function initPlatform(
 
     platform.logger.debug('initPlatform parent process detected - loading real adapters');
 
-    // Load adapters in parallel
+    // Create analytics context for auto-enrichment (once per execution)
+    const analyticsContext = await createAnalyticsContext(cwd);
+    platform.logger.debug('initPlatform created analytics context', {
+      product: analyticsContext.source.product,
+      version: analyticsContext.source.version,
+      actorType: analyticsContext.actor?.type,
+      runId: analyticsContext.runId,
+    });
+
+    // CRITICAL: Load analytics adapter FIRST (before all others)
+    // Other adapters need analytics to be available for wrapWithAnalytics() to work
     const adapterKeys = Object.keys(adapters) as (keyof typeof adapters)[];
 
+    // Step 1: Load analytics adapter first (synchronously before other adapters)
+    if (adapters.analytics) {
+      const adapterPath = adapters.analytics;
+      const optionsForAdapter = adapterOptions.analytics;
+
+      try {
+        const factory = await resolveAdapter(adapterPath, cwd);
+        if (factory) {
+          // Analytics adapter factory accepts (options?, context?)
+          const instance = await (factory as any)(optionsForAdapter, analyticsContext);
+          if (instance) {
+            platform.setAdapter('analytics', instance);
+            platform.logger.debug(`initPlatform loaded analytics adapter: ${instance.constructor.name}`);
+          }
+        } else {
+          platform.logger.warn('Analytics adapter has no createAdapter or default export', { adapterPath });
+        }
+      } catch (error) {
+        platform.logger.warn('Failed to load analytics adapter', {
+          adapterPath,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+
+    // Step 2: Load all other adapters in parallel (now analytics is available for wrapping)
     const loadPromises = adapterKeys
-      .filter((key) => adapters[key]) // Only load non-null adapters
+      .filter((key) => key !== 'analytics' && adapters[key]) // Skip analytics (already loaded)
       .map(async (key) => {
         const adapterPath = adapters[key];
         if (typeof adapterPath !== 'string') return;
@@ -352,8 +444,15 @@ export async function initPlatform(
         const instance = await loadAdapter<AdapterTypes[typeof key]>(adapterPath, cwd, optionsForAdapter);
 
         if (instance) {
-          platform.setAdapter(key as keyof AdapterTypes, instance);
-          platform.logger.debug(`initPlatform loaded adapter: ${key} → ${instance.constructor.name}`);
+          // Wrap adapter with analytics tracking (analytics adapter is now available)
+          const wrappedInstance = wrapWithAnalytics(key as keyof AdapterTypes, instance);
+          platform.setAdapter(key as keyof AdapterTypes, wrappedInstance);
+
+          const wrapperName = wrappedInstance.constructor.name;
+          const isWrapped = wrapperName.startsWith('Analytics');
+          platform.logger.debug(
+            `initPlatform loaded adapter: ${key} → ${instance.constructor.name}${isWrapped ? ` (wrapped with ${wrapperName})` : ''}`
+          );
         }
       });
 
@@ -375,7 +474,10 @@ export async function initPlatform(
     // CRITICAL: ExecutionBackend is REQUIRED - all execution goes through it
     // ══════════════════════════════════════════════════════════════════════
     try {
-      // Use static import (top-level) to avoid issues with dynamic imports in bundled code
+      // Use dynamic import to break circular dependency at compile time
+      // Runtime dependency is in package.json, but import is dynamic to avoid TypeScript cycle
+      const { createExecutionBackend } = await import('@kb-labs/plugin-execution');
+
       // Map config types to backend options (explicit mapping, no type casts)
       const executionBackend = createExecutionBackend({
         platform: platform, // PlatformServices interface (adapters only)
