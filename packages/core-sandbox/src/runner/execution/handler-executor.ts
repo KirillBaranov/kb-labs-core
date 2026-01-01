@@ -33,7 +33,40 @@ export type HandlerResult =
 export async function executeHandlerFn(options: HandlerExecutorOptions): Promise<HandlerResult> {
   const { handlerFn, input, ctx, output } = options;
 
+  // Analytics scope injection for plugin execution
+  // Save original source before overriding (for in-process mode)
+  let originalSource: { product: string; version: string } | undefined;
+
   try {
+    // Override analytics source with plugin-specific source
+    // This ensures events tracked by the plugin show the correct source
+    if (ctx.pluginId && ctx.pluginVersion) {
+      try {
+        const { getPlatform } = await import('@kb-labs/core-runtime');
+        const platform = getPlatform();
+
+        if (platform?.analytics) {
+          // Save original source for restore (in-process mode)
+          originalSource = platform.analytics.getSource?.();
+
+          // Override source to plugin source
+          platform.analytics.setSource?.({
+            product: ctx.pluginId,
+            version: ctx.pluginVersion,
+          });
+
+          output.debug('Analytics source overridden', {
+            from: originalSource?.product,
+            to: ctx.pluginId,
+          });
+        }
+      } catch (error) {
+        // Platform not initialized or analytics not available
+        // This is fine - analytics is optional
+        output.debug('Analytics scope injection skipped (platform not available)');
+      }
+    }
+
     // Execute handler based on adapter signature
     let result: unknown;
     const adapterMeta = ctx.adapterMeta;
@@ -150,5 +183,25 @@ export async function executeHandlerFn(options: HandlerExecutorOptions): Promise
         stack: errorObj.stack,
       },
     };
+  } finally {
+    // Restore original analytics source (for in-process mode)
+    // In subprocess mode, this is not needed (process dies after handler)
+    // But for in-process mode, we must restore to avoid cross-plugin contamination
+    if (originalSource) {
+      try {
+        const { getPlatform } = await import('@kb-labs/core-runtime');
+        const platform = getPlatform();
+
+        if (platform?.analytics?.setSource) {
+          platform.analytics.setSource(originalSource);
+          output.debug('Analytics source restored', {
+            to: originalSource.product,
+          });
+        }
+      } catch (error) {
+        // Ignore restore errors - analytics is optional
+        output.debug('Analytics source restore skipped (platform not available)');
+      }
+    }
   }
 }
