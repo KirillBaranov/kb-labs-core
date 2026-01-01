@@ -4,7 +4,17 @@
  */
 
 // Analytics
-export type { IAnalytics } from './analytics.js';
+export type {
+  IAnalytics,
+  AnalyticsContext,
+  AnalyticsEvent,
+  EventsQuery,
+  EventsResponse,
+  EventsStats,
+  BufferStatus,
+  DlqStatus,
+  DailyStats,
+} from './analytics.js';
 
 // Vector Store
 export type {
