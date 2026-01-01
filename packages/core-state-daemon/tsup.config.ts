@@ -10,7 +10,7 @@ export default defineConfig([
     entry: {
       bin: 'src/bin.ts',
     },
-    dts: false, // No types for bin (already set in binPreset but explicit)
+    dts: true, // No types for bin (already set in binPreset but explicit)
     banner: {
       js: '#!/usr/bin/env node',
     },
