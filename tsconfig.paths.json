@@ -105,6 +105,12 @@
       "@kb-labs/knowledge-core/*": [
         "../kb-labs-knowledge/packages/knowledge-core/src/*"
       ],
+      "@kb-labs/plugin-contracts": [
+        "../kb-labs-plugin/packages/plugin-contracts/src/index.ts"
+      ],
+      "@kb-labs/plugin-contracts/*": [
+        "../kb-labs-plugin/packages/plugin-contracts/src/*"
+      ],
       "@kb-labs/plugin-execution": [
         "../kb-labs-plugin/packages/plugin-execution/src/index.ts"
       ],
