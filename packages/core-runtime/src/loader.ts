@@ -98,10 +98,7 @@ function wrapWithAnalytics<K extends keyof AdapterTypes>(
     case 'llm':
       return new AnalyticsLLM(instance as any, analytics) as unknown as AdapterTypes[K];
     case 'embeddings':
-      console.log('[wrapWithAnalytics] Wrapping embeddings adapter:', instance.constructor.name, '→ AnalyticsEmbeddings');
-      const wrapped = new AnalyticsEmbeddings(instance as any, analytics) as unknown as AdapterTypes[K];
-      console.log('[wrapWithAnalytics] Wrapped embeddings adapter:', wrapped.constructor.name);
-      return wrapped;
+      return new AnalyticsEmbeddings(instance as any, analytics) as unknown as AdapterTypes[K];
     case 'vectorStore':
       return new AnalyticsVectorStore(instance as any, analytics) as unknown as AdapterTypes[K];
     case 'cache':
@@ -205,7 +202,6 @@ function initializeResourceBroker(
   if (container.hasAdapter('embeddings')) {
     const embeddingsConfig = config.embeddings ?? {};
     const realEmbeddings = container.embeddings; // Save reference to real adapter
-    console.log('[initializeResourceBroker] realEmbeddings type:', realEmbeddings.constructor.name);
 
     broker.register('embeddings', {
       rateLimits: embeddingsConfig.rateLimits ?? 'openai-tier-1',
@@ -213,14 +209,10 @@ function initializeResourceBroker(
       timeout: embeddingsConfig.timeout ?? 60000,
       executor: async (operation: string, args: unknown[]) => {
         if (operation === 'embed') {
-          console.log('[embeddings executor] Calling realEmbeddings.embed(), realEmbeddings type:', realEmbeddings.constructor.name);
           return realEmbeddings.embed(args[0] as string);
         }
         if (operation === 'embedBatch') {
-          console.log('[embeddings executor] Calling realEmbeddings.embedBatch(), realEmbeddings type:', realEmbeddings.constructor.name);
-          const result = await realEmbeddings.embedBatch(args[0] as string[]);
-          console.log('[embeddings executor] embedBatch completed, vectors count:', result.length);
-          return result;
+          return await realEmbeddings.embedBatch(args[0] as string[]);
         }
         throw new Error(`Unknown Embeddings operation: ${operation}`);
       },

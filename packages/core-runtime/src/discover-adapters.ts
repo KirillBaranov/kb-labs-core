@@ -111,7 +111,7 @@ export async function discoverAdapters(cwd: string): Promise<Map<string, Discove
 
       // Check for createAdapter export
       if (typeof module.createAdapter !== 'function') {
-        console.warn(`[adapter-discovery] ${pkg.name} missing createAdapter export`);
+        // Skip adapters without createAdapter export (e.g., pino-http is a helper, not an adapter)
         continue;
       }
 
@@ -121,8 +121,8 @@ export async function discoverAdapters(cwd: string): Promise<Map<string, Discove
         createAdapter: module.createAdapter,
         module,
       });
-    } catch (error: any) {
-      console.warn(`[adapter-discovery] Failed to load ${pkg.name}: ${error.message}`);
+    } catch {
+      // Silently skip adapters that fail to load (likely not built yet)
     }
   }
 
@@ -170,8 +170,8 @@ export async function resolveAdapter(
       if (typeof module.default === 'function') {
         return module.default;
       }
-    } catch (error: any) {
-      console.warn(`[adapter-discovery] Failed to load subpath ${subpath}: ${error.message}`);
+    } catch {
+      // Silently skip subpath that fails to load
     }
   } else if (adapter) {
     return adapter.createAdapter;
