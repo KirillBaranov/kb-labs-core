@@ -47,7 +47,6 @@ export class AnalyticsEmbeddings implements IEmbeddings {
   }
 
   async embed(text: string): Promise<number[]> {
-    console.log('[AnalyticsEmbeddings] embed() called, text length:', text.length);
     const startTime = Date.now();
     const requestId = generateRequestId();
 
@@ -84,9 +83,6 @@ export class AnalyticsEmbeddings implements IEmbeddings {
   }
 
   async embedBatch(texts: string[]): Promise<number[][]> {
-    console.log('====== [AnalyticsEmbeddings] embedBatch() CALLED ======');
-    console.log('[AnalyticsEmbeddings] Batch size:', texts.length);
-    console.log('======================================================');
     const startTime = Date.now();
     const requestId = generateRequestId();
 
