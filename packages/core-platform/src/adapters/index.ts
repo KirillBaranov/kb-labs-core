@@ -40,7 +40,7 @@ export type { IConfig } from './config.js';
 export type { IStorage } from './storage.js';
 
 // Logger
-export type { ILogger } from './logger.js';
+export type { ILogger, ILogBuffer, LogRecord, LogQuery, LogLevel } from './logger.js';
 
 // Event Bus
 export type { IEventBus, EventHandler, Unsubscribe } from './event-bus.js';

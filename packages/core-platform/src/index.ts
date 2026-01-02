@@ -49,7 +49,7 @@ export type { IConfig } from './adapters/config.js';
 
 export type { IStorage } from './adapters/storage.js';
 
-export type { ILogger } from './adapters/logger.js';
+export type { ILogger, ILogBuffer, LogRecord, LogQuery, LogLevel } from './adapters/logger.js';
 
 export type {
   IEventBus,

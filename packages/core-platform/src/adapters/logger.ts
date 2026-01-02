@@ -4,8 +4,76 @@
  */
 
 /**
+ * Log level enumeration
+ */
+export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+
+/**
+ * Structured log record
+ */
+export interface LogRecord {
+  /** Timestamp (milliseconds since epoch) */
+  timestamp: number;
+  /** Log level */
+  level: LogLevel;
+  /** Log message */
+  message: string;
+  /** Structured fields (metadata) */
+  fields: Record<string, unknown>;
+  /** Source identifier (e.g., 'rest', 'workflow', 'cli') */
+  source: string;
+}
+
+/**
+ * Query filters for log retrieval
+ */
+export interface LogQuery {
+  /** Minimum log level (inclusive) */
+  level?: LogLevel;
+  /** Filter by source */
+  source?: string;
+  /** Start timestamp (milliseconds since epoch) */
+  startTime?: number;
+  /** End timestamp (milliseconds since epoch) */
+  endTime?: number;
+  /** Maximum number of logs to return */
+  limit?: number;
+}
+
+/**
+ * Log buffer interface for streaming/querying logs
+ */
+export interface ILogBuffer {
+  /**
+   * Append log record to buffer
+   */
+  append(record: LogRecord): void;
+
+  /**
+   * Query logs with filters
+   */
+  query(query?: LogQuery): LogRecord[];
+
+  /**
+   * Subscribe to real-time log stream
+   * @returns Unsubscribe function
+   */
+  subscribe(callback: (record: LogRecord) => void): () => void;
+
+  /**
+   * Get buffer statistics
+   */
+  getStats(): {
+    total: number;
+    bufferSize: number;
+    oldestTimestamp: number | null;
+    newestTimestamp: number | null;
+  };
+}
+
+/**
  * Logger adapter interface.
- * Implementations: @kb-labs/core-pino (production), ConsoleLogger (noop)
+ * Implementations: @kb-labs/adapters-pino (production), ConsoleLogger (noop)
  */
 export interface ILogger {
   /**
@@ -49,4 +117,11 @@ export interface ILogger {
    * @param bindings - Context bindings (e.g., { plugin: 'mind', tenant: 'acme' })
    */
   child(bindings: Record<string, unknown>): ILogger;
+
+  /**
+   * Get log buffer for streaming/querying (optional feature).
+   * Not all logger implementations support buffering.
+   * @returns Log buffer if streaming is enabled, undefined otherwise
+   */
+  getLogBuffer?(): ILogBuffer | undefined;
 }
