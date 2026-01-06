@@ -106,7 +106,6 @@
     "@kb-labs/shared-cli-ui": "link:../kb-labs-shared/packages/shared-cli-ui",
     "zod": "^4.1.5",
     "@kb-labs/core-cli": "link:packages/core-cli",
-    "@kb-labs/core-cli-adapters": "link:packages/core-cli-adapters",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "yaml": "^2.8.0"
