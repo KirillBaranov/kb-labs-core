@@ -27,5 +27,8 @@ export * from './api/explain-bundle';
 // Init system
 export { initAll, type InitAllOptions, type InitAllResult } from './api/init-all';
 
+// Cache management
+export { clearCaches } from '@kb-labs/core-config';
+
 // Re-export ProductId for CLI convenience
 export type { ProductId } from '@kb-labs/core-types';

@@ -51,6 +51,9 @@ export type { IStorage } from './adapters/storage.js';
 
 export type { ILogger, ILogBuffer, LogRecord, LogQuery, LogLevel } from './adapters/logger.js';
 
+// Logging utilities
+export { createPrefixedLogger, SYSTEM_LOG_FIELDS } from './logging/prefixed-logger.js';
+
 export type {
   IEventBus,
   EventHandler,

@@ -37,9 +37,13 @@ export type {
   AdaptersConfig,
   CoreFeaturesConfig,
   ResourcesConfig,
+  ResourceBrokerConfig,
   JobsConfig,
   WorkflowsConfig,
 } from './config.js';
+
+// Analytics context
+export { createAnalyticsContext } from './analytics-context.js';
 
 // Core feature implementations (for direct usage/extension)
 export {
