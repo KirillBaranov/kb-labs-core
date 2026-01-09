@@ -24,7 +24,7 @@
     "@kb-labs/core-platform": "workspace:*",
     "@kb-labs/core-ipc": "workspace:*",
     "@kb-labs/core-resource-broker": "workspace:*",
-    "@kb-labs/plugin-execution": "workspace:*",
+    "@kb-labs/plugin-execution-factory": "link:../../../kb-labs-plugin/packages/plugin-execution-factory",
     "glob": "^10.0.0"
   },
   "devDependencies": {
@@ -46,5 +46,6 @@
     "container"
   ],
   "author": "KB Labs Team",
-  "license": "MIT"
+  "license": "MIT",
+  "private": true
 }

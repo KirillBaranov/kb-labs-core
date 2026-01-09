@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/core",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": false,
   "description": "Core utilities and system interfaces for KB Labs ecosystem",
   "type": "module",
