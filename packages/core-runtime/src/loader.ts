@@ -466,9 +466,9 @@ export async function initPlatform(
     // CRITICAL: ExecutionBackend is REQUIRED - all execution goes through it
     // ══════════════════════════════════════════════════════════════════════
     try {
-      // Use dynamic import to break circular dependency at compile time
-      // Runtime dependency is in package.json, but import is dynamic to avoid TypeScript cycle
-      const { createExecutionBackend } = await import('@kb-labs/plugin-execution');
+      // Use dynamic import from plugin-execution-factory to eliminate circular dependency
+      // plugin-execution-factory has no dependency on core-runtime
+      const { createExecutionBackend } = await import('@kb-labs/plugin-execution-factory');
 
       // Map config types to backend options (explicit mapping, no type casts)
       const executionBackend = createExecutionBackend({
