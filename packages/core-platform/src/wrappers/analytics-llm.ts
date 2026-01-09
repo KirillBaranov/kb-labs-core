@@ -134,33 +134,51 @@ function generateRequestId(): string {
 
 /**
  * Estimate cost based on model and token usage.
- * Prices as of 2024 (approximate, USD per 1K tokens).
+ * Prices as of 2025-01 (USD per 1M tokens).
+ *
+ * Note: OpenAI API returns versioned snapshot names (e.g., 'gpt-4o-mini-2024-07-18')
+ * even when using aliases (e.g., 'gpt-4o-mini'). We match by prefix using longest-first
+ * sorting to ensure specific models match before generic ones.
+ *
+ * See ADR-0041 for details: docs/adr/0041-llm-cost-calculation-fix.md
  */
 function estimateCost(response: LLMResponse): number {
   const model = response.model.toLowerCase();
   const { promptTokens, completionTokens } = response.usage;
 
-  // Pricing map (input / output per 1K tokens)
+  // Pricing map (input / output per 1M tokens)
+  // Source: OpenAI Pricing (2025-01), Anthropic Pricing (2025-01)
   const pricing: Record<string, { input: number; output: number }> = {
-    'gpt-4': { input: 0.03, output: 0.06 },
-    'gpt-4-turbo': { input: 0.01, output: 0.03 },
-    'gpt-3.5-turbo': { input: 0.0005, output: 0.0015 },
-    'claude-3-opus': { input: 0.015, output: 0.075 },
-    'claude-3-sonnet': { input: 0.003, output: 0.015 },
-    'claude-3-haiku': { input: 0.00025, output: 0.00125 },
+    // OpenAI models (2025-01 pricing)
+    'gpt-4o-mini': { input: 0.15, output: 0.60 },
+    'gpt-4o': { input: 2.50, output: 10.00 },
+    'gpt-4-turbo': { input: 10.00, output: 30.00 },
+    'gpt-4': { input: 30.00, output: 60.00 },
+    'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
+
+    // Claude models (2025-01 pricing)
+    'claude-3-opus': { input: 15.00, output: 75.00 },
+    'claude-3-sonnet': { input: 3.00, output: 15.00 },
+    'claude-3-haiku': { input: 0.25, output: 1.25 },
   };
 
+  // Sort keys by length (longest first) to match specific models before generic ones
+  // Example: 'gpt-4o-mini' should match before 'gpt-4o'
+  // This handles versioned names: 'gpt-4o-mini-2024-07-18' → 'gpt-4o-mini' ✅
+  const sortedKeys = Object.keys(pricing).sort((a, b) => b.length - a.length);
+
   // Find matching pricing
-  let modelPricing = pricing['gpt-3.5-turbo']; // Default fallback
-  for (const [key, price] of Object.entries(pricing)) {
+  let modelPricing = pricing['gpt-4o-mini']; // Default to cheapest OpenAI model
+  for (const key of sortedKeys) {
     if (model.includes(key)) {
-      modelPricing = price;
+      modelPricing = pricing[key]!;
       break;
     }
   }
 
-  const inputCost = (promptTokens / 1000) * (modelPricing?.input ?? 0);
-  const outputCost = (completionTokens / 1000) * (modelPricing?.output ?? 0);
+  // Calculate cost (per 1M tokens)
+  const inputCost = (promptTokens / 1_000_000) * (modelPricing?.input ?? 0);
+  const outputCost = (completionTokens / 1_000_000) * (modelPricing?.output ?? 0);
 
   return inputCost + outputCost;
 }
