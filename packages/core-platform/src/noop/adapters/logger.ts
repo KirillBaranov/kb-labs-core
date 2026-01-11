@@ -70,6 +70,15 @@ export class ConsoleLogger implements ILogger {
     }
   }
 
+  fatal(message: string, error?: Error, meta?: Record<string, unknown>): void {
+    if (this.shouldLog('error')) {
+      const errorMeta = error
+        ? { ...meta, error: { message: error.message, stack: error.stack } }
+        : meta;
+      console.error(`[FATAL] ${message}${this.formatMeta(errorMeta)}`);
+    }
+  }
+
   debug(message: string, meta?: Record<string, unknown>): void {
     if (this.shouldLog('debug')) {
       console.debug(`[DEBUG] ${message}${this.formatMeta(meta)}`);
@@ -102,6 +111,10 @@ export class NoOpLogger implements ILogger {
   }
 
   error(_message: string, _error?: Error, _meta?: Record<string, unknown>): void {
+    // No-op
+  }
+
+  fatal(_message: string, _error?: Error, _meta?: Record<string, unknown>): void {
     // No-op
   }
 

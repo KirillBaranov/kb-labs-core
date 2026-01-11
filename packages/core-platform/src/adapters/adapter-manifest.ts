@@ -265,6 +265,25 @@ export interface AdapterManifest {
     adapters?: string[];
   };
 
+  /**
+   * Requested runtime contexts.
+   *
+   * Specifies which runtime contexts this adapter needs.
+   * Requested contexts are injected into the adapter's config by the loader.
+   *
+   * Available contexts:
+   * - 'workspace': { cwd: string } - Workspace directory path
+   * - 'analytics': AnalyticsContext - Analytics enrichment context (source, actor, runId)
+   * - 'tenant': TenantContext - Multi-tenancy context (future)
+   * - 'request': RequestContext - HTTP request context (future)
+   *
+   * @example
+   * ```typescript
+   * contexts: ['workspace', 'analytics']
+   * ```
+   */
+  contexts?: string[];
+
   // ═══════════════════════════════════════════════════════════════════════════
   // Extension Point
   // ═══════════════════════════════════════════════════════════════════════════

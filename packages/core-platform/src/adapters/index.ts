@@ -73,6 +73,7 @@ export type {
 
 // Logger
 export type { ILogger, ILogBuffer, LogRecord, LogQuery, LogLevel } from './logger.js';
+export { generateLogId } from './logger.js';
 
 // Log Ring Buffer
 export type { ILogRingBuffer, LogRingBufferConfig } from './log-ring-buffer.js';

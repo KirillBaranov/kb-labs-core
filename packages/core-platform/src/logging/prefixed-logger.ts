@@ -115,6 +115,7 @@ export function createPrefixedLogger(
     info: baseLogger.info?.bind ? baseLogger.info.bind(baseLogger) : baseLogger.info,
     warn: baseLogger.warn?.bind ? baseLogger.warn.bind(baseLogger) : baseLogger.warn,
     error: baseLogger.error?.bind ? baseLogger.error.bind(baseLogger) : baseLogger.error,
+    fatal: baseLogger.fatal?.bind ? baseLogger.fatal.bind(baseLogger) : baseLogger.fatal,
 
     // Proxy optional log buffer
     getLogBuffer: baseLogger.getLogBuffer?.bind ? baseLogger.getLogBuffer.bind(baseLogger) : baseLogger.getLogBuffer,
