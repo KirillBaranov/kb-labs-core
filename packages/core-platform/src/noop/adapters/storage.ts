@@ -3,7 +3,7 @@
  * In-memory storage implementation.
  */
 
-import type { IStorage } from '../../adapters/storage.js';
+import type { IStorage, StorageMetadata } from '../../adapters/storage.js';
 
 /**
  * In-memory storage for testing and local development.
@@ -36,6 +36,67 @@ export class MemoryStorage implements IStorage {
 
   async exists(path: string): Promise<boolean> {
     return this.store.has(path);
+  }
+
+  /**
+   * Get file metadata.
+   * Optional method - implements IStorage.stat().
+   */
+  async stat(path: string): Promise<StorageMetadata | null> {
+    const data = this.store.get(path);
+    if (!data) return null;
+
+    return {
+      path,
+      size: data.byteLength,
+      lastModified: new Date().toISOString(),
+      contentType: 'application/octet-stream',
+    };
+  }
+
+  /**
+   * Copy file.
+   * Optional method - implements IStorage.copy().
+   */
+  async copy(sourcePath: string, destPath: string): Promise<void> {
+    const data = this.store.get(sourcePath);
+    if (!data) {
+      throw new Error(`Source file not found: ${sourcePath}`);
+    }
+    // Copy buffer (create new instance)
+    this.store.set(destPath, Buffer.from(data));
+  }
+
+  /**
+   * Move file.
+   * Optional method - implements IStorage.move().
+   */
+  async move(sourcePath: string, destPath: string): Promise<void> {
+    const data = this.store.get(sourcePath);
+    if (!data) {
+      throw new Error(`Source file not found: ${sourcePath}`);
+    }
+    this.store.set(destPath, data);
+    this.store.delete(sourcePath);
+  }
+
+  /**
+   * List files with metadata.
+   * Optional method - implements IStorage.listWithMetadata().
+   */
+  async listWithMetadata(prefix: string): Promise<StorageMetadata[]> {
+    const results: StorageMetadata[] = [];
+    for (const [path, data] of this.store.entries()) {
+      if (path.startsWith(prefix)) {
+        results.push({
+          path,
+          size: data.byteLength,
+          lastModified: new Date().toISOString(),
+          contentType: 'application/octet-stream',
+        });
+      }
+    }
+    return results.sort((a, b) => a.path.localeCompare(b.path));
   }
 
   /**

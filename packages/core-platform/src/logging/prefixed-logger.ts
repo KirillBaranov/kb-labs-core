@@ -109,15 +109,15 @@ export function createPrefixedLogger(
   } = options;
 
   return {
-    // Proxy all log methods
-    trace: baseLogger.trace.bind(baseLogger),
-    debug: baseLogger.debug.bind(baseLogger),
-    info: baseLogger.info.bind(baseLogger),
-    warn: baseLogger.warn.bind(baseLogger),
-    error: baseLogger.error.bind(baseLogger),
+    // Proxy all log methods (defensive check for bind)
+    trace: baseLogger.trace?.bind ? baseLogger.trace.bind(baseLogger) : baseLogger.trace,
+    debug: baseLogger.debug?.bind ? baseLogger.debug.bind(baseLogger) : baseLogger.debug,
+    info: baseLogger.info?.bind ? baseLogger.info.bind(baseLogger) : baseLogger.info,
+    warn: baseLogger.warn?.bind ? baseLogger.warn.bind(baseLogger) : baseLogger.warn,
+    error: baseLogger.error?.bind ? baseLogger.error.bind(baseLogger) : baseLogger.error,
 
     // Proxy optional log buffer
-    getLogBuffer: baseLogger.getLogBuffer?.bind(baseLogger),
+    getLogBuffer: baseLogger.getLogBuffer?.bind ? baseLogger.getLogBuffer.bind(baseLogger) : baseLogger.getLogBuffer,
 
     // Wrap child() to add prefixing
     child(fields: Record<string, unknown>): ILogger {

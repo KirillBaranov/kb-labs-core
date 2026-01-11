@@ -3,6 +3,16 @@
  * Platform adapter interfaces (replaceable implementations).
  */
 
+// Adapter Manifest
+export type {
+  AdapterManifest,
+  AdapterType,
+  AdapterDependency,
+  AdapterExtension,
+  AdapterCapabilities,
+  AdapterFactory,
+} from './adapter-manifest.js';
+
 // Analytics
 export type {
   IAnalytics,
@@ -37,10 +47,38 @@ export type { ICache } from './cache.js';
 export type { IConfig } from './config.js';
 
 // Storage
-export type { IStorage } from './storage.js';
+export type { IStorage, StorageMetadata } from './storage.js';
+
+// Database
+export type {
+  // SQL
+  ISQLDatabase,
+  SQLQueryResult,
+  SQLTransaction,
+  // Document
+  IDocumentDatabase,
+  BaseDocument,
+  DocumentFilter,
+  DocumentUpdate,
+  FilterOperators,
+  FindOptions,
+  // Key-Value
+  IKeyValueDatabase,
+  // Time-Series
+  ITimeSeriesDatabase,
+  TimeSeriesPoint,
+  // Provider
+  IDatabaseProvider,
+} from './database.js';
 
 // Logger
 export type { ILogger, ILogBuffer, LogRecord, LogQuery, LogLevel } from './logger.js';
+
+// Log Ring Buffer
+export type { ILogRingBuffer, LogRingBufferConfig } from './log-ring-buffer.js';
+
+// Log Persistence
+export type { ILogPersistence, LogPersistenceConfig } from './log-persistence.js';
 
 // Event Bus
 export type { IEventBus, EventHandler, Unsubscribe } from './event-bus.js';
