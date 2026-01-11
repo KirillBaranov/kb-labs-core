@@ -404,18 +404,14 @@ export async function initPlatform(
     // Use AdapterLoader for dependency resolution and proper loading order
     const loader = new AdapterLoader();
 
-    // Build adapter configs for AdapterLoader
-    const adapterConfigs: Record<string, AdapterConfig> = {};
-    for (const [name, modulePath] of Object.entries(adapters)) {
-      if (typeof modulePath === 'string') {
-        adapterConfigs[name] = {
-          module: modulePath,
-          config: (adapterOptions as Record<string, unknown>)[name],
-        };
-      }
-    }
+    // Create runtime contexts registry
+    // Adapters declare which contexts they need via manifest.contexts
+    const runtimeContexts: Record<string, unknown> = {
+      workspace: { cwd },
+      analytics: analyticsContext,
+    };
 
-    // Module loader function for AdapterLoader
+    // Module loader function - defined before loop so we can pre-load manifests
     const loadModule = async (modulePath: string): Promise<LoadedAdapterModule> => {
       try {
         const { discoverAdapters } = await import('./discover-adapters.js');
@@ -445,41 +441,115 @@ export async function initPlatform(
                 `Subpath ${modulePath} has no createAdapter or default export`
               );
             }
+
             if (!manifest) {
-              throw new Error(`Subpath ${modulePath} has no manifest export`);
+              throw new Error(
+                `Subpath ${modulePath} has no manifest export`
+              );
             }
 
-            return { manifest, createAdapter: factory };
-          } catch (subpathError) {
-            throw new Error(
-              `Failed to load subpath ${modulePath}: ${subpathError instanceof Error ? subpathError.message : String(subpathError)}`
+            return { createAdapter: factory, manifest };
+          } catch (err) {
+            // Subpath file doesn't exist, try loading base package
+            const baseModule = await import(
+              pathToFileURL(
+                path.join(adapter.pkgRoot, 'dist', 'index.js')
+              ).href
             );
+
+            const factory = baseModule.createAdapter || baseModule.default;
+            const manifest = baseModule.manifest;
+
+            if (!factory) {
+              throw new Error(
+                `Module ${modulePath} has no createAdapter or default export`
+              );
+            }
+
+            if (!manifest) {
+              throw new Error(
+                `Module ${modulePath} has no manifest export`
+              );
+            }
+
+            return { createAdapter: factory, manifest };
           }
         } else if (adapter) {
-          // Regular package (not subpath export)
-          const factory = adapter.createAdapter;
-          const manifest = adapter.module.manifest;
+          // Load base package (no subpath)
+          const module = await import(
+            pathToFileURL(
+              path.join(adapter.pkgRoot, 'dist', 'index.js')
+            ).href
+          );
+
+          const factory = module.createAdapter || module.default;
+          const manifest = module.manifest;
 
           if (!factory) {
             throw new Error(
-              `Adapter ${modulePath} has no createAdapter or default export`
+              `Module ${modulePath} has no createAdapter or default export`
             );
           }
+
           if (!manifest) {
-            throw new Error(`Adapter ${modulePath} has no manifest export`);
+            throw new Error(
+              `Module ${modulePath} has no manifest export`
+            );
           }
 
-          return { manifest, createAdapter: factory };
-        }
+          return { createAdapter: factory, manifest };
+        } else {
+          // Fallback to node_modules
+          const module = await import(modulePath);
 
-        // Not found in workspace
-        throw new Error(`Failed to resolve adapter module: ${modulePath}`);
+          const factory = module.createAdapter || module.default;
+          const manifest = module.manifest;
+
+          if (!factory) {
+            throw new Error(
+              `Module ${modulePath} has no createAdapter or default export`
+            );
+          }
+
+          if (!manifest) {
+            throw new Error(
+              `Module ${modulePath} has no manifest export`
+            );
+          }
+
+          return { createAdapter: factory, manifest };
+        }
       } catch (error) {
         throw new Error(
-          `Failed to load adapter module: ${error instanceof Error ? error.message : String(error)}`
+          `Failed to load adapter module ${modulePath}: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     };
+
+    // Build adapter configs for AdapterLoader
+    const adapterConfigs: Record<string, AdapterConfig> = {};
+    for (const [name, modulePath] of Object.entries(adapters)) {
+      if (typeof modulePath === 'string') {
+        // Pre-load module to access manifest
+        const module = await loadModule(modulePath);
+        const baseOptions = (adapterOptions as Record<string, unknown>)[name] ?? {};
+
+        // Inject requested contexts from manifest
+        const requestedContexts = module.manifest.contexts ?? [];
+        const contexts: Record<string, unknown> = {};
+        for (const ctxName of requestedContexts) {
+          if (runtimeContexts[ctxName]) {
+            contexts[ctxName] = runtimeContexts[ctxName];
+          }
+        }
+
+        adapterConfigs[name] = {
+          module: modulePath,
+          // Inject requested contexts first, then merge with baseOptions (baseOptions can override)
+          config: { ...contexts, ...baseOptions },
+        };
+      }
+    }
 
     // Load adapters with dependency resolution
     const loadedAdapters = await loader.loadAdapters(adapterConfigs, loadModule);
