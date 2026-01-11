@@ -14,6 +14,28 @@ function generateRequestId(): string {
 }
 
 /**
+ * Sampling strategy for high-frequency cache operations.
+ *
+ * - cache.get.hit / cache.set.completed: 1:10 (these dominate analytics with ~171k events)
+ * - cache.get.miss / cache.*.error: 1:1 (track all errors and misses - important signals)
+ * - Other operations: 1:1 (delete, clear, zadd, etc. are rare)
+ *
+ * Uses deterministic counter-based sampling for even distribution.
+ */
+let cacheCounter = 0;
+function shouldSampleCacheEvent(eventType: string): boolean {
+  cacheCounter = (cacheCounter + 1) % 10;
+
+  // High-frequency events (hit/set) - sample 1:10
+  if (eventType === 'cache.get.hit' || eventType === 'cache.set.completed') {
+    return cacheCounter === 0; // Track every 10th event
+  }
+
+  // Track all other events (misses, errors, rare operations)
+  return true;
+}
+
+/**
  * Analytics wrapper for cache adapter.
  * Tracks all cache operations including hit/miss rates.
  */
@@ -31,16 +53,20 @@ export class AnalyticsCache implements ICache {
       const result = await this.realCache.get<T>(key);
       const durationMs = Date.now() - startTime;
       const hit = result !== null;
+      const eventType = hit ? 'cache.get.hit' : 'cache.get.miss';
 
-      // Track hit or miss
-      await this.analytics.track(hit ? 'cache.get.hit' : 'cache.get.miss', {
-        requestId,
-        key,
-        durationMs,
-      });
+      // Sample high-frequency hit events (1:10), track all misses
+      if (shouldSampleCacheEvent(eventType)) {
+        await this.analytics.track(eventType, {
+          requestId,
+          key,
+          durationMs,
+        });
+      }
 
       return result;
     } catch (error) {
+      // Always track errors
       await this.analytics.track('cache.get.error', {
         requestId,
         key,
@@ -59,14 +85,17 @@ export class AnalyticsCache implements ICache {
       await this.realCache.set(key, value, ttl);
       const durationMs = Date.now() - startTime;
 
-      // Track set operation
-      await this.analytics.track('cache.set.completed', {
-        requestId,
-        key,
-        ttl: ttl ?? null,
-        durationMs,
-      });
+      // Sample high-frequency set events (1:10)
+      if (shouldSampleCacheEvent('cache.set.completed')) {
+        await this.analytics.track('cache.set.completed', {
+          requestId,
+          key,
+          ttl: ttl ?? null,
+          durationMs,
+        });
+      }
     } catch (error) {
+      // Always track errors
       await this.analytics.track('cache.set.error', {
         requestId,
         key,
