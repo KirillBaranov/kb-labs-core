@@ -1,7 +1,7 @@
 {
   "name": "@kb-labs/core-platform",
   "version": "0.1.5",
-  "description": "Pure abstractions for KB Labs platform. Zero dependencies.",
+  "description": "Pure abstractions for KB Labs platform with minimal dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -53,7 +53,9 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
-  "dependencies": {},
+  "dependencies": {
+    "ulid": "^2.3.0"
+  },
   "devDependencies": {
     "tsup": "^8.0.0",
     "typescript": "^5.3.0",
