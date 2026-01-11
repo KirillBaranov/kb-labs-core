@@ -27,7 +27,7 @@
  * ```
  */
 
-import type { IStorage } from '@kb-labs/core-platform';
+import type { IStorage, StorageMetadata } from '@kb-labs/core-platform/adapters';
 import type { ITransport } from '../transport/transport';
 import { RemoteAdapter } from './remote-adapter';
 
@@ -98,6 +98,54 @@ export class StorageProxy extends RemoteAdapter<IStorage> implements IStorage {
    */
   async exists(path: string): Promise<boolean> {
     return (await this.callRemote('exists', [path])) as boolean;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // EXTENDED METHODS (optional - implements IStorage extended interface)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /**
+   * Get file metadata.
+   * Optional method - implements IStorage.stat().
+   *
+   * @param path - File path
+   * @returns File metadata or null if not found
+   */
+  async stat?(path: string): Promise<StorageMetadata | null> {
+    return (await this.callRemote('stat', [path])) as StorageMetadata | null;
+  }
+
+  /**
+   * Copy file within storage.
+   * Optional method - implements IStorage.copy().
+   *
+   * @param sourcePath - Source file path
+   * @param destPath - Destination file path
+   */
+  async copy?(sourcePath: string, destPath: string): Promise<void> {
+    await this.callRemote('copy', [sourcePath, destPath]);
+  }
+
+  /**
+   * Move file within storage.
+   * Optional method - implements IStorage.move().
+   *
+   * @param sourcePath - Source file path
+   * @param destPath - Destination file path
+   */
+  async move?(sourcePath: string, destPath: string): Promise<void> {
+    await this.callRemote('move', [sourcePath, destPath]);
+  }
+
+  /**
+   * List files with metadata.
+   * Optional method - implements IStorage.listWithMetadata().
+   *
+   * @param prefix - Path prefix (e.g., 'docs/')
+   * @returns Array of file metadata
+   */
+  async listWithMetadata?(prefix: string): Promise<StorageMetadata[]> {
+    return (await this.callRemote('listWithMetadata', [prefix])) as StorageMetadata[];
   }
 }
 

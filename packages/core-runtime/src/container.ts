@@ -20,6 +20,8 @@ import type {
   ICronManager,
   IResourceManager,
   IExecutionBackend,
+  ILogReader,
+  ILogPersistence,
 } from '@kb-labs/core-platform';
 
 import type { IResourceBroker } from '@kb-labs/core-resource-broker';
@@ -42,10 +44,13 @@ import {
   NoOpResourceManager,
 } from '@kb-labs/core-platform/noop';
 
+import { HybridLogReader } from './services/hybrid-log-reader.js';
+
 /**
- * Adapter types map for type-safe setAdapter calls.
+ * Core adapter types (known at compile time).
+ * These are the primary adapters that plugins see.
  */
-export interface AdapterTypes {
+export interface CoreAdapterTypes {
   analytics: IAnalytics;
   vectorStore: IVectorStore;
   llm: ILLM;
@@ -58,6 +63,14 @@ export interface AdapterTypes {
   invoke: IInvoke;
   artifacts: IArtifacts;
 }
+
+/**
+ * All adapter types (core + extensions).
+ * Extensions can be any type, not known at compile time.
+ */
+export type AdapterTypes = CoreAdapterTypes & {
+  [key: string]: unknown;
+};
 
 /**
  * Platform DI container.
@@ -73,27 +86,77 @@ export class PlatformContainer {
 
   /**
    * Set an adapter instance.
+   *
+   * Supports both core adapters (type-safe) and extension adapters (generic).
+   *
+   * @example
+   * ```typescript
+   * // Core adapter (type-safe)
+   * platform.setAdapter('logger', pinoLogger); // Type: ILogger
+   *
+   * // Extension adapter (requires explicit type)
+   * platform.setAdapter('logRingBuffer', ringBuffer); // Type: LogRingBufferAdapter
+   * ```
+   *
    * @param key - Adapter key
    * @param instance - Adapter instance
    */
-  setAdapter<K extends keyof AdapterTypes>(key: K, instance: AdapterTypes[K]): void {
+  setAdapter<K extends keyof CoreAdapterTypes>(key: K, instance: CoreAdapterTypes[K]): void;
+  setAdapter<T = unknown>(key: string, instance: T): void;
+  setAdapter(key: string, instance: unknown): void {
     this.adapters.set(key, instance);
   }
 
   /**
    * Get an adapter instance.
+   *
+   * Two overloads:
+   * 1. Core adapters (logger, db, etc.) - type-safe, returns typed instance
+   * 2. Extension adapters (logRingBuffer, logPersistence, etc.) - generic, requires explicit type
+   *
+   * @example
+   * ```typescript
+   * // Core adapter (type-safe)
+   * const logger = platform.getAdapter('logger'); // ILogger | undefined
+   *
+   * // Extension adapter (requires explicit type)
+   * const buffer = platform.getAdapter<ILogRingBuffer>('logRingBuffer');
+   * ```
+   *
    * @param key - Adapter key
    */
-  getAdapter<K extends keyof AdapterTypes>(key: K): AdapterTypes[K] | undefined {
-    return this.adapters.get(key) as AdapterTypes[K] | undefined;
+  getAdapter<K extends keyof CoreAdapterTypes>(key: K): CoreAdapterTypes[K] | undefined;
+  getAdapter<T = unknown>(key: string): T | undefined;
+  getAdapter(key: string): unknown | undefined {
+    return this.adapters.get(key);
   }
 
   /**
    * Check if an adapter is explicitly configured (not using fallback).
+   *
+   * @example
+   * ```typescript
+   * // Core adapter
+   * if (platform.hasAdapter('logger')) { ... }
+   *
+   * // Extension adapter
+   * if (platform.hasAdapter('logRingBuffer')) { ... }
+   * ```
+   *
    * @param key - Adapter key
    */
-  hasAdapter<K extends keyof AdapterTypes>(key: K): boolean {
+  hasAdapter<K extends keyof CoreAdapterTypes>(key: K): boolean;
+  hasAdapter(key: string): boolean;
+  hasAdapter(key: string): boolean {
     return this.adapters.has(key);
+  }
+
+  /**
+   * List all adapter names.
+   * Useful for debugging and discovery.
+   */
+  listAdapters(): string[] {
+    return Array.from(this.adapters.keys());
   }
 
   /**
@@ -197,6 +260,41 @@ export class PlatformContainer {
   /** Artifact storage adapter (fallback: MemoryArtifacts) */
   get artifacts(): IArtifacts {
     return (this.adapters.get('artifacts') as IArtifacts) ?? new MemoryArtifacts();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SERVICES (derived from adapters, lazy-initialized)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  private _logQueryService?: ILogReader;
+
+  /**
+   * Unified log query service.
+   * Automatically uses configured backends (logPersistence, logRingBuffer).
+   *
+   * @example
+   * ```typescript
+   * // Query logs
+   * const result = await platform.logs.query({ level: 'error' });
+   *
+   * // Get log by ID
+   * const log = await platform.logs.getById('log-123');
+   *
+   * // Full-text search
+   * const results = await platform.logs.search('authentication failed');
+   *
+   * // Subscribe to real-time stream
+   * const unsubscribe = platform.logs.subscribe((log) => console.log(log));
+   * ```
+   */
+  get logs(): ILogReader {
+    if (!this._logQueryService) {
+      const persistence = this.getAdapter<ILogPersistence>('logPersistence');
+      const buffer = this.logger.getLogBuffer?.();
+
+      this._logQueryService = new HybridLogReader(persistence, buffer);
+    }
+    return this._logQueryService!;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

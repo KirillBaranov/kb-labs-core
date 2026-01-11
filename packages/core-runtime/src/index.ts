@@ -22,7 +22,7 @@
 
 // Container
 export { PlatformContainer, platform } from './container.js';
-export type { AdapterTypes } from './container.js';
+export type { CoreAdapterTypes, AdapterTypes } from './container.js';
 
 // Loader
 export { initPlatform, resetPlatform } from './loader.js';

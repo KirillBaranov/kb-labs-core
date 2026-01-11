@@ -3,11 +3,16 @@
  * Platform initialization and adapter loading.
  */
 
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { promises as fs } from 'node:fs';
 import type { AdapterTypes, PlatformContainer } from './container.js';
 import type { PlatformConfig, CoreFeaturesConfig, ResourceBrokerConfig } from './config.js';
 import { platform } from './container.js';
 import { resolveAdapter } from './discover-adapters.js';
 import { createAnalyticsContext } from './analytics-context.js';
+import { AdapterLoader } from './adapter-loader.js';
+import type { AdapterConfig, LoadedAdapterModule } from './adapter-loader.js';
 
 import { ResourceManager } from './core/resource-manager.js';
 import { JobScheduler } from './core/job-scheduler.js';
@@ -396,59 +401,104 @@ export async function initPlatform(
       runId: analyticsContext.runId,
     });
 
-    // CRITICAL: Load analytics adapter FIRST (before all others)
-    // Other adapters need analytics to be available for wrapWithAnalytics() to work
-    const adapterKeys = Object.keys(adapters) as (keyof typeof adapters)[];
+    // Use AdapterLoader for dependency resolution and proper loading order
+    const loader = new AdapterLoader();
 
-    // Step 1: Load analytics adapter first (synchronously before other adapters)
-    if (adapters.analytics) {
-      const adapterPath = adapters.analytics;
-      const optionsForAdapter = adapterOptions.analytics;
-
-      try {
-        const factory = await resolveAdapter(adapterPath, cwd);
-        if (factory) {
-          // Analytics adapter factory accepts (options?, context?)
-          const instance = await (factory as any)(optionsForAdapter, analyticsContext);
-          if (instance) {
-            platform.setAdapter('analytics', instance);
-            platform.logger.debug(`initPlatform loaded analytics adapter: ${instance.constructor.name}`);
-          }
-        } else {
-          platform.logger.warn('Analytics adapter has no createAdapter or default export', { adapterPath });
-        }
-      } catch (error) {
-        platform.logger.warn('Failed to load analytics adapter', {
-          adapterPath,
-          error: error instanceof Error ? error.message : String(error)
-        });
+    // Build adapter configs for AdapterLoader
+    const adapterConfigs: Record<string, AdapterConfig> = {};
+    for (const [name, modulePath] of Object.entries(adapters)) {
+      if (typeof modulePath === 'string') {
+        adapterConfigs[name] = {
+          module: modulePath,
+          config: (adapterOptions as Record<string, unknown>)[name],
+        };
       }
     }
 
-    // Step 2: Load all other adapters in parallel (now analytics is available for wrapping)
-    const loadPromises = adapterKeys
-      .filter((key) => key !== 'analytics' && adapters[key]) // Skip analytics (already loaded)
-      .map(async (key) => {
-        const adapterPath = adapters[key];
-        if (typeof adapterPath !== 'string') return;
+    // Module loader function for AdapterLoader
+    const loadModule = async (modulePath: string): Promise<LoadedAdapterModule> => {
+      try {
+        const { discoverAdapters } = await import('./discover-adapters.js');
+        const discovered = await discoverAdapters(cwd);
 
-        const optionsForAdapter = adapterOptions[key];
-        const instance = await loadAdapter<AdapterTypes[typeof key]>(adapterPath, cwd, optionsForAdapter);
+        // Parse module path into base package and subpath (same logic as resolveAdapter)
+        const basePkgName = modulePath.split('/').slice(0, 2).join('/'); // "@kb-labs/adapters-openai"
+        const subpath =
+          modulePath.includes('/') && modulePath.split('/').length > 2
+            ? modulePath.split('/').slice(2).join('/')
+            : null; // "embeddings" or null
 
-        if (instance) {
-          // Wrap adapter with analytics tracking (analytics adapter is now available)
-          const wrappedInstance = wrapWithAnalytics(key as keyof AdapterTypes, instance);
-          platform.setAdapter(key as keyof AdapterTypes, wrappedInstance);
+        const adapter = discovered.get(basePkgName);
 
-          const wrapperName = wrappedInstance.constructor.name;
-          const isWrapped = wrapperName.startsWith('Analytics');
-          platform.logger.debug(
-            `initPlatform loaded adapter: ${key} → ${instance.constructor.name}${isWrapped ? ` (wrapped with ${wrapperName})` : ''}`
-          );
+        if (adapter && subpath) {
+          // Load subpath export from workspace adapter
+          const subpathFile = path.join(adapter.pkgRoot, 'dist', `${subpath}.js`);
+          try {
+            await fs.access(subpathFile);
+            const module = await import(pathToFileURL(subpathFile).href);
+
+            const factory = module.createAdapter || module.default;
+            const manifest = module.manifest;
+
+            if (!factory) {
+              throw new Error(
+                `Subpath ${modulePath} has no createAdapter or default export`
+              );
+            }
+            if (!manifest) {
+              throw new Error(`Subpath ${modulePath} has no manifest export`);
+            }
+
+            return { manifest, createAdapter: factory };
+          } catch (subpathError) {
+            throw new Error(
+              `Failed to load subpath ${modulePath}: ${subpathError instanceof Error ? subpathError.message : String(subpathError)}`
+            );
+          }
+        } else if (adapter) {
+          // Regular package (not subpath export)
+          const factory = adapter.createAdapter;
+          const manifest = adapter.module.manifest;
+
+          if (!factory) {
+            throw new Error(
+              `Adapter ${modulePath} has no createAdapter or default export`
+            );
+          }
+          if (!manifest) {
+            throw new Error(`Adapter ${modulePath} has no manifest export`);
+          }
+
+          return { manifest, createAdapter: factory };
         }
-      });
 
-    await Promise.all(loadPromises);
+        // Not found in workspace
+        throw new Error(`Failed to resolve adapter module: ${modulePath}`);
+      } catch (error) {
+        throw new Error(
+          `Failed to load adapter module: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    };
+
+    // Load adapters with dependency resolution
+    const loadedAdapters = await loader.loadAdapters(adapterConfigs, loadModule);
+
+    // Set adapters in platform (wrapped with analytics if available)
+    for (const [name, instance] of loadedAdapters.entries()) {
+      const wrappedInstance = wrapWithAnalytics(name as keyof AdapterTypes, instance as any);
+      platform.setAdapter(name, wrappedInstance);
+
+      const wrapperName = (wrappedInstance as any).constructor?.name ?? 'Unknown';
+      const isWrapped = wrapperName.startsWith('Analytics');
+      platform.logger.debug(
+        `initPlatform loaded adapter: ${name} → ${(instance as any).constructor.name}${isWrapped ? ` (wrapped with ${wrapperName})` : ''}`
+      );
+    }
+
+    // Get dependency graph for extension connection
+    const graph = await loader.buildDependencyGraph(adapterConfigs, loadModule);
+    loader.connectExtensions(loadedAdapters, graph);
 
     // Create ConfigAdapter (ALWAYS present, not loaded dynamically)
     try {

@@ -196,12 +196,65 @@ Global singleton container. Access services through properties:
 
 Reset the platform (for testing).
 
+## Adapter Manifest System
+
+**NEW:** Version 1.0.0 enables multiple adapters of the same type with explicit dependencies and extension points.
+
+### Key Features
+
+- ✅ **Multiple adapters per type** - Run multiple loggers, storages, etc.
+- ✅ **Explicit dependencies** - Declare required/optional adapter dependencies
+- ✅ **Extension points** - Connect adapters via hooks (e.g., `logger.onLog()`)
+- ✅ **Topological sorting** - Automatic dependency resolution
+- ✅ **Circular dependency detection** - Fail-fast validation
+- ✅ **Priority ordering** - Control extension execution order
+
+### Example: Logger with Extensions
+
+```typescript
+// Configure logger + extensions
+await initPlatform({
+  adapters: {
+    logger: '@kb-labs/adapters-pino',
+    logRingBuffer: '@kb-labs/adapters-log-ring-buffer',
+    logPersistence: '@kb-labs/adapters-log-sqlite',
+  },
+});
+
+// Core logger (type-safe)
+platform.logger.info('message');
+
+// Extension adapters (generic)
+const buffer = platform.getAdapter<ILogRingBuffer>('logRingBuffer');
+const records = buffer?.getRecords();
+```
+
+### Type System
+
+**Core Adapters** - Known at compile time:
+```typescript
+platform.setAdapter('logger', pinoLogger); // Type: ILogger
+const logger = platform.getAdapter('logger'); // ILogger | undefined
+```
+
+**Extension Adapters** - Dynamic:
+```typescript
+platform.setAdapter('logRingBuffer', ringBuffer);
+const buffer = platform.getAdapter<ILogRingBuffer>('logRingBuffer');
+```
+
+### Documentation
+
+See [Adapter Manifest Guide](../../docs/ADAPTER_MANIFEST_GUIDE.md) for complete documentation.
+
 ## Rules
 
 1. **Depends only on core-platform** - no other @kb-labs/* packages
 2. **Singleton pattern** - `platform` is the global instance
 3. **Lazy NoOp fallback** - if adapter not configured, uses NoOp
+4. **Manifest required** - all adapters must export manifest metadata
 
 ## ADR
 
-See [ADR-0040: Platform Core Adapter Architecture](../../docs/adr/0040-platform-core-adapter-architecture.md)
+- [ADR-0040: Platform Core Adapter Architecture](../../docs/adr/0040-platform-core-adapter-architecture.md)
+- [ADR-0043: Adapter Manifest System](../../docs/adr/0043-adapter-manifest-system.md)
