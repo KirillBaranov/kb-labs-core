@@ -22,6 +22,15 @@
 // ADAPTER INTERFACES (replaceable implementations via kb.config.json)
 // ═══════════════════════════════════════════════════════════════════════════
 
+export type {
+  AdapterManifest,
+  AdapterType,
+  AdapterDependency,
+  AdapterExtension,
+  AdapterCapabilities,
+  AdapterFactory,
+} from './adapters/adapter-manifest.js';
+
 export type { IAnalytics } from './adapters/analytics.js';
 
 export type {
@@ -51,8 +60,24 @@ export type { IStorage } from './adapters/storage.js';
 
 export type { ILogger, ILogBuffer, LogRecord, LogQuery, LogLevel } from './adapters/logger.js';
 
+export type {
+  ILogPersistence,
+  LogPersistenceConfig,
+} from './adapters/log-persistence.js';
+
 // Logging utilities
 export { createPrefixedLogger, SYSTEM_LOG_FIELDS } from './logging/prefixed-logger.js';
+
+// Log reader adapter (read-only interface for querying logs)
+export type {
+  ILogReader,
+  LogQueryOptions,
+  LogQueryResult,
+  LogSearchOptions,
+  LogSearchResult,
+  LogStats,
+  LogCapabilities,
+} from './adapters/log-reader.js';
 
 export type {
   IEventBus,
