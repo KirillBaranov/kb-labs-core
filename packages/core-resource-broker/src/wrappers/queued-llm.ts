@@ -3,7 +3,14 @@
  * QueuedLLM - ILLM wrapper that routes requests through ResourceBroker.
  */
 
-import type { ILLM, LLMOptions, LLMResponse } from '@kb-labs/core-platform';
+import type {
+  ILLM,
+  LLMOptions,
+  LLMResponse,
+  LLMMessage,
+  LLMToolCallOptions,
+  LLMToolCallResponse,
+} from '@kb-labs/core-platform';
 import type { IResourceBroker, ResourcePriority } from '../types.js';
 import { estimateTokens } from '../rate-limit/presets.js';
 
@@ -91,6 +98,25 @@ export class QueuedLLM implements ILLM {
   stream(prompt: string, options?: LLMOptions): AsyncIterable<string> {
     // Pass through to real LLM for real-time streaming
     return this.realLLM.stream(prompt, options);
+  }
+
+  /**
+   * Chat with native tool calling support (proxies to underlying LLM).
+   * Currently NOT queued - passes through directly for simplicity.
+   * TODO: Add queueing support when needed.
+   */
+  async chatWithTools(
+    messages: LLMMessage[],
+    options: LLMToolCallOptions
+  ): Promise<LLMToolCallResponse> {
+    // Check if underlying LLM supports chatWithTools
+    if (!this.realLLM.chatWithTools) {
+      throw new Error('Underlying LLM does not support chatWithTools');
+    }
+
+    // TODO: Route through queue for rate limiting
+    // For now, pass through directly to avoid complexity
+    return this.realLLM.chatWithTools(messages, options);
   }
 }
 
