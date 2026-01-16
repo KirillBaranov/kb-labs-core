@@ -40,7 +40,16 @@ export type {
   VectorFilter,
 } from './adapters/vector-store.js';
 
-export type { ILLM, LLMOptions, LLMResponse } from './adapters/llm.js';
+export type {
+  ILLM,
+  LLMOptions,
+  LLMResponse,
+  LLMTool,
+  LLMToolCall,
+  LLMMessage,
+  LLMToolCallOptions,
+  LLMToolCallResponse,
+} from './adapters/llm.js';
 
 // Analytics wrappers
 export { AnalyticsLLM } from './wrappers/analytics-llm.js';
