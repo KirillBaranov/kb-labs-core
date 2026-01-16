@@ -30,7 +30,14 @@
  * ```
  */
 
-import type { ILLM, LLMOptions, LLMResponse } from '@kb-labs/core-platform';
+import type {
+  ILLM,
+  LLMOptions,
+  LLMResponse,
+  LLMMessage,
+  LLMToolCallOptions,
+  LLMToolCallResponse,
+} from '@kb-labs/core-platform';
 import type { ITransport } from '../transport/transport';
 import { RemoteAdapter } from './remote-adapter';
 
@@ -87,6 +94,22 @@ export class LLMProxy extends RemoteAdapter<ILLM> implements ILLM {
     return;
     // Make TypeScript happy - this is unreachable but ensures correct return type
     yield '';
+  }
+
+  /**
+   * Chat with native tool calling support.
+   *
+   * Forwards tool calling request to parent process via IPC.
+   *
+   * @param messages - Conversation history
+   * @param options - Options including tools and tool choice
+   * @returns LLM response with optional tool calls
+   */
+  async chatWithTools(
+    messages: LLMMessage[],
+    options: LLMToolCallOptions
+  ): Promise<LLMToolCallResponse> {
+    return (await this.callRemote('chatWithTools', [messages, options])) as LLMToolCallResponse;
   }
 }
 

@@ -17,8 +17,7 @@ import type { AdapterConfig, LoadedAdapterModule } from './adapter-loader.js';
 import { ResourceManager } from './core/resource-manager.js';
 import { JobScheduler } from './core/job-scheduler.js';
 import { CronManager } from './core/cron-manager.js';
-// TODO: Re-enable when workflow-engine is ported to V3
-// import { WorkflowEngine } from './core/workflow-engine.js';
+import { WorkflowEngine } from './core/workflow-engine.js';
 
 // Import analytics wrappers for transparent metrics collection
 import {
@@ -144,15 +143,13 @@ function initializeCoreFeatures(
 
   const cron = new CronManager(container.logger);
 
-  // TODO: Re-enable when workflow-engine is ported to V3
-  // const workflows = new WorkflowEngine(
-  //   resources,
-  //   container.storage,
-  //   container.eventBus,
-  //   container.logger,
-  //   config.workflows
-  // );
-  const workflows = null; // Placeholder until V3 workflow-engine is ready
+  const workflows = new WorkflowEngine(
+    resources,
+    container.storage,
+    container.eventBus,
+    container.logger,
+    config.workflows
+  );
 
   return { workflows, jobs, cron, resources };
 }
@@ -537,6 +534,7 @@ export async function initPlatform(
         // Inject requested contexts from manifest
         const requestedContexts = module.manifest.contexts ?? [];
         const contexts: Record<string, unknown> = {};
+
         for (const ctxName of requestedContexts) {
           if (runtimeContexts[ctxName]) {
             contexts[ctxName] = runtimeContexts[ctxName];
@@ -545,7 +543,7 @@ export async function initPlatform(
 
         adapterConfigs[name] = {
           module: modulePath,
-          // Inject requested contexts first, then merge with baseOptions (baseOptions can override)
+          // Merge contexts with user options (user options can override)
           config: { ...contexts, ...baseOptions },
         };
       }
