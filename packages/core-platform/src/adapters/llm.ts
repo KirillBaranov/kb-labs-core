@@ -35,6 +35,60 @@ export interface LLMResponse {
 }
 
 /**
+ * Tool definition for native tool calling.
+ */
+export interface LLMTool {
+  /** Tool name (must be valid identifier) */
+  name: string;
+  /** Human-readable description */
+  description: string;
+  /** JSON Schema for tool input parameters */
+  inputSchema: Record<string, any>;
+}
+
+/**
+ * Tool call from LLM.
+ */
+export interface LLMToolCall {
+  /** Unique call ID */
+  id: string;
+  /** Tool name */
+  name: string;
+  /** Tool input (validated against schema) */
+  input: unknown;
+}
+
+/**
+ * Message in a conversation.
+ */
+export interface LLMMessage {
+  /** Message role */
+  role: 'system' | 'user' | 'assistant' | 'tool';
+  /** Message content (text or tool results) */
+  content: string;
+  /** Tool call ID (for tool role) */
+  toolCallId?: string;
+}
+
+/**
+ * Options for native tool calling.
+ */
+export interface LLMToolCallOptions extends LLMOptions {
+  /** Available tools */
+  tools: LLMTool[];
+  /** Force tool usage (optional) */
+  toolChoice?: 'auto' | 'required' | { type: 'function'; function: { name: string } };
+}
+
+/**
+ * Response from native tool calling.
+ */
+export interface LLMToolCallResponse extends LLMResponse {
+  /** Tool calls requested by LLM (if any) */
+  toolCalls?: LLMToolCall[];
+}
+
+/**
  * LLM adapter interface.
  * Implementations: @kb-labs/shared-openai, @kb-labs/shared-anthropic (production), MockLLM (noop)
  */
@@ -52,4 +106,19 @@ export interface ILLM {
    * @param options - Optional generation options
    */
   stream(prompt: string, options?: LLMOptions): AsyncIterable<string>;
+
+  /**
+   * Chat with native tool calling support (optional).
+   *
+   * If implemented, enables native LLM tool calling (e.g., OpenAI function calling, Claude tool use).
+   * If not implemented, AgentExecutor falls back to text-based tool prompting.
+   *
+   * @param messages - Conversation history
+   * @param options - Options including tools and tool choice
+   * @returns Response with optional tool calls
+   */
+  chatWithTools?(
+    messages: LLMMessage[],
+    options: LLMToolCallOptions
+  ): Promise<LLMToolCallResponse>;
 }

@@ -35,7 +35,16 @@ export type {
 } from './vector-store.js';
 
 // LLM
-export type { ILLM, LLMOptions, LLMResponse } from './llm.js';
+export type {
+  ILLM,
+  LLMOptions,
+  LLMResponse,
+  LLMTool,
+  LLMToolCall,
+  LLMMessage,
+  LLMToolCallOptions,
+  LLMToolCallResponse,
+} from './llm.js';
 
 // Embeddings
 export type { IEmbeddings } from './embeddings.js';

@@ -3,7 +3,14 @@
  * AnalyticsLLM - ILLM wrapper that tracks usage to analytics.
  */
 
-import type { ILLM, LLMOptions, LLMResponse } from '../adapters/llm.js';
+import type {
+  ILLM,
+  LLMOptions,
+  LLMResponse,
+  LLMMessage,
+  LLMToolCallOptions,
+  LLMToolCallResponse,
+} from '../adapters/llm.js';
 import type { IAnalytics } from '../adapters/analytics.js';
 
 /**
@@ -115,6 +122,66 @@ export class AnalyticsLLM implements ILLM {
       });
     } catch (error) {
       await this.analytics.track('llm.stream.error', {
+        requestId,
+        error: error instanceof Error ? error.message : String(error),
+        durationMs: Date.now() - startTime,
+      });
+
+      throw error;
+    }
+  }
+
+  /**
+   * Chat with native tool calling support (optional).
+   * Proxies to underlying LLM if it supports chatWithTools.
+   */
+  async chatWithTools(
+    messages: LLMMessage[],
+    options: LLMToolCallOptions
+  ): Promise<LLMToolCallResponse> {
+    // Check if underlying LLM supports chatWithTools
+    if (!this.realLLM.chatWithTools) {
+      throw new Error('Underlying LLM does not support chatWithTools');
+    }
+
+    const startTime = Date.now();
+    const requestId = generateRequestId();
+
+    // Track start
+    await this.analytics.track('llm.chatWithTools.started', {
+      requestId,
+      model: options?.model,
+      messageCount: messages.length,
+      toolCount: options.tools.length,
+      toolChoice: options.toolChoice,
+      maxTokens: options?.maxTokens,
+      temperature: options?.temperature,
+    });
+
+    try {
+      // Execute real LLM call with tools
+      const response = await this.realLLM.chatWithTools(messages, options);
+
+      // Calculate duration
+      const durationMs = Date.now() - startTime;
+
+      // Track completion
+      await this.analytics.track('llm.chatWithTools.completed', {
+        requestId,
+        model: response.model,
+        promptTokens: response.usage.promptTokens,
+        completionTokens: response.usage.completionTokens,
+        totalTokens: response.usage.promptTokens + response.usage.completionTokens,
+        toolCallCount: response.toolCalls?.length ?? 0,
+        toolNames: response.toolCalls?.map((tc) => tc.name) ?? [],
+        durationMs,
+        estimatedCost: estimateCost(response),
+      });
+
+      return response;
+    } catch (error) {
+      // Track error
+      await this.analytics.track('llm.chatWithTools.error', {
         requestId,
         error: error instanceof Error ? error.message : String(error),
         durationMs: Date.now() - startTime,

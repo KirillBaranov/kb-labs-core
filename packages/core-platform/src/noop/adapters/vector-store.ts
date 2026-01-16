@@ -61,7 +61,8 @@ function matchesFilter(record: VectorRecord, filter: VectorFilter): boolean {
 }
 
 /**
- * In-memory vector store for testing and development.
+ * In-memory vector store.
+ * Suitable for testing and development.
  */
 export class MemoryVectorStore implements IVectorStore {
   private vectors = new Map<string, VectorRecord>();
