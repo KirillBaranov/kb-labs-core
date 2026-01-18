@@ -46,6 +46,16 @@ export type {
   LLMToolCallResponse,
 } from './llm.js';
 
+// LLM Types (tiers, capabilities, routing)
+export type {
+  LLMTier,
+  LLMCapability,
+  UseLLMOptions,
+  LLMResolution,
+  ILLMRouter,
+} from './llm-types.js';
+export { TIER_ORDER, isTierHigher, isTierLower } from './llm-types.js';
+
 // Embeddings
 export type { IEmbeddings } from './embeddings.js';
 

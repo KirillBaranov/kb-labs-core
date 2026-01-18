@@ -51,6 +51,16 @@ export type {
   LLMToolCallResponse,
 } from './adapters/llm.js';
 
+// LLM Types (tiers, capabilities, routing)
+export type {
+  LLMTier,
+  LLMCapability,
+  UseLLMOptions,
+  LLMResolution,
+  ILLMRouter,
+} from './adapters/llm-types.js';
+export { TIER_ORDER, isTierHigher, isTierLower } from './adapters/llm-types.js';
+
 // Analytics wrappers
 export { AnalyticsLLM } from './wrappers/analytics-llm.js';
 export { AnalyticsEmbeddings } from './wrappers/analytics-embeddings.js';

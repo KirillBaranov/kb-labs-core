@@ -76,8 +76,14 @@ export interface LLMMessage {
 export interface LLMToolCallOptions extends LLMOptions {
   /** Available tools */
   tools: LLMTool[];
-  /** Force tool usage (optional) */
-  toolChoice?: 'auto' | 'required' | { type: 'function'; function: { name: string } };
+  /**
+   * Control tool usage:
+   * - 'auto': LLM decides whether to call tools
+   * - 'required': LLM must call at least one tool
+   * - 'none': LLM cannot call tools (text-only response)
+   * - { type: 'function', function: { name: 'tool_name' } }: Force specific tool
+   */
+  toolChoice?: 'auto' | 'required' | 'none' | { type: 'function'; function: { name: string } };
 }
 
 /**
