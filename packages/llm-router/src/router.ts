@@ -17,6 +17,7 @@ import type {
   LLMResolution,
   ILLMRouter,
   ILogger,
+  LLMRequestMetadata,
 } from '@kb-labs/core-platform';
 import { TierResolver, CapabilityResolver } from './resolver.js';
 
@@ -31,8 +32,40 @@ export interface TierModelEntry {
   priority: number;
   /** Model capabilities */
   capabilities?: LLMCapability[];
-  /** Optional: adapter package to use for this model (e.g., "@kb-labs/adapters-openai") */
+  /**
+   * Provider identifier (e.g., 'openai', 'anthropic', 'vibeproxy').
+   * Used to construct resource name: `llm:${provider}`
+   */
+  provider?: string;
+  /**
+   * @deprecated Use `provider` instead. Adapter package to use for this model.
+   * Will be removed in future versions.
+   */
   adapter?: string;
+}
+
+/**
+ * Helper to extract provider from entry (supports both new `provider` and legacy `adapter`).
+ */
+function getProviderFromEntry(entry: TierModelEntry): string {
+  // Prefer explicit provider
+  if (entry.provider) {
+    return entry.provider;
+  }
+  // Extract from adapter package name: "@kb-labs/adapters-openai" → "openai"
+  // eslint-disable-next-line deprecation/deprecation
+  const adapter = entry.adapter;
+  if (adapter) {
+    const match = adapter.match(/adapters-(\w+)/);
+    if (match?.[1]) {
+      return match[1];
+    }
+    // Fallback: use last segment
+    const segments = adapter.split(/[-/]/);
+    const lastSegment = segments[segments.length - 1];
+    return lastSegment ?? 'default';
+  }
+  return 'default';
 }
 
 /**
@@ -112,6 +145,12 @@ export class LLMRouter implements ILLM, ILLMRouter {
   private currentModel: string | undefined;
   private currentAdapter: ILLM;
   private currentAdapterPackage: string | undefined;
+  /** Current tier for metadata */
+  private currentTier: LLMTier;
+  /** Current provider for metadata */
+  private currentProvider: string = 'default';
+  /** Current resource name for metadata */
+  private currentResource: string = 'llm:default';
 
   /** Cache of loaded adapters by package name */
   private adapterCache: Map<string, ILLM> = new Map();
@@ -124,6 +163,7 @@ export class LLMRouter implements ILLM, ILLMRouter {
     // Use defaultTier or legacy tier field
     const effectiveTier = config.defaultTier ?? config.tier ?? 'small';
     this.tierResolver = new TierResolver(effectiveTier);
+    this.currentTier = effectiveTier;
 
     // Build capabilities from tierMapping or legacy config
     const allCapabilities = this.extractCapabilities();
@@ -136,12 +176,15 @@ export class LLMRouter implements ILLM, ILLMRouter {
     const entry = this.getEntryForTier(effectiveTier);
     if (entry) {
       this.currentModel = entry.model;
+      // eslint-disable-next-line deprecation/deprecation
       this.currentAdapterPackage = entry.adapter;
+      this.currentProvider = getProviderFromEntry(entry);
+      this.currentResource = `llm:${this.currentProvider}`;
     }
 
     if (this.logger && this.currentModel) {
       this.logger.debug(
-        `LLMRouter initialized: model=${this.currentModel}, adapter=${this.currentAdapterPackage ?? 'default'}`
+        `LLMRouter initialized: model=${this.currentModel}, provider=${this.currentProvider}`
       );
     }
   }
@@ -304,15 +347,21 @@ export class LLMRouter implements ILLM, ILLMRouter {
     // Get entry for the actual tier
     const entry = this.getEntryForTier(actualTier, options?.capabilities);
     const model = entry?.model;
+    // eslint-disable-next-line deprecation/deprecation
     const adapterPackage = entry?.adapter;
+    const provider = entry ? getProviderFromEntry(entry) : 'default';
+    const resource = `llm:${provider}`;
 
     // Update current state for subsequent calls
+    this.currentTier = actualTier;
+    this.currentProvider = provider;
+    this.currentResource = resource;
     if (model) {
       this.currentModel = model;
       this.currentAdapterPackage = adapterPackage;
       if (this.logger) {
         this.logger.debug(
-          `LLMRouter resolved: tier=${actualTier}, model=${model}, adapter=${adapterPackage ?? 'default'}`
+          `LLMRouter resolved: tier=${actualTier}, model=${model}, provider=${provider}, resource=${resource}`
         );
       }
     }
@@ -331,8 +380,9 @@ export class LLMRouter implements ILLM, ILLMRouter {
     }
 
     return {
-      provider: adapterPackage ?? 'default',
+      provider,
       model: model ?? 'default',
+      resource,
       requestedTier: requestedTier,
       actualTier: actualTier,
       adapted: adapted,
@@ -373,16 +423,23 @@ export class LLMRouter implements ILLM, ILLMRouter {
   // ═══════════════════════════════════════════════════════════════════════
 
   /**
-   * Merge options with current model.
+   * Merge options with current model and routing metadata.
+   * Metadata is used by AnalyticsLLM to track tier/provider/resource.
    */
-  private withModel(options?: LLMOptions): LLMOptions {
-    if (!this.currentModel) {
-      return options ?? {};
-    }
+  private withModelAndMetadata(options?: LLMOptions): LLMOptions {
+    const metadata: LLMRequestMetadata = {
+      tier: this.currentTier,
+      provider: this.currentProvider,
+      resource: this.currentResource,
+    };
 
     return {
       ...options,
       model: options?.model ?? this.currentModel,
+      metadata: {
+        ...metadata,
+        ...options?.metadata, // Allow override if needed
+      },
     };
   }
 
@@ -391,7 +448,7 @@ export class LLMRouter implements ILLM, ILLMRouter {
    */
   async complete(prompt: string, options?: LLMOptions): Promise<LLMResponse> {
     const adapter = await this.ensureAdapter();
-    return adapter.complete(prompt, this.withModel(options));
+    return adapter.complete(prompt, this.withModelAndMetadata(options));
   }
 
   /**
@@ -399,7 +456,7 @@ export class LLMRouter implements ILLM, ILLMRouter {
    */
   async *stream(prompt: string, options?: LLMOptions): AsyncIterable<string> {
     const adapter = await this.ensureAdapter();
-    yield* adapter.stream(prompt, this.withModel(options));
+    yield* adapter.stream(prompt, this.withModelAndMetadata(options));
   }
 
   /**
@@ -413,7 +470,7 @@ export class LLMRouter implements ILLM, ILLMRouter {
     if (!adapter.chatWithTools) {
       throw new Error('Current adapter does not support chatWithTools');
     }
-    return adapter.chatWithTools(messages, this.withModel(options) as LLMToolCallOptions);
+    return adapter.chatWithTools(messages, this.withModelAndMetadata(options) as LLMToolCallOptions);
   }
 
   /**

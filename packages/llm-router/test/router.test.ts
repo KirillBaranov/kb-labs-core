@@ -213,9 +213,13 @@ describe('LLMRouter', () => {
 
       await router.complete('Hello');
 
-      expect(mockAdapter.complete).toHaveBeenCalledWith('Hello', {
-        model: 'claude-sonnet-4-5',
-      });
+      expect(mockAdapter.complete).toHaveBeenCalledWith(
+        'Hello',
+        expect.objectContaining({
+          model: 'claude-sonnet-4-5',
+          metadata: expect.objectContaining({ tier: 'medium' }),
+        })
+      );
     });
 
     it('should pass selected model after resolve()', async () => {
@@ -230,9 +234,13 @@ describe('LLMRouter', () => {
 
       await router.complete('Hello');
 
-      expect(mockAdapter.complete).toHaveBeenCalledWith('Hello', {
-        model: 'gpt-4o-mini',
-      });
+      expect(mockAdapter.complete).toHaveBeenCalledWith(
+        'Hello',
+        expect.objectContaining({
+          model: 'gpt-4o-mini',
+          metadata: expect.objectContaining({ tier: 'small' }),
+        })
+      );
     });
 
     it('should preserve other options when injecting model', async () => {
@@ -244,11 +252,15 @@ describe('LLMRouter', () => {
 
       await router.complete('Hello', { temperature: 0.7, maxTokens: 100 });
 
-      expect(mockAdapter.complete).toHaveBeenCalledWith('Hello', {
-        model: 'claude-sonnet-4-5',
-        temperature: 0.7,
-        maxTokens: 100,
-      });
+      expect(mockAdapter.complete).toHaveBeenCalledWith(
+        'Hello',
+        expect.objectContaining({
+          model: 'claude-sonnet-4-5',
+          temperature: 0.7,
+          maxTokens: 100,
+          metadata: expect.objectContaining({ tier: 'medium' }),
+        })
+      );
     });
 
     it('should not override explicitly provided model', async () => {
@@ -260,9 +272,13 @@ describe('LLMRouter', () => {
 
       await router.complete('Hello', { model: 'custom-model' });
 
-      expect(mockAdapter.complete).toHaveBeenCalledWith('Hello', {
-        model: 'custom-model',
-      });
+      expect(mockAdapter.complete).toHaveBeenCalledWith(
+        'Hello',
+        expect.objectContaining({
+          model: 'custom-model',
+          metadata: expect.objectContaining({ tier: 'medium' }),
+        })
+      );
     });
 
     it('should pass model to stream()', async () => {
@@ -278,9 +294,13 @@ describe('LLMRouter', () => {
         chunks.push(chunk);
       }
 
-      expect(mockAdapter.stream).toHaveBeenCalledWith('Hello', {
-        model: 'claude-sonnet-4-5',
-      });
+      expect(mockAdapter.stream).toHaveBeenCalledWith(
+        'Hello',
+        expect.objectContaining({
+          model: 'claude-sonnet-4-5',
+          metadata: expect.objectContaining({ tier: 'medium' }),
+        })
+      );
     });
   });
 
@@ -380,7 +400,11 @@ describe('LLMRouter', () => {
 
       expect(adapterWithTools.chatWithTools).toHaveBeenCalledWith(
         [{ role: 'user', content: 'Hello' }],
-        { tools: [], model: 'claude-sonnet-4-5' }
+        expect.objectContaining({
+          tools: [],
+          model: 'claude-sonnet-4-5',
+          metadata: expect.objectContaining({ tier: 'medium' }),
+        })
       );
     });
   });
@@ -486,7 +510,13 @@ describe('LLMRouter', () => {
       await router.complete('Hello');
 
       expect(adapterLoader).toHaveBeenCalledWith('@kb-labs/adapters-openai');
-      expect(openaiAdapter.complete).toHaveBeenCalledWith('Hello', { model: 'gpt-4o-mini' });
+      expect(openaiAdapter.complete).toHaveBeenCalledWith(
+        'Hello',
+        expect.objectContaining({
+          model: 'gpt-4o-mini',
+          metadata: expect.objectContaining({ tier: 'small', provider: 'openai' }),
+        })
+      );
     });
 
     it('should cache loaded adapters', async () => {
@@ -523,15 +553,27 @@ describe('LLMRouter', () => {
 
       // Use small tier
       await router.complete('Hello small');
-      expect(openaiAdapter.complete).toHaveBeenCalledWith('Hello small', { model: 'gpt-4o-mini' });
+      expect(openaiAdapter.complete).toHaveBeenCalledWith(
+        'Hello small',
+        expect.objectContaining({
+          model: 'gpt-4o-mini',
+          metadata: expect.objectContaining({ tier: 'small', provider: 'openai' }),
+        })
+      );
 
       // Switch to medium tier
       router.resolve({ tier: 'medium' });
       await router.complete('Hello medium');
-      expect(vibeproxyAdapter.complete).toHaveBeenCalledWith('Hello medium', { model: 'claude-sonnet-4-5' });
+      expect(vibeproxyAdapter.complete).toHaveBeenCalledWith(
+        'Hello medium',
+        expect.objectContaining({
+          model: 'claude-sonnet-4-5',
+          metadata: expect.objectContaining({ tier: 'medium', provider: 'vibeproxy' }),
+        })
+      );
     });
 
-    it('should include adapter package in resolution result', () => {
+    it('should include provider and resource in resolution result', () => {
       const tierMapping: TierMapping = {
         small: [{ adapter: '@kb-labs/adapters-openai', model: 'gpt-4o-mini', priority: 1 }],
         medium: [{ adapter: '@kb-labs/adapters-vibeproxy', model: 'claude-sonnet-4-5', priority: 1 }],
@@ -544,10 +586,33 @@ describe('LLMRouter', () => {
       );
 
       const smallResolution = router.resolve({ tier: 'small' });
-      expect(smallResolution.provider).toBe('@kb-labs/adapters-openai');
+      expect(smallResolution.provider).toBe('openai');
+      expect(smallResolution.resource).toBe('llm:openai');
 
       const mediumResolution = router.resolve({ tier: 'medium' });
-      expect(mediumResolution.provider).toBe('@kb-labs/adapters-vibeproxy');
+      expect(mediumResolution.provider).toBe('vibeproxy');
+      expect(mediumResolution.resource).toBe('llm:vibeproxy');
+    });
+
+    it('should extract provider from new provider field when specified', () => {
+      const tierMapping: TierMapping = {
+        small: [{ provider: 'openai', model: 'gpt-4o-mini', priority: 1 }],
+        medium: [{ provider: 'anthropic', model: 'claude-sonnet-4-5', priority: 1 }],
+      };
+
+      const router = new LLMRouter(
+        mockAdapter,
+        { defaultTier: 'small', tierMapping },
+        mockLogger
+      );
+
+      const smallResolution = router.resolve({ tier: 'small' });
+      expect(smallResolution.provider).toBe('openai');
+      expect(smallResolution.resource).toBe('llm:openai');
+
+      const mediumResolution = router.resolve({ tier: 'medium' });
+      expect(mediumResolution.provider).toBe('anthropic');
+      expect(mediumResolution.resource).toBe('llm:anthropic');
     });
 
     it('should fall back to default adapter when adapter loader fails', async () => {
@@ -567,7 +632,17 @@ describe('LLMRouter', () => {
       await router.complete('Hello');
 
       expect(failingLoader).toHaveBeenCalled();
-      expect(mockAdapter.complete).toHaveBeenCalledWith('Hello', { model: 'unknown-model' });
+      expect(mockAdapter.complete).toHaveBeenCalledWith(
+        'Hello',
+        expect.objectContaining({
+          model: 'unknown-model',
+          metadata: expect.objectContaining({
+            tier: 'small',
+            provider: 'unknown',
+            resource: 'llm:unknown',
+          }),
+        })
+      );
       expect(mockLogger.warn).toHaveBeenCalled();
     });
 
@@ -586,7 +661,17 @@ describe('LLMRouter', () => {
 
       // Should use default adapter, not call loader
       expect(adapterLoader).not.toHaveBeenCalled();
-      expect(mockAdapter.complete).toHaveBeenCalledWith('Hello', { model: 'gpt-4o-mini' });
+      expect(mockAdapter.complete).toHaveBeenCalledWith(
+        'Hello',
+        expect.objectContaining({
+          model: 'gpt-4o-mini',
+          metadata: expect.objectContaining({
+            tier: 'small',
+            provider: 'default',
+            resource: 'llm:default',
+          }),
+        })
+      );
     });
 
     it('should work without adapterLoader (backward compatible)', async () => {
@@ -603,7 +688,17 @@ describe('LLMRouter', () => {
       // Should use default adapter even though adapter is specified
       await router.complete('Hello');
 
-      expect(mockAdapter.complete).toHaveBeenCalledWith('Hello', { model: 'gpt-4o-mini' });
+      expect(mockAdapter.complete).toHaveBeenCalledWith(
+        'Hello',
+        expect.objectContaining({
+          model: 'gpt-4o-mini',
+          metadata: expect.objectContaining({
+            tier: 'small',
+            provider: 'openai',
+            resource: 'llm:openai',
+          }),
+        })
+      );
     });
 
     it('should handle stream() with multi-adapter', async () => {
@@ -623,7 +718,17 @@ describe('LLMRouter', () => {
       }
 
       expect(adapterLoader).toHaveBeenCalledWith('@kb-labs/adapters-openai');
-      expect(openaiAdapter.stream).toHaveBeenCalledWith('Hello', { model: 'gpt-4o-mini' });
+      expect(openaiAdapter.stream).toHaveBeenCalledWith(
+        'Hello',
+        expect.objectContaining({
+          model: 'gpt-4o-mini',
+          metadata: expect.objectContaining({
+            tier: 'small',
+            provider: 'openai',
+            resource: 'llm:openai',
+          }),
+        })
+      );
       expect(chunks).toEqual(['openai chunk']);
     });
 
@@ -664,7 +769,15 @@ describe('LLMRouter', () => {
       expect(adapterLoaderWithTools).toHaveBeenCalledWith('@kb-labs/adapters-vibeproxy');
       expect(vibeproxyWithTools.chatWithTools).toHaveBeenCalledWith(
         [{ role: 'user', content: 'Use tool' }],
-        { tools: [], model: 'claude-sonnet-4-5' }
+        expect.objectContaining({
+          tools: [],
+          model: 'claude-sonnet-4-5',
+          metadata: expect.objectContaining({
+            tier: 'medium',
+            provider: 'vibeproxy',
+            resource: 'llm:vibeproxy',
+          }),
+        })
       );
     });
   });
