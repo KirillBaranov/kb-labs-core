@@ -612,75 +612,16 @@ export async function initPlatform(
     }
 
     // Set adapters in platform (wrapped with analytics if available)
+    // NOTE: LLM gets special handling - LLMRouter wraps AFTER ResourceBroker
+    // Chain will be: LLMRouter → QueuedLLM → AnalyticsLLM → RawAdapter
     for (const [name, instance] of loadedAdapters.entries()) {
       // Skip analytics - already set above
       if (name === 'analytics') {
         continue;
       }
 
-      let adapterInstance = instance;
-
-      // Special handling for LLM: wrap in Router for tier support
-      if (name === 'llm' && instance) {
-        const llmOptions = (adapterOptions.llm ?? {}) as LLMAdapterOptions;
-
-        try {
-          const { LLMRouter } = await import('@kb-labs/llm-router');
-
-          // Create adapter loader function for multi-adapter support
-          const adapterLoader = async (adapterPackage: string): Promise<any> => {
-            try {
-              const module = await loadModule(adapterPackage);
-              // Use llmOptions for all LLM adapters (they share the same config shape)
-              // Second argument is dependencies (empty for LLM adapters)
-              const loadedAdapter = await module.createAdapter(llmOptions, {});
-              platform.logger.debug(`LLMRouter loaded adapter: ${adapterPackage}`);
-              return loadedAdapter;
-            } catch (error) {
-              platform.logger.warn(`Failed to load adapter ${adapterPackage}`, {
-                error: error instanceof Error ? error.message : String(error),
-              });
-              throw error;
-            }
-          };
-
-          // Build router config from adapter options
-          const routerConfig = {
-            defaultTier: llmOptions.defaultTier ?? llmOptions.tier ?? 'small',
-            tierMapping: llmOptions.tierMapping,
-            capabilities: llmOptions.capabilities,
-            adapterLoader,
-          };
-
-          adapterInstance = new LLMRouter(
-            instance as any,
-            routerConfig,
-            platform.logger
-          );
-
-          const modelInfo = llmOptions.tierMapping
-            ? `tierMapping with ${Object.keys(llmOptions.tierMapping).length} tiers`
-            : `tier: ${routerConfig.defaultTier}`;
-
-          // Log multi-adapter info if configured
-          const llmAdapters = availableAdapters['llm'] ?? [];
-          if (llmAdapters.length > 1) {
-            platform.logger.debug(`initPlatform LLM multi-adapter enabled`, {
-              adapters: llmAdapters,
-              primary: llmAdapters[0],
-            });
-          }
-
-          platform.logger.debug(`initPlatform wrapped LLM with Router (${modelInfo})`);
-        } catch (error) {
-          // LLMRouter not available - use raw adapter
-          platform.logger.debug('LLMRouter not available, using raw LLM adapter', {
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
-      }
-
-      const wrappedInstance = wrapWithAnalytics(name as keyof AdapterTypes, adapterInstance as any);
+      // For LLM: only wrap with Analytics here, Router wrapping happens after ResourceBroker
+      const wrappedInstance = wrapWithAnalytics(name as keyof AdapterTypes, instance as any);
       platform.setAdapter(name, wrappedInstance);
 
       const wrapperName = (wrappedInstance as any).constructor?.name ?? 'Unknown';
@@ -784,6 +725,73 @@ export async function initPlatform(
       platform.logger.warn('Failed to initialize ResourceBroker, continuing without rate limiting', {
         error: error instanceof Error ? error.message : String(error),
       });
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // Wrap LLM with Router (AFTER ResourceBroker)
+    // Chain: LLMRouter → QueuedLLM → AnalyticsLLM → RawAdapter
+    // This ensures useLLM({ tier }) can call resolve() on the outermost wrapper
+    // ══════════════════════════════════════════════════════════════════════
+    if (platform.hasAdapter('llm')) {
+      const llmOptions = (adapterOptions.llm ?? {}) as LLMAdapterOptions;
+
+      try {
+        const { LLMRouter } = await import('@kb-labs/llm-router');
+
+        // Get current LLM (already QueuedLLM → AnalyticsLLM → RawAdapter)
+        const queuedLLM = platform.llm;
+
+        // Create adapter loader function for multi-adapter support
+        const adapterLoader = async (adapterPackage: string): Promise<any> => {
+          try {
+            const module = await loadModule(adapterPackage);
+            const loadedAdapter = await module.createAdapter(llmOptions, {});
+            platform.logger.debug(`LLMRouter loaded adapter: ${adapterPackage}`);
+            return loadedAdapter;
+          } catch (error) {
+            platform.logger.warn(`Failed to load adapter ${adapterPackage}`, {
+              error: error instanceof Error ? error.message : String(error),
+            });
+            throw error;
+          }
+        };
+
+        // Build router config from adapter options
+        const routerConfig = {
+          defaultTier: llmOptions.defaultTier ?? llmOptions.tier ?? 'small',
+          tierMapping: llmOptions.tierMapping,
+          capabilities: llmOptions.capabilities,
+          adapterLoader,
+        };
+
+        const llmRouter = new LLMRouter(
+          queuedLLM,
+          routerConfig,
+          platform.logger
+        );
+
+        // Replace LLM adapter with Router-wrapped version
+        platform.setAdapter('llm', llmRouter);
+
+        const modelInfo = llmOptions.tierMapping
+          ? `tierMapping with ${Object.keys(llmOptions.tierMapping).length} tiers`
+          : `tier: ${routerConfig.defaultTier}`;
+
+        const llmAdapters = availableAdapters['llm'] ?? [];
+        if (llmAdapters.length > 1) {
+          platform.logger.debug(`initPlatform LLM multi-adapter enabled`, {
+            adapters: llmAdapters,
+            primary: llmAdapters[0],
+          });
+        }
+
+        platform.logger.debug(`initPlatform wrapped LLM with Router (${modelInfo})`);
+      } catch (error) {
+        // LLMRouter not available - keep QueuedLLM as is
+        platform.logger.debug('LLMRouter not available, using QueuedLLM directly', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
 
     // Start Unix Socket server to handle adapter calls from children (critical for V3 plugins)
