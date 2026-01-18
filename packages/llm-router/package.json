@@ -1,0 +1,50 @@
+{
+  "name": "@kb-labs/llm-router",
+  "version": "0.1.0",
+  "description": "Adaptive LLM router with tier-based model selection and fallback support.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "clean": "rimraf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@kb-labs/core-platform": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "rimraf": "^5.0.0",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "kb-labs",
+    "llm",
+    "router",
+    "tier",
+    "adaptive"
+  ],
+  "author": "KB Labs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kb-labs/kb-labs-core.git",
+    "directory": "packages/llm-router"
+  },
+  "private": true
+}
