@@ -3,30 +3,95 @@
  * Platform configuration types.
  */
 
-import type { TenantQuotas } from '@kb-labs/core-platform';
+import type { TenantQuotas, LLMTier, LLMCapability } from '@kb-labs/core-platform';
 import type { RateLimitConfig, RateLimitPreset } from '@kb-labs/core-resource-broker';
 
 /**
+ * Model entry in tier mapping.
+ * Can optionally specify a different adapter per model.
+ */
+export interface TierModelEntry {
+  /** Model identifier */
+  model: string;
+  /** Priority (lower = higher priority) */
+  priority: number;
+  /** Model capabilities */
+  capabilities?: LLMCapability[];
+  /** Optional: adapter package to use for this model (e.g., "@kb-labs/adapters-openai") */
+  adapter?: string;
+}
+
+/**
+ * Tier mapping configuration.
+ */
+export interface TierMapping {
+  small?: TierModelEntry[];
+  medium?: TierModelEntry[];
+  large?: TierModelEntry[];
+}
+
+/**
+ * LLM adapter options with tier support.
+ */
+export interface LLMAdapterOptions {
+  /** Default tier when none specified @default 'medium' */
+  defaultTier?: LLMTier;
+  /** Tier to model mapping (advanced config) */
+  tierMapping?: TierMapping;
+  /** Legacy: Configured tier (simple config) @deprecated use defaultTier */
+  tier?: LLMTier;
+  /** Available capabilities (optional) */
+  capabilities?: LLMCapability[];
+  /** Default model for the underlying adapter (simple config) */
+  defaultModel?: string;
+  /** Any other adapter-specific options */
+  [key: string]: unknown;
+}
+
+/**
+ * Adapter value type.
+ * - string: Single adapter package path
+ * - string[]: Multiple adapter packages (first = primary/default, others available via adapterLoader)
+ * - null: NoOp adapter
+ *
+ * @example
+ * ```typescript
+ * // Single adapter
+ * llm: "@kb-labs/adapters-openai"
+ *
+ * // Multiple adapters (multi-provider setup)
+ * llm: ["@kb-labs/adapters-openai", "@kb-labs/adapters-vibeproxy"]
+ *
+ * // NoOp/disabled
+ * analytics: null
+ * ```
+ */
+export type AdapterValue = string | string[] | null;
+
+/**
  * Platform adapter configuration.
- * Each key is the adapter name, value is the package path or null for NoOp.
+ * Each key is the adapter name, value can be:
+ * - string: Single adapter package path
+ * - string[]: Multiple adapters (first = primary, rest available via routing/options)
+ * - null: NoOp adapter
  */
 export interface AdaptersConfig {
-  /** Analytics adapter package (e.g., "@kb-labs/analytics-adapter") */
-  analytics?: string | null;
-  /** Vector store adapter package (e.g., "@kb-labs/mind-qdrant") */
-  vectorStore?: string | null;
-  /** LLM adapter package (e.g., "@kb-labs/shared-openai") */
-  llm?: string | null;
-  /** Embeddings adapter package (e.g., "@kb-labs/shared-openai") */
-  embeddings?: string | null;
-  /** Cache adapter package (e.g., "@kb-labs/core-redis") */
-  cache?: string | null;
-  /** Storage adapter package (e.g., "@kb-labs/core-fs") */
-  storage?: string | null;
-  /** Logger adapter package (e.g., "@kb-labs/core-pino") */
-  logger?: string | null;
-  /** Event bus adapter package */
-  eventBus?: string | null;
+  /** Analytics adapter package(s) (e.g., "@kb-labs/analytics-adapter" or ["@kb-labs/analytics-file", "@kb-labs/analytics-posthog"]) */
+  analytics?: AdapterValue;
+  /** Vector store adapter package(s) (e.g., "@kb-labs/adapters-qdrant") */
+  vectorStore?: AdapterValue;
+  /** LLM adapter package(s) (e.g., "@kb-labs/adapters-openai" or ["@kb-labs/adapters-openai", "@kb-labs/adapters-vibeproxy"]) */
+  llm?: AdapterValue;
+  /** Embeddings adapter package(s) (e.g., "@kb-labs/adapters-openai/embeddings") */
+  embeddings?: AdapterValue;
+  /** Cache adapter package(s) (e.g., "@kb-labs/adapters-redis") */
+  cache?: AdapterValue;
+  /** Storage adapter package(s) (e.g., "@kb-labs/adapters-fs") */
+  storage?: AdapterValue;
+  /** Logger adapter package(s) (e.g., "@kb-labs/adapters-pino") */
+  logger?: AdapterValue;
+  /** Event bus adapter package(s) */
+  eventBus?: AdapterValue;
 }
 
 /**

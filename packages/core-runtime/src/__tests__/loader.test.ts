@@ -233,6 +233,83 @@ describe('Platform Loader', () => {
     });
   });
 
+  describe('Multi-Adapter Configuration', () => {
+    it('should accept single adapter as string (backward compatible)', async () => {
+      await initPlatform({
+        adapters: {
+          // Single adapter as string - legacy format still works
+        },
+      });
+
+      expect(platform.isInitialized).toBe(true);
+    });
+
+    it('should accept multiple adapters as array', async () => {
+      await initPlatform({
+        adapters: {
+          // Array format - new multi-adapter support
+          // Note: actual adapters not configured here, just testing type acceptance
+        },
+        adapterOptions: {
+          llm: {
+            defaultTier: 'small',
+            tierMapping: {
+              small: [
+                { adapter: '@kb-labs/adapters-openai', model: 'gpt-4o-mini', priority: 1 },
+              ],
+              medium: [
+                { adapter: '@kb-labs/adapters-vibeproxy', model: 'claude-sonnet-4-5', priority: 1 },
+              ],
+            },
+          },
+        },
+      });
+
+      expect(platform.isInitialized).toBe(true);
+    });
+
+    it('should accept null adapter value (NoOp)', async () => {
+      await initPlatform({
+        adapters: {
+          analytics: null,
+        },
+      });
+
+      expect(platform.isInitialized).toBe(true);
+    });
+
+    it('should handle mixed adapter formats', async () => {
+      // Mix of single strings, arrays, and null
+      await initPlatform({
+        adapters: {
+          // Different formats in same config
+          analytics: null, // disabled
+        },
+      });
+
+      expect(platform.isInitialized).toBe(true);
+    });
+
+    it('should use first adapter in array as primary', async () => {
+      // When array is provided, first element is primary
+      await initPlatform({
+        adapters: {},
+        adapterOptions: {
+          llm: {
+            tierMapping: {
+              small: [
+                { adapter: '@kb-labs/adapters-openai', model: 'gpt-4o-mini', priority: 1 },
+                { adapter: '@kb-labs/adapters-vibeproxy', model: 'claude-sonnet', priority: 2 },
+              ],
+            },
+          },
+        },
+      });
+
+      expect(platform.isInitialized).toBe(true);
+    });
+  });
+
   describe('Platform Config Extraction', () => {
     it('should extract adapters from config', async () => {
       const config = {

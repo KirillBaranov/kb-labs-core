@@ -7,7 +7,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { promises as fs } from 'node:fs';
 import type { AdapterTypes, PlatformContainer } from './container.js';
-import type { PlatformConfig, CoreFeaturesConfig, ResourceBrokerConfig } from './config.js';
+import type { PlatformConfig, CoreFeaturesConfig, ResourceBrokerConfig, LLMAdapterOptions, AdapterValue } from './config.js';
 import { platform } from './container.js';
 import { resolveAdapter } from './discover-adapters.js';
 import { createAnalyticsContext } from './analytics-context.js';
@@ -47,6 +47,33 @@ import type { IExecutionBackend } from '@kb-labs/core-contracts';
  * Adapters should export a createAdapter function.
  */
 type AdapterFactory<T> = (config?: unknown) => T | Promise<T>;
+
+/**
+ * Normalize adapter value to array format.
+ * - string → [string]
+ * - string[] → string[]
+ * - null/undefined → []
+ *
+ * @param value - Adapter value (string, string[], or null)
+ * @returns Array of adapter package paths
+ */
+function normalizeAdapterValue(value: AdapterValue | undefined): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  return [value];
+}
+
+/**
+ * Get primary adapter from value (first in array or single string).
+ *
+ * @param value - Adapter value
+ * @returns Primary adapter package path or undefined
+ */
+function getPrimaryAdapter(value: AdapterValue | undefined): string | undefined {
+  if (!value) return undefined;
+  if (Array.isArray(value)) return value[0];
+  return value;
+}
 
 /**
  * Load an adapter from a package path.
@@ -292,6 +319,7 @@ export async function initPlatform(
   cwd: string = process.cwd(),
   uiProvider?: (hostType: string) => any
 ): Promise<PlatformContainer> {
+
   // ✅ Idempotent: If already initialized, return existing singleton
   // This prevents duplicate adapter instances across CLI and sandbox processes
   platform.logger.debug(`initPlatform isInitialized=${platform.isInitialized} pid=${process.pid}`);
@@ -306,6 +334,7 @@ export async function initPlatform(
 
   // 🔍 Detect if running in child process (sandbox worker)
   const isChildProcess = !!process.send; // Has IPC channel = forked child
+
 
   if (isChildProcess) {
     // ══════════════════════════════════════════════════════════════════════
@@ -524,11 +553,25 @@ export async function initPlatform(
     };
 
     // Build adapter configs for AdapterLoader
+    // Supports both single adapter (string) and multi-adapter (string[]) config
     const adapterConfigs: Record<string, AdapterConfig> = {};
-    for (const [name, modulePath] of Object.entries(adapters)) {
-      if (typeof modulePath === 'string') {
-        // Pre-load module to access manifest
-        const module = await loadModule(modulePath);
+
+    // Track all available adapters for multi-adapter routing (LLM tier switching, etc.)
+    const availableAdapters: Record<string, string[]> = {};
+
+    for (const [name, adapterValue] of Object.entries(adapters)) {
+      // Normalize to array and get primary adapter
+      const adapterPackages = normalizeAdapterValue(adapterValue as AdapterValue);
+      const primaryAdapter = getPrimaryAdapter(adapterValue as AdapterValue);
+
+      if (!primaryAdapter) continue;
+
+      // Store all available adapters for this type (used by LLMRouter, etc.)
+      availableAdapters[name] = adapterPackages;
+
+      try {
+        // Pre-load module to access manifest (primary adapter only)
+        const module = await loadModule(primaryAdapter);
         const baseOptions = (adapterOptions as Record<string, unknown>)[name] ?? {};
 
         // Inject requested contexts from manifest
@@ -542,19 +585,102 @@ export async function initPlatform(
         }
 
         adapterConfigs[name] = {
-          module: modulePath,
+          module: primaryAdapter,
           // Merge contexts with user options (user options can override)
           config: { ...contexts, ...baseOptions },
         };
+
+        // Log multi-adapter setup
+        if (adapterPackages.length > 1) {
+          platform.logger.debug(`initPlatform multi-adapter setup for ${name}`, {
+            primary: primaryAdapter,
+            available: adapterPackages,
+          });
+        }
+      } catch (error) {
+        throw error;
       }
     }
 
     // Load adapters with dependency resolution
     const loadedAdapters = await loader.loadAdapters(adapterConfigs, loadModule);
 
+    // CRITICAL: Set analytics adapter FIRST (without wrapping) so wrapWithAnalytics() can use it
+    if (loadedAdapters.has('analytics')) {
+      platform.setAdapter('analytics', loadedAdapters.get('analytics') as any);
+      platform.logger.debug('initPlatform loaded adapter: analytics → FileAnalytics (set early for wrapping)');
+    }
+
     // Set adapters in platform (wrapped with analytics if available)
     for (const [name, instance] of loadedAdapters.entries()) {
-      const wrappedInstance = wrapWithAnalytics(name as keyof AdapterTypes, instance as any);
+      // Skip analytics - already set above
+      if (name === 'analytics') {
+        continue;
+      }
+
+      let adapterInstance = instance;
+
+      // Special handling for LLM: wrap in Router for tier support
+      if (name === 'llm' && instance) {
+        const llmOptions = (adapterOptions.llm ?? {}) as LLMAdapterOptions;
+
+        try {
+          const { LLMRouter } = await import('@kb-labs/llm-router');
+
+          // Create adapter loader function for multi-adapter support
+          const adapterLoader = async (adapterPackage: string): Promise<any> => {
+            try {
+              const module = await loadModule(adapterPackage);
+              // Use llmOptions for all LLM adapters (they share the same config shape)
+              // Second argument is dependencies (empty for LLM adapters)
+              const loadedAdapter = await module.createAdapter(llmOptions, {});
+              platform.logger.debug(`LLMRouter loaded adapter: ${adapterPackage}`);
+              return loadedAdapter;
+            } catch (error) {
+              platform.logger.warn(`Failed to load adapter ${adapterPackage}`, {
+                error: error instanceof Error ? error.message : String(error),
+              });
+              throw error;
+            }
+          };
+
+          // Build router config from adapter options
+          const routerConfig = {
+            defaultTier: llmOptions.defaultTier ?? llmOptions.tier ?? 'small',
+            tierMapping: llmOptions.tierMapping,
+            capabilities: llmOptions.capabilities,
+            adapterLoader,
+          };
+
+          adapterInstance = new LLMRouter(
+            instance as any,
+            routerConfig,
+            platform.logger
+          );
+
+          const modelInfo = llmOptions.tierMapping
+            ? `tierMapping with ${Object.keys(llmOptions.tierMapping).length} tiers`
+            : `tier: ${routerConfig.defaultTier}`;
+
+          // Log multi-adapter info if configured
+          const llmAdapters = availableAdapters['llm'] ?? [];
+          if (llmAdapters.length > 1) {
+            platform.logger.debug(`initPlatform LLM multi-adapter enabled`, {
+              adapters: llmAdapters,
+              primary: llmAdapters[0],
+            });
+          }
+
+          platform.logger.debug(`initPlatform wrapped LLM with Router (${modelInfo})`);
+        } catch (error) {
+          // LLMRouter not available - use raw adapter
+          platform.logger.debug('LLMRouter not available, using raw LLM adapter', {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+
+      const wrappedInstance = wrapWithAnalytics(name as keyof AdapterTypes, adapterInstance as any);
       platform.setAdapter(name, wrappedInstance);
 
       const wrapperName = (wrappedInstance as any).constructor?.name ?? 'Unknown';
