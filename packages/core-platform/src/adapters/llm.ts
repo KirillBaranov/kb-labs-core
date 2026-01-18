@@ -4,6 +4,19 @@
  */
 
 /**
+ * Metadata for LLM request tracking and analytics.
+ * Passed through the chain from LLMRouter to AnalyticsLLM.
+ */
+export interface LLMRequestMetadata {
+  /** Tier used for this request */
+  tier?: import('./llm-types.js').LLMTier;
+  /** Provider identifier (e.g., 'openai', 'anthropic') */
+  provider?: string;
+  /** Resource name in broker (e.g., 'llm:openai') */
+  resource?: string;
+}
+
+/**
  * Options for LLM completion.
  */
 export interface LLMOptions {
@@ -17,6 +30,8 @@ export interface LLMOptions {
   stop?: string[];
   /** System prompt/instruction */
   systemPrompt?: string;
+  /** Metadata for analytics and observability (set by LLMRouter) */
+  metadata?: LLMRequestMetadata;
 }
 
 /**

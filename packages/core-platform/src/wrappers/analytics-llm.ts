@@ -49,9 +49,14 @@ export class AnalyticsLLM implements ILLM {
     const startTime = Date.now();
     const requestId = generateRequestId();
 
+    // Extract routing metadata (set by LLMRouter)
+    const metadata = options?.metadata;
+
     // Track start
     await this.analytics.track('llm.completion.started', {
       requestId,
+      tier: metadata?.tier,
+      provider: metadata?.provider,
       model: options?.model,
       promptLength: prompt.length,
       maxTokens: options?.maxTokens,
@@ -68,6 +73,8 @@ export class AnalyticsLLM implements ILLM {
       // Track completion
       await this.analytics.track('llm.completion.completed', {
         requestId,
+        tier: metadata?.tier,
+        provider: metadata?.provider,
         model: response.model,
         promptTokens: response.usage.promptTokens,
         completionTokens: response.usage.completionTokens,
@@ -81,6 +88,8 @@ export class AnalyticsLLM implements ILLM {
       // Track error
       await this.analytics.track('llm.completion.error', {
         requestId,
+        tier: metadata?.tier,
+        provider: metadata?.provider,
         error: error instanceof Error ? error.message : String(error),
         durationMs: Date.now() - startTime,
       });
@@ -97,8 +106,13 @@ export class AnalyticsLLM implements ILLM {
     const startTime = Date.now();
     const requestId = generateRequestId();
 
+    // Extract routing metadata (set by LLMRouter)
+    const metadata = options?.metadata;
+
     await this.analytics.track('llm.stream.started', {
       requestId,
+      tier: metadata?.tier,
+      provider: metadata?.provider,
       model: options?.model,
       promptLength: prompt.length,
     });
@@ -115,6 +129,8 @@ export class AnalyticsLLM implements ILLM {
 
       await this.analytics.track('llm.stream.completed', {
         requestId,
+        tier: metadata?.tier,
+        provider: metadata?.provider,
         model: options?.model,
         durationMs: Date.now() - startTime,
         totalChunks,
@@ -123,6 +139,8 @@ export class AnalyticsLLM implements ILLM {
     } catch (error) {
       await this.analytics.track('llm.stream.error', {
         requestId,
+        tier: metadata?.tier,
+        provider: metadata?.provider,
         error: error instanceof Error ? error.message : String(error),
         durationMs: Date.now() - startTime,
       });
@@ -147,9 +165,14 @@ export class AnalyticsLLM implements ILLM {
     const startTime = Date.now();
     const requestId = generateRequestId();
 
+    // Extract routing metadata (set by LLMRouter)
+    const metadata = options?.metadata;
+
     // Track start
     await this.analytics.track('llm.chatWithTools.started', {
       requestId,
+      tier: metadata?.tier,
+      provider: metadata?.provider,
       model: options?.model,
       messageCount: messages.length,
       toolCount: options.tools.length,
@@ -168,6 +191,8 @@ export class AnalyticsLLM implements ILLM {
       // Track completion
       await this.analytics.track('llm.chatWithTools.completed', {
         requestId,
+        tier: metadata?.tier,
+        provider: metadata?.provider,
         model: response.model,
         promptTokens: response.usage.promptTokens,
         completionTokens: response.usage.completionTokens,
@@ -183,6 +208,8 @@ export class AnalyticsLLM implements ILLM {
       // Track error
       await this.analytics.track('llm.chatWithTools.error', {
         requestId,
+        tier: metadata?.tier,
+        provider: metadata?.provider,
         error: error instanceof Error ? error.message : String(error),
         durationMs: Date.now() - startTime,
       });

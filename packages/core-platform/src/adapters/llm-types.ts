@@ -67,10 +67,12 @@ export interface UseLLMOptions {
  * Internal type used by LLMRouter.
  */
 export interface LLMResolution {
-  /** Resolved provider ID */
+  /** Resolved provider ID (e.g., 'openai', 'anthropic') */
   provider: string;
   /** Resolved model name */
   model: string;
+  /** Resource name for ResourceBroker (e.g., 'llm:openai') */
+  resource: string;
   /** Original requested tier */
   requestedTier: LLMTier | undefined;
   /** Actual tier being used */

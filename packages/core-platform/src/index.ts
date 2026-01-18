@@ -49,6 +49,7 @@ export type {
   LLMMessage,
   LLMToolCallOptions,
   LLMToolCallResponse,
+  LLMRequestMetadata,
 } from './adapters/llm.js';
 
 // LLM Types (tiers, capabilities, routing)
