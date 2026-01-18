@@ -67,8 +67,11 @@ export class QueuedLLM implements ILLM {
     const priority: ResourcePriority = options?.priority ?? 'normal';
     const estimatedTokens = estimateTokens(prompt);
 
+    // Use resource from metadata if provided (set by LLMRouter), fallback to 'llm'
+    const resource = options?.metadata?.resource ?? 'llm';
+
     const response = await this.broker.enqueue<LLMResponse>({
-      resource: 'llm',
+      resource,
       operation: 'complete',
       args: [prompt, options],
       priority,
