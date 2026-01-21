@@ -85,6 +85,17 @@ export { selectTimeout, getOperationTimeout, OPERATION_TIMEOUTS } from '@kb-labs
 // Proxy adapters (child process)
 export { RemoteAdapter } from './proxy/remote-adapter.js';
 export { VectorStoreProxy, createVectorStoreProxy } from './proxy/vector-store-proxy.js';
+export { CacheProxy, createCacheProxy } from './proxy/cache-proxy.js';
+export { LLMProxy } from './proxy/llm-proxy.js';
+export { EmbeddingsProxy } from './proxy/embeddings-proxy.js';
+export { StorageProxy, createStorageProxy } from './proxy/storage-proxy.js';
+export { SQLDatabaseProxy, createSQLDatabaseProxy } from './proxy/sql-database-proxy.js';
+export { DocumentDatabaseProxy, createDocumentDatabaseProxy } from './proxy/document-database-proxy.js';
+export {
+  createProxyPlatform,
+  closeProxyPlatform,
+  type CreateProxyPlatformOptions
+} from './proxy/create-proxy-platform.js';
 
 export type {
   ResourceManagerConfig,

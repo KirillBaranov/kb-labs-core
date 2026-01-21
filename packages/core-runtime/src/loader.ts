@@ -742,12 +742,22 @@ export async function initPlatform(
         const queuedLLM = platform.llm;
 
         // Create adapter loader function for multi-adapter support
+        // CRITICAL: Wrap loaded adapters with AnalyticsLLM for tracking
         const adapterLoader = async (adapterPackage: string): Promise<any> => {
           try {
             const module = await loadModule(adapterPackage);
             const loadedAdapter = await module.createAdapter(llmOptions, {});
-            platform.logger.debug(`LLMRouter loaded adapter: ${adapterPackage}`);
-            return loadedAdapter;
+
+            // Wrap with AnalyticsLLM if analytics is available
+            const analytics = platform.analytics;
+            const wrappedAdapter = analytics && analytics.constructor.name !== 'NoOpAnalytics'
+              ? new AnalyticsLLM(loadedAdapter as any, analytics)
+              : loadedAdapter;
+
+            platform.logger.debug(`LLMRouter loaded adapter: ${adapterPackage}`, {
+              wrapped: wrappedAdapter !== loadedAdapter,
+            });
+            return wrappedAdapter;
           } catch (error) {
             platform.logger.warn(`Failed to load adapter ${adapterPackage}`, {
               error: error instanceof Error ? error.message : String(error),
