@@ -110,7 +110,9 @@ export type AdapterType =
   | 'analytics'
   | 'eventBus'
   | 'invoke'
-  | 'artifacts';
+  | 'artifacts'
+  | 'database.document'
+  | 'database.sql';
 
 /**
  * Execution context for adapter calls.

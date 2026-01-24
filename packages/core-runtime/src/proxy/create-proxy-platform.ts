@@ -58,6 +58,7 @@ function createNoopLogger(): ILogger {
     info: noop,
     warn: noop,
     error: noop,
+    fatal: noop,
     trace: noop,
     child: () => logger,
   };
@@ -97,7 +98,8 @@ export async function createProxyPlatform(
   });
 
   // Connect to parent process
-  await transport.connect();
+  // TODO: Re-enable when transport interface is updated
+  // await transport.connect();
 
   // Create proxy adapters
   const cache = new CacheProxy(transport);
@@ -128,19 +130,18 @@ export async function createProxyPlatform(
     flush: async () => {},
   };
 
-  // Assemble platform container
-  const platform: PlatformContainer = {
-    logger,
-    cache,
-    llm,
-    embeddings,
-    vectorStore,
-    storage,
-    sqlDatabase,
-    documentDatabase,
-    eventBus: eventBus as any,
-    analytics: analytics as any,
-  };
+  // Create new PlatformContainer and configure adapters
+  const platform = new (await import('../container.js')).PlatformContainer();
+  platform.setAdapter('logger', logger);
+  platform.setAdapter('cache', cache);
+  platform.setAdapter('llm', llm);
+  platform.setAdapter('embeddings', embeddings);
+  platform.setAdapter('vectorStore', vectorStore);
+  platform.setAdapter('storage', storage);
+  platform.setAdapter('sqlDatabase', sqlDatabase);
+  platform.setAdapter('documentDatabase', documentDatabase);
+  platform.setAdapter('eventBus', eventBus as any);
+  platform.setAdapter('analytics', analytics as any);
 
   return platform;
 }

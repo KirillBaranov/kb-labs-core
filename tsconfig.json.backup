@@ -1,0 +1,22 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "."
+    },
+    {
+      "path": "packages/sys"
+    },
+    {
+      "path": "packages/core-framework"
+    },
+    {
+      "path": "apps/demo"
+    }
+  ],
+  "exclude": [
+    "**/__tests__/**",
+    "dist",
+    "node_modules"
+  ]
+}

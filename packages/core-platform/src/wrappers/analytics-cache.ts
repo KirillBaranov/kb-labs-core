@@ -17,6 +17,7 @@ function generateRequestId(): string {
  * Sampling strategy for high-frequency cache operations.
  *
  * - cache.get.hit / cache.set.completed: 1:10 (these dominate analytics with ~171k events)
+ * - cache.zrangebyscore.completed: time-based sampling (1 event per key per minute)
  * - cache.get.miss / cache.*.error: 1:1 (track all errors and misses - important signals)
  * - Other operations: 1:1 (delete, clear, zadd, etc. are rare)
  *
@@ -33,6 +34,24 @@ function shouldSampleCacheEvent(eventType: string): boolean {
 
   // Track all other events (misses, errors, rare operations)
   return true;
+}
+
+/**
+ * Time-based sampling for zrangebyscore (scheduler hot path).
+ * Tracks last event timestamp per key - only emit 1 event per minute per key.
+ * This reduces ~322k events to ~50-100 (based on unique keys).
+ */
+const lastZrangeTimestamp = new Map<string, number>();
+function shouldSampleZrangebyscore(key: string): boolean {
+  const now = Date.now();
+  const last = lastZrangeTimestamp.get(key) ?? 0;
+
+  // Emit only once per minute for each key
+  if (now - last > 60000) {
+    lastZrangeTimestamp.set(key, now);
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -188,15 +207,19 @@ export class AnalyticsCache implements ICache {
       const results = await this.realCache.zrangebyscore(key, min, max);
       const durationMs = Date.now() - startTime;
 
-      await this.analytics.track('cache.zrangebyscore.completed', {
-        requestId,
-        key,
-        resultsCount: results.length,
-        durationMs,
-      });
+      // Time-based sampling: 1 event per key per minute (scheduler hot path)
+      if (shouldSampleZrangebyscore(key)) {
+        await this.analytics.track('cache.zrangebyscore.completed', {
+          requestId,
+          key,
+          resultsCount: results.length,
+          durationMs,
+        });
+      }
 
       return results;
     } catch (error) {
+      // Always track errors (important signal)
       await this.analytics.track('cache.zrangebyscore.error', {
         requestId,
         key,

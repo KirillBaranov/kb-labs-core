@@ -1,5 +1,5 @@
 import { defineConfig } from 'tsup';
-import nodePreset from '@kb-labs/devkit/tsup/node.js';
+import nodePreset from '@kb-labs/devkit/tsup/node';
 import binPreset from '@kb-labs/devkit/tsup/bin.js';
 
 export default defineConfig([

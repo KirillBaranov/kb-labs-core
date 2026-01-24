@@ -25,7 +25,9 @@
     "dev": "tsup --config tsup.config.ts --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@kb-labs/core-state-broker": "link:../core-state-broker",
@@ -40,7 +42,11 @@
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",
     "typescript": "^5.6.3",
-    "vitest": "^3.0.0"
+    "vitest": "^3.2.4"
   },
-  "private": true
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
 }

@@ -44,18 +44,14 @@ export class ConfigAdapter implements IConfig {
    * ```
    */
   async getConfig(productId: string, profileId?: string): Promise<any> {
-    console.log('[ConfigAdapter.getConfig] called with productId:', productId, 'profileId:', profileId);
-
     // Access rawConfig from globalThis (set by bootstrap.ts)
     const rawConfig = (globalThis as any).__KB_RAW_CONFIG__;
-    console.log('[ConfigAdapter.getConfig] rawConfig:', rawConfig ? 'EXISTS' : 'UNDEFINED');
 
     if (!rawConfig) {
       return undefined;
     }
 
     const effectiveProfileId = profileId ?? process.env.KB_PROFILE ?? 'default';
-    console.log('[ConfigAdapter.getConfig] effectiveProfileId:', effectiveProfileId);
 
     // Try profiles v2 structure first
     if (rawConfig.profiles && Array.isArray(rawConfig.profiles)) {

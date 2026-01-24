@@ -51,16 +51,22 @@
     "clean": "rimraf dist",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "dev": "tsup --config tsup.config.ts --watch",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint . --fix",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "ulid": "^2.3.0"
   },
   "devDependencies": {
-    "tsup": "^8.0.0",
-    "typescript": "^5.3.0",
-    "rimraf": "^5.0.0",
-    "vitest": "^2.1.8"
+    "tsup": "^8.5.0",
+    "typescript": "^5.6.3",
+    "rimraf": "^6.0.1",
+    "vitest": "^3.2.4",
+    "@kb-labs/devkit": "link:../../../kb-labs-devkit",
+    "@types/node": "^24.3.3"
   },
   "keywords": [
     "kb-labs",
@@ -76,5 +82,9 @@
     "url": "https://github.com/kb-labs/kb-labs-core.git",
     "directory": "packages/core-platform"
   },
-  "private": true
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
 }
