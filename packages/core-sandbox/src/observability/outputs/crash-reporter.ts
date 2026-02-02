@@ -5,7 +5,7 @@
  * Generates beautiful, actionable crash reports with memory analysis
  */
 
-import type { HeapAnalysisResult, MemoryConsumer } from '../profiling/heap-analyzer';
+import type { HeapAnalysisResult } from '../profiling/heap-analyzer';
 import type { OOMWarning } from '../profiling/pre-oom-detector';
 
 export interface CrashContext {
@@ -236,12 +236,12 @@ export class CrashReporter {
       if (currentLine.length + word.length + 1 <= maxLen) {
         currentLine += (currentLine ? ' ' : '') + word;
       } else {
-        if (currentLine) lines.push(currentLine);
+        if (currentLine) {lines.push(currentLine);}
         currentLine = word;
       }
     }
 
-    if (currentLine) lines.push(currentLine);
+    if (currentLine) {lines.push(currentLine);}
     return lines;
   }
 }

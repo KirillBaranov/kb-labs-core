@@ -5,7 +5,7 @@
 
 import type { LogRecord, LogSink, LogLevel } from "../types/types";
 import type { VerbosityLevel, OutputMode, DebugFormat } from "../types/types";
-import { safeColors, safeSymbols } from "@kb-labs/shared-cli-ui";
+import { safeColors } from "@kb-labs/shared-cli-ui";
 
 export interface ConsoleSinkConfig {
     verbosity: VerbosityLevel;
@@ -75,9 +75,9 @@ export class ConsoleSink implements LogSink {
         // Минималистичный формат для LLM - write to stderr
         const parts: string[] = [];
 
-        if (rec.level) parts.push(`[${rec.level.toUpperCase()}]`);
-        if (rec.category) parts.push(`[${rec.category}]`);
-        if (rec.msg) parts.push(rec.msg);
+        if (rec.level) {parts.push(`[${rec.level.toUpperCase()}]`);}
+        if (rec.category) {parts.push(`[${rec.category}]`);}
+        if (rec.msg) {parts.push(rec.msg);}
 
         console.error(parts.join(" "));
 

@@ -87,21 +87,33 @@ export interface IPlatformGateway {
    * Cache operations (flat RPC methods)
    */
   cacheGet(ctx: RequestContext, key: string): Promise<string | null>;
-  cacheSet(ctx: RequestContext, key: string, value: string, ttl?: number): Promise<void>;
+  cacheSet(
+    ctx: RequestContext,
+    key: string,
+    value: string,
+    ttl?: number,
+  ): Promise<void>;
   cacheDelete(ctx: RequestContext, key: string): Promise<boolean>;
   cacheClear(ctx: RequestContext, pattern?: string): Promise<void>;
 
   /**
    * Vector operations
    */
-  vectorSearch(ctx: RequestContext, query: VectorQuery): Promise<VectorSearchResult[]>;
+  vectorSearch(
+    ctx: RequestContext,
+    query: VectorQuery,
+  ): Promise<VectorSearchResult[]>;
   vectorUpsert(ctx: RequestContext, vectors: VectorRecord[]): Promise<void>;
   vectorDelete(ctx: RequestContext, ids: string[]): Promise<void>;
 
   /**
    * LLM operations
    */
-  llmComplete(ctx: RequestContext, prompt: string, options?: LLMOptions): Promise<LLMResponse>;
+  llmComplete(
+    ctx: RequestContext,
+    prompt: string,
+    options?: LLMOptions,
+  ): Promise<LLMResponse>;
 
   /**
    * Storage operations

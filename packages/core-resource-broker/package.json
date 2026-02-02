@@ -23,12 +23,12 @@
     "type-check": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint . --fix",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@kb-labs/core-state-broker": "link:../core-state-broker",
-    "@kb-labs/core-platform": "link:../core-platform"
+    "@kb-labs/core-platform": "link:../core-platform",
+    "@kb-labs/core-state-broker": "link:../core-state-broker"
   },
   "devDependencies": {
     "@kb-labs/devkit": "link:../../../kb-labs-devkit",

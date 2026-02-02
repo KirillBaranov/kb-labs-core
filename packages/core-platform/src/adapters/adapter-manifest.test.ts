@@ -6,7 +6,7 @@
  * We trust the TypeScript compiler for type safety (no runtime validation).
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 import type {
   AdapterManifest,
   AdapterType,
@@ -14,63 +14,63 @@ import type {
   AdapterExtension,
   AdapterCapabilities,
   AdapterFactory,
-} from './adapter-manifest.js';
+} from "./adapter-manifest.js";
 
-describe('AdapterManifest', () => {
-  describe('Core Adapter Manifest', () => {
-    it('should define valid core adapter manifest (Pino logger)', () => {
+describe("AdapterManifest", () => {
+  describe("Core Adapter Manifest", () => {
+    it("should define valid core adapter manifest (Pino logger)", () => {
       const manifest: AdapterManifest = {
-        manifestVersion: '1.0.0',
-        id: 'pino-logger',
-        name: 'Pino Logger',
-        version: '1.0.0',
-        description: 'Production-ready structured logger based on Pino',
-        type: 'core',
-        implements: 'ILogger',
+        manifestVersion: "1.0.0",
+        id: "pino-logger",
+        name: "Pino Logger",
+        version: "1.0.0",
+        description: "Production-ready structured logger based on Pino",
+        type: "core",
+        implements: "ILogger",
         optional: {
-          adapters: ['analytics'],
+          adapters: ["analytics"],
         },
         capabilities: {
           streaming: true,
         },
       };
 
-      expect(manifest.id).toBe('pino-logger');
-      expect(manifest.type).toBe('core');
-      expect(manifest.implements).toBe('ILogger');
+      expect(manifest.id).toBe("pino-logger");
+      expect(manifest.type).toBe("core");
+      expect(manifest.implements).toBe("ILogger");
       expect(manifest.capabilities?.streaming).toBe(true);
     });
 
-    it('should define minimal core adapter manifest', () => {
+    it("should define minimal core adapter manifest", () => {
       const manifest: AdapterManifest = {
-        manifestVersion: '1.0.0',
-        id: 'simple-logger',
-        name: 'Simple Logger',
-        version: '1.0.0',
-        type: 'core',
-        implements: 'ILogger',
+        manifestVersion: "1.0.0",
+        id: "simple-logger",
+        name: "Simple Logger",
+        version: "1.0.0",
+        type: "core",
+        implements: "ILogger",
       };
 
-      expect(manifest.id).toBe('simple-logger');
+      expect(manifest.id).toBe("simple-logger");
       expect(manifest.description).toBeUndefined();
       expect(manifest.requires).toBeUndefined();
       expect(manifest.capabilities).toBeUndefined();
     });
   });
 
-  describe('Extension Adapter Manifest', () => {
-    it('should define extension adapter without dependencies (ring buffer)', () => {
+  describe("Extension Adapter Manifest", () => {
+    it("should define extension adapter without dependencies (ring buffer)", () => {
       const manifest: AdapterManifest = {
-        manifestVersion: '1.0.0',
-        id: 'log-ringbuffer',
-        name: 'Log Ring Buffer',
-        version: '1.0.0',
-        type: 'extension',
-        implements: 'ILogRingBuffer',
+        manifestVersion: "1.0.0",
+        id: "log-ringbuffer",
+        name: "Log Ring Buffer",
+        version: "1.0.0",
+        type: "extension",
+        implements: "ILogRingBuffer",
         extends: {
-          adapter: 'logger',
-          hook: 'onLog',
-          method: 'append',
+          adapter: "logger",
+          hook: "onLog",
+          method: "append",
           priority: 10,
         },
         capabilities: {
@@ -78,29 +78,29 @@ describe('AdapterManifest', () => {
         },
       };
 
-      expect(manifest.type).toBe('extension');
-      expect(manifest.extends?.adapter).toBe('logger');
-      expect(manifest.extends?.hook).toBe('onLog');
-      expect(manifest.extends?.method).toBe('append');
+      expect(manifest.type).toBe("extension");
+      expect(manifest.extends?.adapter).toBe("logger");
+      expect(manifest.extends?.hook).toBe("onLog");
+      expect(manifest.extends?.method).toBe("append");
       expect(manifest.extends?.priority).toBe(10);
     });
 
-    it('should define extension adapter with dependencies (SQLite persistence)', () => {
+    it("should define extension adapter with dependencies (SQLite persistence)", () => {
       const manifest: AdapterManifest = {
-        manifestVersion: '1.0.0',
-        id: 'log-persistence',
-        name: 'SQLite Log Persistence',
-        version: '1.0.0',
-        type: 'extension',
-        implements: 'ILogPersistence',
+        manifestVersion: "1.0.0",
+        id: "log-persistence",
+        name: "SQLite Log Persistence",
+        version: "1.0.0",
+        type: "extension",
+        implements: "ILogPersistence",
         requires: {
-          adapters: [{ id: 'db', alias: 'database' }],
-          platform: '>= 1.0.0',
+          adapters: [{ id: "db", alias: "database" }],
+          platform: ">= 1.0.0",
         },
         extends: {
-          adapter: 'logger',
-          hook: 'onLog',
-          method: 'write',
+          adapter: "logger",
+          hook: "onLog",
+          method: "write",
           priority: 5,
         },
         capabilities: {
@@ -111,24 +111,24 @@ describe('AdapterManifest', () => {
       };
 
       expect(manifest.requires?.adapters).toHaveLength(1);
-      expect(manifest.requires?.platform).toBe('>= 1.0.0');
+      expect(manifest.requires?.platform).toBe(">= 1.0.0");
       expect(manifest.capabilities?.batch).toBe(true);
       expect(manifest.capabilities?.search).toBe(true);
       expect(manifest.capabilities?.transactions).toBe(true);
     });
 
-    it('should support default priority (0) when not specified', () => {
+    it("should support default priority (0) when not specified", () => {
       const manifest: AdapterManifest = {
-        manifestVersion: '1.0.0',
-        id: 'log-extension',
-        name: 'Log Extension',
-        version: '1.0.0',
-        type: 'extension',
-        implements: 'ILogExtension',
+        manifestVersion: "1.0.0",
+        id: "log-extension",
+        name: "Log Extension",
+        version: "1.0.0",
+        type: "extension",
+        implements: "ILogExtension",
         extends: {
-          adapter: 'logger',
-          hook: 'onLog',
-          method: 'handle',
+          adapter: "logger",
+          hook: "onLog",
+          method: "handle",
           // priority not specified - defaults to 0
         },
       };
@@ -137,58 +137,58 @@ describe('AdapterManifest', () => {
     });
   });
 
-  describe('Proxy Adapter Manifest', () => {
-    it('should define proxy adapter manifest (IPC proxy)', () => {
+  describe("Proxy Adapter Manifest", () => {
+    it("should define proxy adapter manifest (IPC proxy)", () => {
       const manifest: AdapterManifest = {
-        manifestVersion: '1.0.0',
-        id: 'logger-ipc-proxy',
-        name: 'Logger IPC Proxy',
-        version: '1.0.0',
-        type: 'proxy',
-        implements: 'ILogger',
-        description: 'IPC proxy for cross-process logger communication',
+        manifestVersion: "1.0.0",
+        id: "logger-ipc-proxy",
+        name: "Logger IPC Proxy",
+        version: "1.0.0",
+        type: "proxy",
+        implements: "ILogger",
+        description: "IPC proxy for cross-process logger communication",
       };
 
-      expect(manifest.type).toBe('proxy');
+      expect(manifest.type).toBe("proxy");
     });
   });
 
-  describe('Adapter Dependencies', () => {
-    it('should support short-form dependencies (string)', () => {
-      const deps: AdapterDependency[] = ['db', 'cache', 'analytics'];
+  describe("Adapter Dependencies", () => {
+    it("should support short-form dependencies (string)", () => {
+      const deps: AdapterDependency[] = ["db", "cache", "analytics"];
 
       expect(deps).toHaveLength(3);
-      expect(deps[0]).toBe('db');
+      expect(deps[0]).toBe("db");
     });
 
-    it('should support long-form dependencies with aliases', () => {
+    it("should support long-form dependencies with aliases", () => {
       const deps: AdapterDependency[] = [
-        { id: 'db', alias: 'database' },
-        { id: 'cache' }, // No alias
-        'analytics', // Short form
+        { id: "db", alias: "database" },
+        { id: "cache" }, // No alias
+        "analytics", // Short form
       ];
 
       expect(deps).toHaveLength(3);
-      expect(typeof deps[0]).toBe('object');
-      if (typeof deps[0] === 'object') {
-        expect(deps[0].id).toBe('db');
-        expect(deps[0].alias).toBe('database');
+      expect(typeof deps[0]).toBe("object");
+      if (typeof deps[0] === "object") {
+        expect(deps[0].id).toBe("db");
+        expect(deps[0].alias).toBe("database");
       }
     });
 
-    it('should support mixed required and optional dependencies', () => {
+    it("should support mixed required and optional dependencies", () => {
       const manifest: AdapterManifest = {
-        manifestVersion: '1.0.0',
-        id: 'complex-adapter',
-        name: 'Complex Adapter',
-        version: '1.0.0',
-        type: 'core',
-        implements: 'IComplexAdapter',
+        manifestVersion: "1.0.0",
+        id: "complex-adapter",
+        name: "Complex Adapter",
+        version: "1.0.0",
+        type: "core",
+        implements: "IComplexAdapter",
         requires: {
-          adapters: ['db', { id: 'cache', alias: 'cacheService' }],
+          adapters: ["db", { id: "cache", alias: "cacheService" }],
         },
         optional: {
-          adapters: ['analytics', 'metrics'],
+          adapters: ["analytics", "metrics"],
         },
       };
 
@@ -197,8 +197,8 @@ describe('AdapterManifest', () => {
     });
   });
 
-  describe('Adapter Capabilities', () => {
-    it('should support boolean capabilities', () => {
+  describe("Adapter Capabilities", () => {
+    it("should support boolean capabilities", () => {
       const capabilities: AdapterCapabilities = {
         streaming: true,
         batch: false,
@@ -210,13 +210,13 @@ describe('AdapterManifest', () => {
       expect(capabilities.batch).toBe(false);
     });
 
-    it('should support custom capabilities', () => {
+    it("should support custom capabilities", () => {
       const capabilities: AdapterCapabilities = {
         streaming: true,
         custom: {
           maxBatchSize: 1000,
           retryAttempts: 3,
-          supportedFormats: ['json', 'csv', 'parquet'],
+          supportedFormats: ["json", "csv", "parquet"],
         },
       };
 
@@ -225,15 +225,15 @@ describe('AdapterManifest', () => {
       expect(Array.isArray(capabilities.custom?.supportedFormats)).toBe(true);
     });
 
-    it('should allow empty capabilities object', () => {
+    it("should allow empty capabilities object", () => {
       const capabilities: AdapterCapabilities = {};
 
       expect(Object.keys(capabilities)).toHaveLength(0);
     });
   });
 
-  describe('AdapterFactory', () => {
-    it('should define sync factory function', () => {
+  describe("AdapterFactory", () => {
+    it("should define sync factory function", () => {
       interface MockConfig {
         level: string;
       }
@@ -246,7 +246,7 @@ describe('AdapterManifest', () => {
 
       const factory: AdapterFactory<MockConfig, MockDeps, MockLogger> = (
         config,
-        deps
+        deps,
       ) => {
         return {
           log: (msg: string) => {
@@ -258,11 +258,11 @@ describe('AdapterManifest', () => {
         };
       };
 
-      const logger = factory({ level: 'info' }, {});
+      const logger = factory({ level: "info" }, {});
       expect(logger.log).toBeDefined();
     });
 
-    it('should define async factory function', () => {
+    it("should define async factory function", () => {
       interface MockConfig {
         connectionString: string;
       }
@@ -275,10 +275,12 @@ describe('AdapterManifest', () => {
 
       const factory: AdapterFactory<MockConfig, MockDeps, MockDB> = async (
         config,
-        deps
+        deps,
       ) => {
         // Async initialization
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        await new Promise((resolve) => {
+          setTimeout(resolve, 10);
+        });
 
         return {
           query: async (sql: string) => {
@@ -291,8 +293,10 @@ describe('AdapterManifest', () => {
       expect(factory).toBeDefined();
     });
 
-    it('should support factory with no dependencies', () => {
-      const factory: AdapterFactory<{ size: number }, {}, unknown> = (config) => {
+    it("should support factory with no dependencies", () => {
+      const factory: AdapterFactory<{ size: number }, Record<string, never>, unknown> = (
+        config,
+      ) => {
         return { size: config.size };
       };
 
@@ -301,42 +305,42 @@ describe('AdapterManifest', () => {
     });
   });
 
-  describe('Manifest Versioning', () => {
-    it('should require semver version strings', () => {
+  describe("Manifest Versioning", () => {
+    it("should require semver version strings", () => {
       const manifest: AdapterManifest = {
-        manifestVersion: '1.0.0',
-        id: 'versioned-adapter',
-        name: 'Versioned Adapter',
-        version: '2.3.1',
-        type: 'core',
-        implements: 'IAdapter',
+        manifestVersion: "1.0.0",
+        id: "versioned-adapter",
+        name: "Versioned Adapter",
+        version: "2.3.1",
+        type: "core",
+        implements: "IAdapter",
         requires: {
-          platform: '>= 1.0.0',
+          platform: ">= 1.0.0",
         },
       };
 
-      expect(manifest.manifestVersion).toBe('1.0.0');
-      expect(manifest.version).toBe('2.3.1');
-      expect(manifest.requires?.platform).toBe('>= 1.0.0');
+      expect(manifest.manifestVersion).toBe("1.0.0");
+      expect(manifest.version).toBe("2.3.1");
+      expect(manifest.requires?.platform).toBe(">= 1.0.0");
     });
 
-    it('should support semver ranges in platform requirements', () => {
+    it("should support semver ranges in platform requirements", () => {
       const ranges = [
-        '>= 1.0.0',
-        '^1.2.0',
-        '~1.2.3',
-        '1.2.x',
-        '>=1.0.0 <2.0.0',
+        ">= 1.0.0",
+        "^1.2.0",
+        "~1.2.3",
+        "1.2.x",
+        ">=1.0.0 <2.0.0",
       ];
 
       ranges.forEach((range) => {
         const manifest: AdapterManifest = {
-          manifestVersion: '1.0.0',
-          id: 'test',
-          name: 'Test',
-          version: '1.0.0',
-          type: 'core',
-          implements: 'ITest',
+          manifestVersion: "1.0.0",
+          id: "test",
+          name: "Test",
+          version: "1.0.0",
+          type: "core",
+          implements: "ITest",
           requires: {
             platform: range,
           },
@@ -347,39 +351,39 @@ describe('AdapterManifest', () => {
     });
   });
 
-  describe('Type Constraints', () => {
-    it('should only allow valid adapter types', () => {
-      const validTypes: AdapterType[] = ['core', 'extension', 'proxy'];
+  describe("Type Constraints", () => {
+    it("should only allow valid adapter types", () => {
+      const validTypes: AdapterType[] = ["core", "extension", "proxy"];
 
       validTypes.forEach((type) => {
         const manifest: AdapterManifest = {
-          manifestVersion: '1.0.0',
-          id: 'test',
-          name: 'Test',
-          version: '1.0.0',
+          manifestVersion: "1.0.0",
+          id: "test",
+          name: "Test",
+          version: "1.0.0",
           type,
-          implements: 'ITest',
+          implements: "ITest",
         };
 
-        expect(['core', 'extension', 'proxy']).toContain(manifest.type);
+        expect(["core", "extension", "proxy"]).toContain(manifest.type);
       });
     });
 
-    it('should allow extension without priority (defaults to 0)', () => {
+    it("should allow extension without priority (defaults to 0)", () => {
       const extension: AdapterExtension = {
-        adapter: 'logger',
-        hook: 'onLog',
-        method: 'handle',
+        adapter: "logger",
+        hook: "onLog",
+        method: "handle",
       };
 
       expect(extension.priority).toBeUndefined();
     });
 
-    it('should allow extension with explicit priority', () => {
+    it("should allow extension with explicit priority", () => {
       const extension: AdapterExtension = {
-        adapter: 'logger',
-        hook: 'onLog',
-        method: 'handle',
+        adapter: "logger",
+        hook: "onLog",
+        method: "handle",
         priority: 42,
       };
 
@@ -387,34 +391,34 @@ describe('AdapterManifest', () => {
     });
   });
 
-  describe('Real-world Examples', () => {
-    it('should compile example from ADR: Pino Logger', () => {
+  describe("Real-world Examples", () => {
+    it("should compile example from ADR: Pino Logger", () => {
       const manifest: AdapterManifest = {
-        manifestVersion: '1.0.0',
-        id: 'pino-logger',
-        name: 'Pino Logger',
-        version: '1.0.0',
-        type: 'core',
-        implements: 'ILogger',
-        optional: { adapters: ['analytics'] },
+        manifestVersion: "1.0.0",
+        id: "pino-logger",
+        name: "Pino Logger",
+        version: "1.0.0",
+        type: "core",
+        implements: "ILogger",
+        optional: { adapters: ["analytics"] },
         capabilities: { streaming: true },
       };
 
       expect(manifest).toBeDefined();
     });
 
-    it('should compile example from ADR: Ring Buffer', () => {
+    it("should compile example from ADR: Ring Buffer", () => {
       const manifest: AdapterManifest = {
-        manifestVersion: '1.0.0',
-        id: 'log-ringbuffer',
-        name: 'Log Ring Buffer',
-        version: '1.0.0',
-        type: 'extension',
-        implements: 'ILogRingBuffer',
+        manifestVersion: "1.0.0",
+        id: "log-ringbuffer",
+        name: "Log Ring Buffer",
+        version: "1.0.0",
+        type: "extension",
+        implements: "ILogRingBuffer",
         extends: {
-          adapter: 'logger',
-          hook: 'onLog',
-          method: 'append',
+          adapter: "logger",
+          hook: "onLog",
+          method: "append",
           priority: 10,
         },
         capabilities: { streaming: true },
@@ -423,22 +427,22 @@ describe('AdapterManifest', () => {
       expect(manifest).toBeDefined();
     });
 
-    it('should compile example from ADR: SQLite Persistence', () => {
+    it("should compile example from ADR: SQLite Persistence", () => {
       const manifest: AdapterManifest = {
-        manifestVersion: '1.0.0',
-        id: 'log-persistence',
-        name: 'SQLite Log Persistence',
-        version: '1.0.0',
-        type: 'extension',
-        implements: 'ILogPersistence',
+        manifestVersion: "1.0.0",
+        id: "log-persistence",
+        name: "SQLite Log Persistence",
+        version: "1.0.0",
+        type: "extension",
+        implements: "ILogPersistence",
         requires: {
-          adapters: [{ id: 'db', alias: 'database' }],
-          platform: '>= 1.0.0',
+          adapters: [{ id: "db", alias: "database" }],
+          platform: ">= 1.0.0",
         },
         extends: {
-          adapter: 'logger',
-          hook: 'onLog',
-          method: 'write',
+          adapter: "logger",
+          hook: "onLog",
+          method: "write",
           priority: 5,
         },
         capabilities: { batch: true, search: true, transactions: true },

@@ -16,7 +16,7 @@ const KB_CONFIG_FILENAMES = [
   '.kb/kb.config.yml',
 ];
 
-export interface KbConfigResult extends ConfigFileResult {}
+export type KbConfigResult = ConfigFileResult;
 
 export async function findKbConfig(
   cwd: string,

@@ -3,16 +3,19 @@
  * Tests for product configuration system
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { promises as fsp } from 'node:fs';
-import path from 'node:path';
-import { tmpdir } from 'node:os';
-import { getProductConfig, explainProductConfig } from '../api/product-config';
-import { clearCaches } from '../cache/fs-cache';
-import { toFsProduct, toConfigProduct, ProductId } from '../utils/product-normalize';
-import { KbError } from '../errors/kb-error';
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { promises as fsp } from "node:fs";
+import path from "node:path";
+import { tmpdir } from "node:os";
+import { getProductConfig, explainProductConfig } from "../api/product-config";
+import { clearCaches } from "../cache/fs-cache";
+import {
+  toFsProduct,
+  toConfigProduct,
+} from "../utils/product-normalize";
+import { KbError } from "../errors/kb-error";
 
-describe('Product Configuration', () => {
+describe("Product Configuration", () => {
   let testDir: string;
 
   beforeEach(async () => {
@@ -26,193 +29,217 @@ describe('Product Configuration', () => {
     clearCaches();
   });
 
-  describe('Product Normalization', () => {
-    it('should convert ProductId to filesystem format', () => {
-      expect(toFsProduct('aiReview')).toBe('ai-review');
-      expect(toFsProduct('aiDocs')).toBe('ai-docs');
-      expect(toFsProduct('devlink')).toBe('devlink');
-      expect(toFsProduct('release')).toBe('release');
-      expect(toFsProduct('devkit')).toBe('devkit');
+  describe("Product Normalization", () => {
+    it("should convert ProductId to filesystem format", () => {
+      expect(toFsProduct("aiReview")).toBe("ai-review");
+      expect(toFsProduct("aiDocs")).toBe("ai-docs");
+      expect(toFsProduct("devlink")).toBe("devlink");
+      expect(toFsProduct("release")).toBe("release");
+      expect(toFsProduct("devkit")).toBe("devkit");
     });
 
-    it('should convert filesystem format to ProductId', () => {
-      expect(toConfigProduct('ai-review')).toBe('aiReview');
-      expect(toConfigProduct('ai-docs')).toBe('aiDocs');
-      expect(toConfigProduct('devlink')).toBe('devlink');
-      expect(toConfigProduct('release')).toBe('release');
-      expect(toConfigProduct('devkit')).toBe('devkit');
+    it("should convert filesystem format to ProductId", () => {
+      expect(toConfigProduct("ai-review")).toBe("aiReview");
+      expect(toConfigProduct("ai-docs")).toBe("aiDocs");
+      expect(toConfigProduct("devlink")).toBe("devlink");
+      expect(toConfigProduct("release")).toBe("release");
+      expect(toConfigProduct("devkit")).toBe("devkit");
     });
   });
 
-  describe('getProductConfig', () => {
-    it('should return runtime defaults when no config files exist', async () => {
-      const result = await getProductConfig({
-        cwd: testDir,
-        product: 'aiReview',
-      }, null);
+  describe("getProductConfig", () => {
+    it("should return runtime defaults when no config files exist", async () => {
+      const result = await getProductConfig(
+        {
+          cwd: testDir,
+          product: "aiReview",
+        },
+        null,
+      );
 
       expect(result.config).toMatchObject({
         enabled: true,
         rules: [],
       });
       expect(result.trace.length).toBeGreaterThan(0);
-      expect(result.trace[0]?.layer).toBe('runtime');
+      expect(result.trace[0]?.layer).toBe("runtime");
     });
 
-    it('should merge workspace config', async () => {
+    it("should merge workspace config", async () => {
       // Create workspace config
       const workspaceConfig = {
-        schemaVersion: '1.0',
+        schemaVersion: "1.0",
         products: {
-          'ai-review': {
+          "ai-review": {
             enabled: false,
-            customSetting: 'test',
+            customSetting: "test",
           },
         },
       };
       await fsp.writeFile(
-        path.join(testDir, 'kb-labs.config.json'),
-        JSON.stringify(workspaceConfig, null, 2)
+        path.join(testDir, "kb-labs.config.json"),
+        JSON.stringify(workspaceConfig, null, 2),
       );
 
-      const result = await getProductConfig({
-        cwd: testDir,
-        product: 'aiReview',
-      }, null);
+      const result = await getProductConfig(
+        {
+          cwd: testDir,
+          product: "aiReview",
+        },
+        null,
+      );
 
       expect(result.config).toMatchObject({
         enabled: false,
-        customSetting: 'test',
+        customSetting: "test",
       });
       expect(result.trace.length).toBeGreaterThan(1);
-      expect(result.trace.some(t => t.layer === 'workspace')).toBe(true);
+      expect(result.trace.some((t) => t.layer === "workspace")).toBe(true);
     });
 
-    it('should merge local config', async () => {
+    it("should merge local config", async () => {
       // Create local config directory
-      const localConfigDir = path.join(testDir, '.kb', 'ai-review');
+      const localConfigDir = path.join(testDir, ".kb", "ai-review");
       await fsp.mkdir(localConfigDir, { recursive: true });
 
       const localConfig = {
-        $schema: 'https://schemas.kb-labs.dev/config.schema.json',
-        schemaVersion: '1.0',
+        $schema: "https://schemas.kb-labs.dev/config.schema.json",
+        schemaVersion: "1.0",
         enabled: false,
-        localSetting: 'local-value',
+        localSetting: "local-value",
       };
       await fsp.writeFile(
-        path.join(localConfigDir, 'ai-review.config.json'),
-        JSON.stringify(localConfig, null, 2)
+        path.join(localConfigDir, "ai-review.config.json"),
+        JSON.stringify(localConfig, null, 2),
       );
 
-      const result = await getProductConfig({
-        cwd: testDir,
-        product: 'aiReview',
-      }, null);
+      const result = await getProductConfig(
+        {
+          cwd: testDir,
+          product: "aiReview",
+        },
+        null,
+      );
 
       expect(result.config).toMatchObject({
         enabled: false,
-        localSetting: 'local-value',
+        localSetting: "local-value",
       });
       expect(result.trace.length).toBeGreaterThan(1);
-      expect(result.trace.some(t => t.layer === 'local')).toBe(true);
+      expect(result.trace.some((t) => t.layer === "local")).toBe(true);
     });
 
-    it('should merge CLI overrides', async () => {
-      const result = await getProductConfig({
-        cwd: testDir,
-        product: 'aiReview',
-        cli: {
-          enabled: false,
-          debug: true,
+    it("should merge CLI overrides", async () => {
+      const result = await getProductConfig(
+        {
+          cwd: testDir,
+          product: "aiReview",
+          cli: {
+            enabled: false,
+            debug: true,
+          },
         },
-      }, null);
+        null,
+      );
 
       expect(result.config).toMatchObject({
         enabled: false,
         debug: true,
       });
       expect(result.trace.length).toBeGreaterThan(1);
-      expect(result.trace.some(t => t.layer === 'cli')).toBe(true);
+      expect(result.trace.some((t) => t.layer === "cli")).toBe(true);
     });
 
-    it('should handle array overwrite', async () => {
+    it("should handle array overwrite", async () => {
       // Create workspace config with array
       const workspaceConfig = {
-        schemaVersion: '1.0',
+        schemaVersion: "1.0",
         products: {
-          'ai-review': {
-            rules: ['workspace-rule'],
+          "ai-review": {
+            rules: ["workspace-rule"],
           },
         },
       };
       await fsp.writeFile(
-        path.join(testDir, 'kb-labs.config.json'),
-        JSON.stringify(workspaceConfig, null, 2)
+        path.join(testDir, "kb-labs.config.json"),
+        JSON.stringify(workspaceConfig, null, 2),
       );
 
-      const result = await getProductConfig({
-        cwd: testDir,
-        product: 'aiReview',
-        cli: {
-          rules: ['cli-rule'],
+      const result = await getProductConfig(
+        {
+          cwd: testDir,
+          product: "aiReview",
+          cli: {
+            rules: ["cli-rule"],
+          },
         },
-      }, null);
+        null,
+      );
 
-      expect((result.config as any).rules).toEqual(['cli-rule']);
+      expect((result.config as any).rules).toEqual(["cli-rule"]);
       expect(result.trace.length).toBeGreaterThan(2);
-      expect(result.trace.some(t => t.type === 'overwriteArray')).toBe(true);
+      expect(result.trace.some((t) => t.type === "overwriteArray")).toBe(true);
     });
   });
 
-  describe('explainProductConfig', () => {
-    it('should return trace without resolving config', async () => {
-      const result = await explainProductConfig({
-        cwd: testDir,
-        product: 'aiReview',
-      }, null);
+  describe("explainProductConfig", () => {
+    it("should return trace without resolving config", async () => {
+      const result = await explainProductConfig(
+        {
+          cwd: testDir,
+          product: "aiReview",
+        },
+        null,
+      );
 
       expect(result.trace.length).toBeGreaterThan(0);
-      expect(result.trace[0].layer).toBe('runtime');
+      expect(result.trace[0].layer).toBe("runtime");
     });
   });
 
-  describe('Error Handling', () => {
-    it('should throw KbError for invalid config', async () => {
+  describe("Error Handling", () => {
+    it("should throw KbError for invalid config", async () => {
       // Create invalid JSON config
       await fsp.writeFile(
-        path.join(testDir, 'kb-labs.config.json'),
-        '{ invalid json }'
+        path.join(testDir, "kb-labs.config.json"),
+        "{ invalid json }",
       );
 
       await expect(
-        getProductConfig({
-          cwd: testDir,
-          product: 'aiReview',
-        }, null)
+        getProductConfig(
+          {
+            cwd: testDir,
+            product: "aiReview",
+          },
+          null,
+        ),
       ).rejects.toThrow(KbError);
     });
 
-    it('should handle preset resolution failures', async () => {
+    it("should handle preset resolution failures", async () => {
       // Create config with invalid preset
       const workspaceConfig = {
-        schemaVersion: '1.0',
-        preset: 'nonexistent/preset',
+        schemaVersion: "1.0",
+        preset: "nonexistent/preset",
         products: {
-          'ai-review': {
+          "ai-review": {
             enabled: true,
           },
         },
       };
       await fsp.writeFile(
-        path.join(testDir, 'kb-labs.config.json'),
-        JSON.stringify(workspaceConfig, null, 2)
+        path.join(testDir, "kb-labs.config.json"),
+        JSON.stringify(workspaceConfig, null, 2),
       );
 
       // The function should handle invalid presets gracefully and fall back to defaults
-      const result = await getProductConfig({
-        cwd: testDir,
-        product: 'aiReview',
-      }, null);
+      const result = await getProductConfig(
+        {
+          cwd: testDir,
+          product: "aiReview",
+        },
+        null,
+      );
 
       expect(result.config).toMatchObject({
         enabled: true,
@@ -220,67 +247,73 @@ describe('Product Configuration', () => {
       });
     });
 
-    it('should handle merge conflicts gracefully', async () => {
+    it("should handle merge conflicts gracefully", async () => {
       // Create conflicting configs
       const workspaceConfig = {
-        schemaVersion: '1.0',
+        schemaVersion: "1.0",
         products: {
-          'ai-review': {
+          "ai-review": {
             enabled: true,
-            rules: ['workspace-rule'],
+            rules: ["workspace-rule"],
           },
         },
       };
       await fsp.writeFile(
-        path.join(testDir, 'kb-labs.config.json'),
-        JSON.stringify(workspaceConfig, null, 2)
+        path.join(testDir, "kb-labs.config.json"),
+        JSON.stringify(workspaceConfig, null, 2),
       );
 
-      const localConfigDir = path.join(testDir, '.kb', 'ai-review');
+      const localConfigDir = path.join(testDir, ".kb", "ai-review");
       await fsp.mkdir(localConfigDir, { recursive: true });
 
       const localConfig = {
-        $schema: 'https://schemas.kb-labs.dev/config.schema.json',
-        schemaVersion: '1.0',
+        $schema: "https://schemas.kb-labs.dev/config.schema.json",
+        schemaVersion: "1.0",
         enabled: false,
-        rules: ['local-rule'],
+        rules: ["local-rule"],
       };
       await fsp.writeFile(
-        path.join(localConfigDir, 'ai-review.config.json'),
-        JSON.stringify(localConfig, null, 2)
+        path.join(localConfigDir, "ai-review.config.json"),
+        JSON.stringify(localConfig, null, 2),
       );
 
-      const result = await getProductConfig({
-        cwd: testDir,
-        product: 'aiReview',
-      }, null);
+      const result = await getProductConfig(
+        {
+          cwd: testDir,
+          product: "aiReview",
+        },
+        null,
+      );
 
       // Local config should override workspace
       expect(result.config).toMatchObject({
         enabled: false,
-        rules: ['local-rule'],
+        rules: ["local-rule"],
       });
     });
 
-    it('should handle missing product in config', async () => {
+    it("should handle missing product in config", async () => {
       // Create config without the product
       const workspaceConfig = {
-        schemaVersion: '1.0',
+        schemaVersion: "1.0",
         products: {
-          'other-product': {
+          "other-product": {
             enabled: true,
           },
         },
       };
       await fsp.writeFile(
-        path.join(testDir, 'kb-labs.config.json'),
-        JSON.stringify(workspaceConfig, null, 2)
+        path.join(testDir, "kb-labs.config.json"),
+        JSON.stringify(workspaceConfig, null, 2),
       );
 
-      const result = await getProductConfig({
-        cwd: testDir,
-        product: 'aiReview',
-      }, null);
+      const result = await getProductConfig(
+        {
+          cwd: testDir,
+          product: "aiReview",
+        },
+        null,
+      );
 
       // Should fall back to runtime defaults
       expect(result.config).toMatchObject({
@@ -289,78 +322,87 @@ describe('Product Configuration', () => {
       });
     });
 
-    it('should handle invalid product configuration structure', async () => {
+    it("should handle invalid product configuration structure", async () => {
       // Create config with invalid product structure
       const workspaceConfig = {
-        schemaVersion: '1.0',
+        schemaVersion: "1.0",
         products: {
-          'ai-review': 'invalid-string-instead-of-object',
+          "ai-review": "invalid-string-instead-of-object",
         },
       };
       await fsp.writeFile(
-        path.join(testDir, 'kb-labs.config.json'),
-        JSON.stringify(workspaceConfig, null, 2)
+        path.join(testDir, "kb-labs.config.json"),
+        JSON.stringify(workspaceConfig, null, 2),
       );
 
       // The function should handle invalid structures gracefully
-      const result = await getProductConfig({
-        cwd: testDir,
-        product: 'aiReview',
-      }, null);
+      const result = await getProductConfig(
+        {
+          cwd: testDir,
+          product: "aiReview",
+        },
+        null,
+      );
 
       // Should handle invalid structure gracefully
-      expect(result.config).toBe('invalid-string-instead-of-object');
+      expect(result.config).toBe("invalid-string-instead-of-object");
     });
 
-    it('should handle circular references in config', async () => {
+    it("should handle circular references in config", async () => {
       // Create config that might cause circular references
       const workspaceConfig = {
-        schemaVersion: '1.0',
+        schemaVersion: "1.0",
         products: {
-          'ai-review': {
+          "ai-review": {
             enabled: true,
             circularRef: null as any,
           },
         },
       };
-      workspaceConfig.products['ai-review'].circularRef = workspaceConfig;
+      workspaceConfig.products["ai-review"].circularRef = workspaceConfig;
 
       // JSON.stringify will fail with circular references, so we'll create a simpler test
       const simpleConfig = {
-        schemaVersion: '1.0',
+        schemaVersion: "1.0",
         products: {
-          'ai-review': {
+          "ai-review": {
             enabled: true,
           },
         },
       };
       await fsp.writeFile(
-        path.join(testDir, 'kb-labs.config.json'),
-        JSON.stringify(simpleConfig, null, 2)
+        path.join(testDir, "kb-labs.config.json"),
+        JSON.stringify(simpleConfig, null, 2),
       );
 
       // Should handle gracefully
-      const result = await getProductConfig({
-        cwd: testDir,
-        product: 'aiReview',
-      }, null);
+      const result = await getProductConfig(
+        {
+          cwd: testDir,
+          product: "aiReview",
+        },
+        null,
+      );
 
       expect(result.config).toMatchObject({
         enabled: true,
       });
     });
 
-    it('should handle file system errors', async () => {
+    it("should handle file system errors", async () => {
       // Create directory that can't be read
-      const restrictedDir = path.join(testDir, 'restricted');
+      const restrictedDir = path.join(testDir, "restricted");
       await fsp.mkdir(restrictedDir, { recursive: true });
       await fsp.chmod(restrictedDir, 0o000); // Remove all permissions
 
       // The function should handle permission errors gracefully
-      const result = await getProductConfig({
-        cwd: restrictedDir,
-        product: 'aiReview',
-      }, null);
+      const result = await getProductConfig(
+        {
+          cwd: restrictedDir,
+          product: "aiReview",
+        },
+        null,
+      );
 
       // Should fall back to runtime defaults
       expect(result.config).toMatchObject({

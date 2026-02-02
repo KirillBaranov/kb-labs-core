@@ -19,10 +19,10 @@ function isQuiet(): boolean {
  */
 function getLogLevelFromEnv(): LogLevel {
   const envLevel = process.env.KB_LOG_LEVEL?.toLowerCase();
-  if (envLevel === 'debug' || envLevel === 'trace') return 'debug';
-  if (envLevel === 'info') return 'info';
-  if (envLevel === 'warn') return 'warn';
-  if (envLevel === 'error') return 'error';
+  if (envLevel === 'debug' || envLevel === 'trace') {return 'debug';}
+  if (envLevel === 'info') {return 'info';}
+  if (envLevel === 'warn') {return 'warn';}
+  if (envLevel === 'error') {return 'error';}
   return 'info';
 }
 

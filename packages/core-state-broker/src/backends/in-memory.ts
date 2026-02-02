@@ -2,7 +2,7 @@
  * In-memory state broker with TTL cleanup
  */
 
-import type { StateBroker, BrokerStats, HealthStatus, StoredValue } from '../index';
+import type { StateBroker, BrokerStats, HealthStatus } from '../index';
 
 interface CacheEntry {
   value: unknown;

@@ -480,7 +480,9 @@ describe('AI Enrichment', () => {
             logger.info('User created project', { userId: '123' });
             
             await Promise.resolve();
-            await new Promise(r => setTimeout(r, 10));
+            await new Promise((r) => {
+      setTimeout(r, 10);
+    });
             
             expect(records.length).toBeGreaterThan(0);
             const record = records[0];
@@ -506,7 +508,9 @@ describe('AI Enrichment', () => {
             logger.info('User created project');
             
             await Promise.resolve();
-            await new Promise(r => setTimeout(r, 10));
+            await new Promise((r) => {
+      setTimeout(r, 10);
+    });
             
             expect(records.length).toBeGreaterThan(0);
             const record = records[0];

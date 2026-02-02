@@ -14,7 +14,9 @@ describe.sequential('configureFromEnv', () => {
     addSink({ handle: r => { records.push(r) } })
     getLogger('a').debug('x')
     getLogger('c').debug('y')
-    await new Promise(r => setTimeout(r, 0))
+    await new Promise((r) => {
+      setTimeout(r, 0);
+    })
     expect(records.length).toBe(1)
     expect(records[0].level).toBe('debug')
     expect(records[0].category).toBe('a')
@@ -29,7 +31,9 @@ describe.sequential('configureFromEnv', () => {
     addSink({ handle: r => { records.push(r) } })
     getLogger('api:get').info('pass')
     getLogger('db').info('skip')
-    await new Promise(r => setTimeout(r, 0))
+    await new Promise((r) => {
+      setTimeout(r, 0);
+    })
     expect(records.map(r => r.category)).toEqual(['api:get'])
   })
 })
@@ -48,7 +52,9 @@ describe.sequential('redactor', () => {
     configureLogger({ redactor: (r) => redact(r), sinks: [{ handle: r => { seen.push(r) } }] })
     getLogger('x').info('ok', { token: 'secret', keep: 1 })
     await Promise.resolve();
-    await new Promise(r => setTimeout(r, 1))
+    await new Promise((r) => {
+      setTimeout(r, 1);
+    })
     expect(seen[0].meta).toEqual({ token: '***', keep: 1 })
   })
 })
@@ -63,7 +69,9 @@ describe.sequential('sinks', () => {
     addSink(jsonSink)
     getLogger('cat').info('hello', { a: 1 })
     await Promise.resolve();
-    await new Promise(r => setTimeout(r, 1))
+    await new Promise((r) => {
+      setTimeout(r, 1);
+    })
     expect(spy).toHaveBeenCalled()
     const call = spy.mock.calls[0]?.[0] as string
     const obj = JSON.parse(call.trim())
@@ -86,7 +94,9 @@ describe.sequential('sinks', () => {
     l.warn('w')
     l.error('e')
     await Promise.resolve();
-    await new Promise(r => setTimeout(r, 1))
+    await new Promise((r) => {
+      setTimeout(r, 1);
+    })
 
     expect(dbgSpy).toHaveBeenCalled()
     expect(logSpy).toHaveBeenCalledWith('[2020-01-01T00:00:00.000Z] INFO svc: i', { x: 1 })

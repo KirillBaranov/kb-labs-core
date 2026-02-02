@@ -34,8 +34,7 @@ export async function checkSinkHealth(sink: LogSink): Promise<{ ok: boolean; err
     // If sink has health check function, use it
     if (sink.health) {
         try {
-            const result = await Promise.resolve(sink.health());
-            return result;
+            return await Promise.resolve(sink.health());
         } catch (error) {
             return {
                 ok: false,

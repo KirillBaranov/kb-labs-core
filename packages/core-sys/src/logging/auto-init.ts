@@ -23,7 +23,7 @@ let configLoaderPromise: Promise<typeof import('./config-loader') | null> | null
  * Использует разумные дефолты или загружает kb.config.json если есть
  */
 export function ensureLoggingInitialized(): void {
-  if (autoInitialized) return;
+  if (autoInitialized) {return;}
   autoInitialized = true;
   
   // 1. Попробовать найти kb.config.json

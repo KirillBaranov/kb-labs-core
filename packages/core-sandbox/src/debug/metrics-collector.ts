@@ -94,7 +94,7 @@ async function loadSnapshots(
  * Calculate percentile
  */
 function percentile(sortedValues: number[], p: number): number {
-  if (sortedValues.length === 0) return 0;
+  if (sortedValues.length === 0) {return 0;}
   const index = Math.ceil((p / 100) * sortedValues.length) - 1;
   const safeIndex = Math.max(0, Math.min(index, sortedValues.length - 1));
   const value = sortedValues[safeIndex];
@@ -108,13 +108,13 @@ function calculateTrend(
   recent: number[],
   older: number[]
 ): 'up' | 'down' | 'stable' {
-  if (recent.length === 0 || older.length === 0) return 'stable';
+  if (recent.length === 0 || older.length === 0) {return 'stable';}
 
   const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
   const olderAvg = older.reduce((a, b) => a + b, 0) / older.length;
 
   const diff = ((recentAvg - olderAvg) / olderAvg) * 100;
-  if (Math.abs(diff) < 5) return 'stable';
+  if (Math.abs(diff) < 5) {return 'stable';}
   return diff > 0 ? 'up' : 'down';
 }
 
@@ -290,7 +290,7 @@ export function formatMetricsDashboard(
     lines.push('║ Top Errors                                                      ║');
     for (let i = 0; i < Math.min(3, metrics.topErrors.length); i++) {
       const error = metrics.topErrors[i];
-      if (!error) continue;
+      if (!error) {continue;}
       const message = error.message.length > 50
         ? error.message.substring(0, 47) + '...'
         : error.message;

@@ -44,7 +44,11 @@ export interface IArtifacts {
    * @param data - Data to write (will be serialized)
    * @param options - Write options
    */
-  write(key: string, data: unknown, options?: ArtifactWriteOptions): Promise<void>;
+  write(
+    key: string,
+    data: unknown,
+    options?: ArtifactWriteOptions,
+  ): Promise<void>;
 
   /**
    * Read an artifact.

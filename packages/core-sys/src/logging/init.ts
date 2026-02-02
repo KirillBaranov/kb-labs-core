@@ -3,8 +3,8 @@
  * Unified logging initialization for all KB Labs components
  */
 
-import { configureLogger, setLogLevel, removeSink, getLogger } from "./index";
-import type { LogLevel, VerbosityLevel, OutputMode, DebugFormat } from "./types/types";
+import { configureLogger, removeSink, getLogger } from "./index";
+import type { LogLevel, VerbosityLevel, OutputMode } from "./types/types";
 import { createConsoleSink } from "./sinks/console-sink";
 import { jsonSink } from "./sinks/json";
 import { setupGracefulShutdown } from "./shutdown";

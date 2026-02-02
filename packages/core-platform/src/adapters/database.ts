@@ -35,7 +35,10 @@ export interface SQLTransaction {
    * @param params - Query parameters (prevents SQL injection)
    * @returns Query result
    */
-  query<T = unknown>(sql: string, params?: unknown[]): Promise<SQLQueryResult<T>>;
+  query<T = unknown>(
+    sql: string,
+    params?: unknown[],
+  ): Promise<SQLQueryResult<T>>;
 
   /**
    * Commit the transaction.
@@ -85,7 +88,10 @@ export interface ISQLDatabase {
    * console.log(result.rows); // [{ id: 1, name: 'Alice' }, ...]
    * ```
    */
-  query<T = unknown>(sql: string, params?: unknown[]): Promise<SQLQueryResult<T>>;
+  query<T = unknown>(
+    sql: string,
+    params?: unknown[],
+  ): Promise<SQLQueryResult<T>>;
 
   /**
    * Begin a SQL transaction.
@@ -205,7 +211,7 @@ export interface IDocumentDatabase {
   find<T extends BaseDocument>(
     collection: string,
     filter: DocumentFilter<T>,
-    options?: FindOptions
+    options?: FindOptions,
   ): Promise<T[]>;
 
   /**
@@ -215,7 +221,10 @@ export interface IDocumentDatabase {
    * @param id - Document ID
    * @returns Document or null if not found
    */
-  findById<T extends BaseDocument>(collection: string, id: string): Promise<T | null>;
+  findById<T extends BaseDocument>(
+    collection: string,
+    id: string,
+  ): Promise<T | null>;
 
   /**
    * Insert a single document.
@@ -224,7 +233,10 @@ export interface IDocumentDatabase {
    * @param document - Document to insert (id, createdAt, updatedAt will be added if missing)
    * @returns Inserted document with generated fields
    */
-  insertOne<T extends BaseDocument>(collection: string, document: Omit<T, 'id' | 'createdAt' | 'updatedAt'>): Promise<T>;
+  insertOne<T extends BaseDocument>(
+    collection: string,
+    document: Omit<T, "id" | "createdAt" | "updatedAt">,
+  ): Promise<T>;
 
   /**
    * Update documents matching a filter.
@@ -237,7 +249,7 @@ export interface IDocumentDatabase {
   updateMany<T extends BaseDocument>(
     collection: string,
     filter: DocumentFilter<T>,
-    update: DocumentUpdate<T>
+    update: DocumentUpdate<T>,
   ): Promise<number>;
 
   /**
@@ -251,7 +263,7 @@ export interface IDocumentDatabase {
   updateById<T extends BaseDocument>(
     collection: string,
     id: string,
-    update: DocumentUpdate<T>
+    update: DocumentUpdate<T>,
   ): Promise<T | null>;
 
   /**
@@ -261,7 +273,10 @@ export interface IDocumentDatabase {
    * @param filter - MongoDB-style filter
    * @returns Number of documents deleted
    */
-  deleteMany<T extends BaseDocument>(collection: string, filter: DocumentFilter<T>): Promise<number>;
+  deleteMany<T extends BaseDocument>(
+    collection: string,
+    filter: DocumentFilter<T>,
+  ): Promise<number>;
 
   /**
    * Delete a single document by ID.
@@ -279,7 +294,10 @@ export interface IDocumentDatabase {
    * @param filter - MongoDB-style filter
    * @returns Number of matching documents
    */
-  count<T extends BaseDocument>(collection: string, filter: DocumentFilter<T>): Promise<number>;
+  count<T extends BaseDocument>(
+    collection: string,
+    filter: DocumentFilter<T>,
+  ): Promise<number>;
 
   /**
    * Close database connection.
@@ -407,7 +425,7 @@ export interface ITimeSeriesDatabase {
     metric: string,
     startTime: number,
     endTime: number,
-    tags?: Record<string, string>
+    tags?: Record<string, string>,
   ): Promise<TimeSeriesPoint[]>;
 
   /**

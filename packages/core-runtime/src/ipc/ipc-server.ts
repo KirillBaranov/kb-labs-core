@@ -25,7 +25,7 @@
  */
 
 import type { PlatformContainer } from '../container';
-import type { AdapterCall, AdapterResponse } from '@kb-labs/core-platform/serializable';
+import type { AdapterResponse } from '@kb-labs/core-platform/serializable';
 import { isAdapterCall, serialize, deserialize, IPC_PROTOCOL_VERSION } from '@kb-labs/core-platform/serializable';
 
 /**

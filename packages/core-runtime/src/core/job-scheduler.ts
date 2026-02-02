@@ -138,7 +138,7 @@ export class JobScheduler implements IJobScheduler {
 
   async cancel(jobId: string): Promise<boolean> {
     const job = this.jobs.get(jobId);
-    if (!job) return false;
+    if (!job) {return false;}
 
     if (job.status === 'completed' || job.status === 'failed') {
       return false; // Can't cancel finished jobs
@@ -201,7 +201,7 @@ export class JobScheduler implements IJobScheduler {
    */
   private enqueue(jobId: string): void {
     const job = this.jobs.get(jobId);
-    if (!job || job.status !== 'pending') return;
+    if (!job || job.status !== 'pending') {return;}
 
     // Insert by priority (higher priority = earlier in queue)
     const priority = job.definition.priority ?? 50;
@@ -232,10 +232,10 @@ export class JobScheduler implements IJobScheduler {
     // Get next job from queue
     while (this.queue.length > 0 && this.running.size < this.config.maxConcurrent) {
       const jobId = this.queue.shift();
-      if (!jobId) break;
+      if (!jobId) {break;}
 
       const job = this.jobs.get(jobId);
-      if (!job || job.status !== 'pending') continue;
+      if (!job || job.status !== 'pending') {continue;}
 
       // Try to acquire resource slot
       const slot = await this.resources.acquireSlot('job', job.tenantId, this.config.defaultTimeout);
@@ -287,7 +287,7 @@ export class JobScheduler implements IJobScheduler {
       const result = await handler(job.definition.payload);
 
       // Success
-      if (job.timeoutId) clearTimeout(job.timeoutId);
+      if (job.timeoutId) {clearTimeout(job.timeoutId);}
 
       job.status = 'completed';
       job.result = result;
@@ -300,7 +300,7 @@ export class JobScheduler implements IJobScheduler {
       });
       this.logger.info('Job completed', { jobId: job.id, type: job.type });
     } catch (error) {
-      if (job.timeoutId) clearTimeout(job.timeoutId);
+      if (job.timeoutId) {clearTimeout(job.timeoutId);}
 
       const errorMessage = error instanceof Error ? error.message : String(error);
 

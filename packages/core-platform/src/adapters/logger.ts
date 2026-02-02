@@ -3,12 +3,12 @@
  * Logger abstraction for structured logging.
  */
 
-import { ulid } from 'ulid';
+import { ulid } from "ulid";
 
 /**
  * Log level enumeration
  */
-export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
 
 /**
  * Generate unique log ID using ULID.

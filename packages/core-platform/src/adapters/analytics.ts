@@ -21,7 +21,7 @@ export interface EventsQuery {
  */
 export interface AnalyticsEvent {
   id: string;
-  schema: 'kb.v1';
+  schema: "kb.v1";
   type: string;
   ts: string;
   ingestTs: string;
@@ -31,14 +31,14 @@ export interface AnalyticsEvent {
   };
   runId: string;
   actor?: {
-    type: 'user' | 'agent' | 'ci';
+    type: "user" | "agent" | "ci";
     id?: string;
     name?: string;
   };
   ctx?: Record<string, string | number | boolean | null>;
   payload?: unknown;
   hashMeta?: {
-    algo: 'hmac-sha256';
+    algo: "hmac-sha256";
     saltId: string;
   };
 }
@@ -118,7 +118,7 @@ export interface AnalyticsContext {
    * Auto-detected from environment (git config, CI env vars, etc).
    */
   actor?: {
-    type: 'user' | 'agent' | 'ci';
+    type: "user" | "agent" | "ci";
     id?: string;
     name?: string;
   };

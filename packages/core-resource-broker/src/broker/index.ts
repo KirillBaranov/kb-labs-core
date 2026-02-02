@@ -3,4 +3,4 @@
  * Resource broker exports.
  */
 
-export { ResourceBroker } from './resource-broker.js';
+export { ResourceBroker } from "./resource-broker.js";

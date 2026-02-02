@@ -7,5 +7,6 @@ export default defineConfig({
     index: 'src/index.ts',
   },
   tsconfig: "tsconfig.build.json", // Use build-specific tsconfig without paths
+  splitting: true, // Enable code splitting for proper ESM re-exports
   // nodePreset already includes all workspace packages as external via tsup.external.json
 })

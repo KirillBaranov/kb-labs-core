@@ -10,12 +10,13 @@ import {
   serializeArgs,
   deserializeArgs,
 } from './serializer';
-import {
-  SerializationError,
-  DeserializationError,
+import type {
   SerializableBuffer,
   SerializableDate,
-  SerializableError,
+  SerializableError} from './types';
+import {
+  SerializationError,
+  DeserializationError
 } from './types';
 
 describe('serializer', () => {

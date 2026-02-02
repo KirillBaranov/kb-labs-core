@@ -36,7 +36,7 @@
  * ```
  */
 
-import type { LogRecord, LogQuery } from './logger.ts';
+import type { LogRecord, LogQuery } from "./logger";
 
 /**
  * Query options for log retrieval.
@@ -47,9 +47,9 @@ export interface LogQueryOptions {
   /** Number of logs to skip for pagination (default: 0) */
   offset?: number;
   /** Sort by field (default: 'timestamp') */
-  sortBy?: 'timestamp' | 'level';
+  sortBy?: "timestamp" | "level";
   /** Sort order (default: 'desc' - newest first) */
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 /**
@@ -63,7 +63,7 @@ export interface LogQueryResult {
   /** True if more results are available (offset + logs.length < total) */
   hasMore: boolean;
   /** Source of data (for debugging/monitoring) */
-  source: 'buffer' | 'persistence' | 'hybrid';
+  source: "buffer" | "persistence" | "hybrid";
 }
 
 /**
@@ -241,7 +241,10 @@ export interface ILogReader {
    * const results = await reader.search('auth* AND (error OR warn)');
    * ```
    */
-  search(searchText: string, options?: LogSearchOptions): Promise<LogSearchResult>;
+  search(
+    searchText: string,
+    options?: LogSearchOptions,
+  ): Promise<LogSearchResult>;
 
   /**
    * Subscribe to real-time log stream.

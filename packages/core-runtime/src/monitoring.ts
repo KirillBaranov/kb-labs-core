@@ -32,7 +32,7 @@ export async function getMonitoringSnapshot(
     return [];
   }
 
-  const entries = await Promise.all(
+  return await Promise.all(
     resources.map(async (resource) => {
       const availability = await resourcesManager
         .getAvailability(resource, tenantId)
@@ -44,8 +44,6 @@ export async function getMonitoringSnapshot(
       return { resource, availability, quota, tenantId, ts };
     })
   );
-
-  return entries;
 }
 
 export type DegradedLevel = 'normal' | 'degraded' | 'critical';

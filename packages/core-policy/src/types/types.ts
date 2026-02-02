@@ -17,7 +17,7 @@ export interface PolicyRule {
 
 export interface Policy {
   $schema?: string;
-  schemaVersion: '1.0';
+  schemaVersion: "1.0";
   rules: PolicyRule[];
   metadata?: {
     name: string;
@@ -33,17 +33,17 @@ export interface PolicyResolutionOptions {
 
 export interface PolicyResolutionResult {
   policy: Policy;
-  source: 'preset' | 'workspace' | 'default';
+  source: "preset" | "workspace" | "default";
   bundle?: string;
 }
 
 // Base actions for KB Labs
 export const BASE_ACTIONS = {
-  RELEASE_PUBLISH: 'release.publish',
-  DEVKIT_SYNC: 'devkit.sync',
-  DEVLINK_WATCH: 'devlink.watch',
-  AI_REVIEW_RUN: 'aiReview.run',
-  PROFILES_MATERIALIZE: 'profiles.materialize',
+  RELEASE_PUBLISH: "release.publish",
+  DEVKIT_SYNC: "devkit.sync",
+  DEVLINK_WATCH: "devlink.watch",
+  AI_REVIEW_RUN: "aiReview.run",
+  PROFILES_MATERIALIZE: "profiles.materialize",
 } as const;
 
-export type BaseAction = typeof BASE_ACTIONS[keyof typeof BASE_ACTIONS];
+export type BaseAction = (typeof BASE_ACTIONS)[keyof typeof BASE_ACTIONS];

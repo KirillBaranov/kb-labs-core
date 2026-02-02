@@ -94,7 +94,9 @@ describe('Logging Metrics', () => {
     addSink(sink as any);
     getLogger('test').info('message');
     await Promise.resolve();
-    await new Promise(r => setTimeout(r, 1));
+    await new Promise((r) => {
+      setTimeout(r, 1);
+    });
     
     // Health tracking is optional and may not be automatically tracked
     // Just verify the function works
@@ -112,7 +114,9 @@ describe('Logging Metrics', () => {
     
     getLogger('test').info('message');
     await Promise.resolve();
-    await new Promise(r => setTimeout(r, 1));
+    await new Promise((r) => {
+      setTimeout(r, 1);
+    });
     
     const allHealth = getAllSinkHealth();
     // Health tracking might be optional, so just check function works

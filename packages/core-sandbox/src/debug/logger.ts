@@ -142,7 +142,7 @@ function isDebugEnabled(namespace: string): boolean {
  * Format log entry for console output
  */
 function formatLogEntry(entry: LogEntry, enabled: boolean): string {
-  if (!enabled) return '';
+  if (!enabled) {return '';}
   
   const timestamp = new Date(entry.timestamp).toISOString();
   const level = entry.level.toUpperCase().padEnd(5);
@@ -186,7 +186,7 @@ export function createDebugLogger(enabled: boolean, namespace: string, options?:
     formattersLoading = (async () => {
       try {
         // Dynamic import to avoid circular dependencies
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+         
         const debugModule = await import('@kb-labs/shared-cli-ui/debug');
         if (!debugModule || !debugModule.formatDebugEntryAI || !debugModule.formatDebugEntryHuman) {
           throw new Error('Debug formatters not found in @kb-labs/shared-cli-ui/debug');
@@ -261,7 +261,7 @@ export function createDebugLogger(enabled: boolean, namespace: string, options?:
   };
 
   const log = (level: LogEntry['level'], message: string, meta?: object): void => {
-    if (!actuallyEnabled) return;
+    if (!actuallyEnabled) {return;}
     
     const entry = createEntry(level, message, meta);
     entries.push(entry);
@@ -286,7 +286,7 @@ export function createDebugLogger(enabled: boolean, namespace: string, options?:
   };
 
   const logLazy = (level: LogEntry['level'], getMessage: () => string, meta?: object): void => {
-    if (!actuallyEnabled) return;
+    if (!actuallyEnabled) {return;}
     
     // Only compute message if actually logging
     const message = getMessage();

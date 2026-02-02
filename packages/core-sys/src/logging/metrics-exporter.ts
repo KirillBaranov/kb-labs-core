@@ -7,7 +7,6 @@
  */
 
 import { getMetrics, getAllSinkHealth } from "./metrics";
-import type { LoggingMetrics, SinkHealth } from "./metrics";
 
 /**
  * Telemetry emitter interface (compatible with @kb-labs/core-types)
@@ -103,7 +102,7 @@ export function createPeriodicMetricsExporter(
     let intervalId: NodeJS.Timeout | null = null;
 
     const start = () => {
-        if (intervalId) return; // Already started
+        if (intervalId) {return;} // Already started
 
         intervalId = setInterval(() => {
             void exportMetricsToAnalytics(emitter, false); // Don't reset, accumulate

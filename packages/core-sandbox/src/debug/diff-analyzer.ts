@@ -299,8 +299,8 @@ export async function findLatestSnapshots(
 
     for (const file of snapshotFiles) {
       const snapshot = await loadSnapshot(path.join(snapshotsDir, file));
-      if (!snapshot) continue;
-      if (pluginId && snapshot.pluginId !== pluginId) continue;
+      if (!snapshot) {continue;}
+      if (pluginId && snapshot.pluginId !== pluginId) {continue;}
 
       if (!success && snapshot.result === 'success') {
         success = snapshot;
@@ -309,7 +309,7 @@ export async function findLatestSnapshots(
         error = snapshot;
       }
 
-      if (success && error) break;
+      if (success && error) {break;}
     }
 
     return { success, error };

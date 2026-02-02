@@ -3,7 +3,6 @@
  * Bundle orchestration logic
  */
 
-import { promises as fsp } from 'node:fs';
 import path from 'node:path';
 import {
   getProductConfig,
@@ -12,7 +11,6 @@ import {
   readProfilesSection,
   resolveProfile as resolveProfileV2,
   selectProfileScope,
-  MergeTrace,
   validateProductConfig,
   type BundleProfile,
   type ProfileLayerInput,

@@ -4,17 +4,17 @@
  * Execution response types for the execution layer.
  */
 
-import type { ExecutionMeta } from '@kb-labs/plugin-contracts';
+import type { ExecutionMeta } from "@kb-labs/plugin-contracts";
 
 // Re-export for convenience
-export type { ExecutionMeta } from '@kb-labs/plugin-contracts';
+export type { ExecutionMeta } from "@kb-labs/plugin-contracts";
 
 /**
  * Execution metadata - additional info about the execution.
  */
 export interface ExecutionMetadata {
   /** Backend type that executed the request */
-  backend: 'in-process' | 'subprocess' | 'worker-pool' | 'remote';
+  backend: "in-process" | "subprocess" | "worker-pool" | "remote";
 
   /** Workspace ID used for execution */
   workspaceId?: string;
@@ -75,5 +75,5 @@ export interface ExecuteOptions {
   signal?: AbortSignal;
 
   /** Priority level */
-  priority?: 'low' | 'normal' | 'high';
+  priority?: "low" | "normal" | "high";
 }

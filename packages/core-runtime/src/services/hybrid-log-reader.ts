@@ -154,10 +154,10 @@ export class HybridLogReader implements ILogReader {
     return this.buffer.subscribe((log) => {
       // Apply filters if provided
       if (filters) {
-        if (filters.level && log.level !== filters.level) return;
-        if (filters.source && log.source !== filters.source) return;
-        if (filters.from !== undefined && log.timestamp < filters.from) return;
-        if (filters.to !== undefined && log.timestamp > filters.to) return;
+        if (filters.level && log.level !== filters.level) {return;}
+        if (filters.source && log.source !== filters.source) {return;}
+        if (filters.from !== undefined && log.timestamp < filters.from) {return;}
+        if (filters.to !== undefined && log.timestamp > filters.to) {return;}
       }
       callback(log);
     });

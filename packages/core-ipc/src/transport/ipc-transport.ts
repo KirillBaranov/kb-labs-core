@@ -30,7 +30,6 @@
  * ```
  */
 
-import { randomUUID } from 'crypto';
 import type { AdapterCall, AdapterResponse } from '@kb-labs/core-platform/serializable';
 import { isAdapterResponse } from '@kb-labs/core-platform/serializable';
 import {

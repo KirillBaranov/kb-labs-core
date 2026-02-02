@@ -44,7 +44,7 @@ export class MemoryStorage implements IStorage {
    */
   async stat(path: string): Promise<StorageMetadata | null> {
     const data = this.store.get(path);
-    if (!data) return null;
+    if (!data) {return null;}
 
     return {
       path,

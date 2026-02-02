@@ -6,14 +6,14 @@
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { promises as fsp } from 'node:fs';
-import {
+import type {
   BundleProfile,
   BundleProfileSource,
   ProfileTrace,
   ProfileV2,
-  ProfileV2Schema,
-  ProfilesV2Schema,
-  ScopeV2,
+  ScopeV2} from './types';
+import {
+  ProfilesV2Schema
 } from './types';
 import { readProfilesSection } from './loader';
 import { readConfigFile } from '../api/read-config';
@@ -231,7 +231,7 @@ function buildScopeProductMap(
           continue;
         }
         const scopeMap = map[scope.id];
-        if (!scopeMap) continue;
+        if (!scopeMap) {continue;}
         
         const target = scopeMap[productKey];
         if (!target) {

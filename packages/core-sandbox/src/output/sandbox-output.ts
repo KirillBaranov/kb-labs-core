@@ -4,9 +4,7 @@
  */
 
 import type { Output, ErrorOptions, ProgressDetails, Spinner } from "@kb-labs/core-sys/output";
-import type { LogRecord } from "@kb-labs/core-sys/logging";
 import { createOutput, type OutputConfig } from "@kb-labs/core-sys/output";
-import { createSpinner } from "@kb-labs/shared-cli-ui";
 
 /**
  * SandboxOutput - Output implementation for subprocess

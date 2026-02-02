@@ -146,8 +146,7 @@ export class CrashReporter {
     try {
       const filename = `crash-heap-${process.pid}.heapsnapshot`;
       const filepath = path.join(this.crashDir, filename);
-      const result = v8.writeHeapSnapshot(filepath);
-      return result;
+      return v8.writeHeapSnapshot(filepath);
     } catch (err) {
       console.error('[CRASH-REPORTER] Failed to generate heap snapshot:', err);
       return null;

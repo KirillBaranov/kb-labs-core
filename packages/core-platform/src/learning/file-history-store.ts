@@ -36,7 +36,7 @@ export class FileHistoryStore implements IHistoryStore {
       await this.enforceRotation();
     } catch (error) {
       // Log to stderr to avoid throwing (learning is non-critical)
-      // eslint-disable-next-line no-console
+       
       console.error('[FileHistoryStore] Failed to write history', {
         target,
         error: error instanceof Error ? error.message : String(error),
@@ -48,20 +48,20 @@ export class FileHistoryStore implements IHistoryStore {
     const files = await this.getFilesSorted();
     const results: HistoryRecord[] = [];
     for (const file of files) {
-      if (options.limit && results.length >= options.limit) break;
+      if (options.limit && results.length >= options.limit) {break;}
       const buf = await this.storage.read(file);
-      if (!buf) continue;
+      if (!buf) {continue;}
       const lines = buf.toString('utf8').split('\n').filter(Boolean);
       for (const line of lines) {
-        if (options.limit && results.length >= options.limit) break;
+        if (options.limit && results.length >= options.limit) {break;}
         try {
           const parsed = JSON.parse(line) as { v: number; record: HistoryRecord };
           const rec = parsed.record;
-          if (rec.scopeId !== options.scopeId) continue;
-          if (options.queryHash && rec.queryHash !== options.queryHash) continue;
+          if (rec.scopeId !== options.scopeId) {continue;}
+          if (options.queryHash && rec.queryHash !== options.queryHash) {continue;}
           if (options.queryVector && options.queryVector.length > 0 && rec.queryVector) {
             const similarity = this.cosineSimilarity(options.queryVector, rec.queryVector);
-            if (similarity <= 0.7) continue;
+            if (similarity <= 0.7) {continue;}
           }
           results.push(rec);
         } catch {
@@ -77,13 +77,13 @@ export class FileHistoryStore implements IHistoryStore {
     const counts = new Map<string, number>();
     for (const file of files) {
       const buf = await this.storage.read(file);
-      if (!buf) continue;
+      if (!buf) {continue;}
       const lines = buf.toString('utf8').split('\n').filter(Boolean);
       for (const line of lines) {
         try {
           const parsed = JSON.parse(line) as { v: number; record: HistoryRecord };
           const rec = parsed.record;
-          if (rec.scopeId !== scopeId) continue;
+          if (rec.scopeId !== scopeId) {continue;}
           counts.set(rec.query, (counts.get(rec.query) ?? 0) + 1);
         } catch {
           continue;
@@ -108,7 +108,7 @@ export class FileHistoryStore implements IHistoryStore {
     }
     const latest = files[files.length - 1]!;
     const buf = await this.storage.read(latest);
-    if (!buf) return latest;
+    if (!buf) {return latest;}
     const count = buf.toString('utf8').split('\n').filter(Boolean).length;
     if (count >= this.maxRecordsPerFile) {
       return this.segmentPath(Date.now());
@@ -134,7 +134,7 @@ export class FileHistoryStore implements IHistoryStore {
 
   private async enforceRotation(): Promise<void> {
     const files = await this.getFilesSorted();
-    if (files.length <= this.maxFiles) return;
+    if (files.length <= this.maxFiles) {return;}
     const excess = files.length - this.maxFiles;
     const toDelete = files.slice(0, excess);
     await Promise.all(toDelete.map((f) => this.storage.delete(f)));
@@ -145,7 +145,7 @@ export class FileHistoryStore implements IHistoryStore {
   }
 
   private cosineSimilarity(vec1: number[], vec2: number[]): number {
-    if (vec1.length !== vec2.length) return 0;
+    if (vec1.length !== vec2.length) {return 0;}
     let dot = 0;
     let norm1 = 0;
     let norm2 = 0;

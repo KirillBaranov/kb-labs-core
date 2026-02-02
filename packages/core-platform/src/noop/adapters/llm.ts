@@ -29,7 +29,9 @@ export class MockLLM implements ILLM {
 
     for (const word of words) {
       yield word + ' ';
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
     }
   }
 }

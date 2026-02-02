@@ -16,23 +16,29 @@ function generateRequestId(): string {
 /**
  * Sampling strategy for high-frequency cache operations.
  *
- * - cache.get.hit / cache.set.completed: 1:10 (these dominate analytics with ~171k events)
- * - cache.zrangebyscore.completed: time-based sampling (1 event per key per minute)
- * - cache.get.miss / cache.*.error: 1:1 (track all errors and misses - important signals)
+ * - cache.get.hit / cache.set.completed: 1:100 (aggressive sampling for efficiency monitoring)
+ * - cache.get.miss: 1:10 (more frequent to detect cache inefficiencies)
+ * - cache.zrangebyscore.completed: DISABLED (generates 99% of events, no business value)
+ * - cache.*.error: 1:1 (track all errors - important signals)
  * - Other operations: 1:1 (delete, clear, zadd, etc. are rare)
  *
  * Uses deterministic counter-based sampling for even distribution.
  */
 let cacheCounter = 0;
 function shouldSampleCacheEvent(eventType: string): boolean {
-  cacheCounter = (cacheCounter + 1) % 10;
+  cacheCounter = (cacheCounter + 1) % 100;
 
-  // High-frequency events (hit/set) - sample 1:10
+  // High-frequency events (hit/set) - sample 1:100 for efficiency metrics
   if (eventType === 'cache.get.hit' || eventType === 'cache.set.completed') {
-    return cacheCounter === 0; // Track every 10th event
+    return cacheCounter === 0; // Track every 100th event
   }
 
-  // Track all other events (misses, errors, rare operations)
+  // Miss events - sample 1:10 (more important for detecting cache issues)
+  if (eventType === 'cache.get.miss') {
+    return cacheCounter % 10 === 0; // Track every 10th miss
+  }
+
+  // Track all other events (errors, rare operations)
   return true;
 }
 
@@ -74,7 +80,7 @@ export class AnalyticsCache implements ICache {
       const hit = result !== null;
       const eventType = hit ? 'cache.get.hit' : 'cache.get.miss';
 
-      // Sample high-frequency hit events (1:10), track all misses
+      // Sample: hit/set 1:100, miss 1:10 (for cache efficiency monitoring)
       if (shouldSampleCacheEvent(eventType)) {
         await this.analytics.track(eventType, {
           requestId,
@@ -104,7 +110,7 @@ export class AnalyticsCache implements ICache {
       await this.realCache.set(key, value, ttl);
       const durationMs = Date.now() - startTime;
 
-      // Sample high-frequency set events (1:10)
+      // Sample 1:100 for cache efficiency monitoring
       if (shouldSampleCacheEvent('cache.set.completed')) {
         await this.analytics.track('cache.set.completed', {
           requestId,
@@ -207,15 +213,17 @@ export class AnalyticsCache implements ICache {
       const results = await this.realCache.zrangebyscore(key, min, max);
       const durationMs = Date.now() - startTime;
 
-      // Time-based sampling: 1 event per key per minute (scheduler hot path)
-      if (shouldSampleZrangebyscore(key)) {
-        await this.analytics.track('cache.zrangebyscore.completed', {
-          requestId,
-          key,
-          resultsCount: results.length,
-          durationMs,
-        });
-      }
+      // DISABLED: zrangebyscore generates 99% of all analytics events (530k/day)
+      // This overwhelms FileAnalytics (1.7M events total) causing OOM/timeouts
+      // Cache operations are internal and don't provide business value for analytics
+      // if (shouldSampleZrangebyscore(key)) {
+      //   await this.analytics.track('cache.zrangebyscore.completed', {
+      //     requestId,
+      //     key,
+      //     resultsCount: results.length,
+      //     durationMs,
+      //   });
+      // }
 
       return results;
     } catch (error) {

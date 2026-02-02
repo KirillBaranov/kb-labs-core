@@ -1,5 +1,5 @@
 // Core exports
-export * from './types'
+export * from './types/index'
 export * from './runtime'
 export * from './utils'
 export * from './utils/paths'

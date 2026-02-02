@@ -34,7 +34,7 @@ export class FileFeedbackStore implements IFeedbackStore {
       await this.storage.write(target, buffer);
       await this.enforceRotation();
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('[FileFeedbackStore] Failed to write feedback', {
         target,
         error: error instanceof Error ? error.message : String(error),
@@ -46,16 +46,16 @@ export class FileFeedbackStore implements IFeedbackStore {
     const files = await this.getFilesSorted();
     const results: FeedbackRecord[] = [];
     for (const file of files) {
-      if (results.length >= limit) break;
+      if (results.length >= limit) {break;}
       const buf = await this.storage.read(file);
-      if (!buf) continue;
+      if (!buf) {continue;}
       const lines = buf.toString('utf8').split('\n').filter(Boolean);
       for (const line of lines) {
-        if (results.length >= limit) break;
+        if (results.length >= limit) {break;}
         try {
           const parsed = JSON.parse(line) as { v: number; record: FeedbackRecord };
           const rec = parsed.record;
-          if (rec.scopeId !== scopeId) continue;
+          if (rec.scopeId !== scopeId) {continue;}
           results.push(rec);
         } catch {
           continue;
@@ -72,7 +72,7 @@ export class FileFeedbackStore implements IFeedbackStore {
     }
     const latest = files[files.length - 1]!;
     const buf = await this.storage.read(latest);
-    if (!buf) return latest;
+    if (!buf) {return latest;}
     const count = buf.toString('utf8').split('\n').filter(Boolean).length;
     if (count >= this.maxRecordsPerFile) {
       return this.segmentPath(Date.now());
@@ -98,7 +98,7 @@ export class FileFeedbackStore implements IFeedbackStore {
 
   private async enforceRotation(): Promise<void> {
     const files = await this.getFilesSorted();
-    if (files.length <= this.maxFiles) return;
+    if (files.length <= this.maxFiles) {return;}
     const excess = files.length - this.maxFiles;
     const toDelete = files.slice(0, excess);
     await Promise.all(toDelete.map((f) => this.storage.delete(f)));

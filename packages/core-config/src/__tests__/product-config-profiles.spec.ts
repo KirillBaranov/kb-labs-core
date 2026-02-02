@@ -3,14 +3,14 @@
  * Tests for product config with profile integration
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { promises as fsp } from 'node:fs';
-import path from 'node:path';
-import { tmpdir } from 'node:os';
-import { getProductConfig } from '../api/product-config';
-import type { ProfileLayerInput } from '../types/types';
+import { describe, it, expect, beforeEach } from "vitest";
+import { promises as fsp } from "node:fs";
+import path from "node:path";
+import { tmpdir } from "node:os";
+import { getProductConfig } from "../api/product-config";
+import type { ProfileLayerInput } from "../types/types";
 
-describe('Product Config with Profiles', () => {
+describe("Product Config with Profiles", () => {
   let testDir: string;
 
   beforeEach(async () => {
@@ -18,10 +18,10 @@ describe('Product Config with Profiles', () => {
     await fsp.mkdir(testDir, { recursive: true });
   });
 
-  it('should merge profile overlays correctly', async () => {
+  it("should merge profile overlays correctly", async () => {
     const profileLayer: ProfileLayerInput = {
-      profileId: 'test-profile',
-      source: 'profile:test-profile@1.0.0',
+      profileId: "test-profile",
+      source: "profile:test-profile@1.0.0",
       products: {
         aiReview: { maxFiles: 50, debug: false },
       },
@@ -30,29 +30,28 @@ describe('Product Config with Profiles', () => {
     const result = await getProductConfig(
       {
         cwd: testDir,
-        product: 'aiReview',
+        product: "aiReview",
         cli: {},
         profileLayer,
       },
-      null
+      null,
     );
-
 
     expect(result.config.maxFiles).toBe(50);
     expect(result.config.debug).toBe(false);
-    const traceLayer = result.trace.find((t) => t.layer === 'profile');
-    expect(traceLayer?.source).toBe('profile:test-profile@1.0.0');
+    const traceLayer = result.trace.find((t) => t.layer === "profile");
+    expect(traceLayer?.source).toBe("profile:test-profile@1.0.0");
   });
 
-  it('should handle missing profile gracefully', async () => {
+  it("should handle missing profile gracefully", async () => {
     // Test without profileInfo
     const config = await getProductConfig(
       {
         cwd: testDir,
-        product: 'aiReview',
-        cli: {}
+        product: "aiReview",
+        cli: {},
       },
-      null
+      null,
       // No profileInfo passed
     );
 
@@ -60,10 +59,10 @@ describe('Product Config with Profiles', () => {
     expect(config.trace).toBeDefined();
   });
 
-  it('should include profile info in trace', async () => {
+  it("should include profile info in trace", async () => {
     const profileLayerInput: ProfileLayerInput = {
-      profileId: 'test-profile',
-      source: 'profile:test-profile@1.2.0',
+      profileId: "test-profile",
+      source: "profile:test-profile@1.2.0",
       products: {
         aiReview: { enabled: true },
       },
@@ -72,44 +71,43 @@ describe('Product Config with Profiles', () => {
     const config = await getProductConfig(
       {
         cwd: testDir,
-        product: 'aiReview',
+        product: "aiReview",
         cli: {},
         profileLayer: profileLayerInput,
       },
-      null
+      null,
     );
 
-    const profileLayer = config.trace.find((t) => t.layer === 'profile');
+    const profileLayer = config.trace.find((t) => t.layer === "profile");
     expect(profileLayer).toBeDefined();
-    expect(profileLayer?.source).toBe('profile:test-profile@1.2.0');
+    expect(profileLayer?.source).toBe("profile:test-profile@1.2.0");
   });
 
-  it('should include scope layer when provided', async () => {
+  it("should include scope layer when provided", async () => {
     const profileLayerInput: ProfileLayerInput = {
-      profileId: 'test-profile',
-      source: 'profile:test-profile@1.0.0',
-      products: { aiReview: { engine: 'openai' } },
+      profileId: "test-profile",
+      source: "profile:test-profile@1.0.0",
+      products: { aiReview: { engine: "openai" } },
       scope: {
-        id: 'src',
-        source: 'profile-scope:src',
-        products: { aiReview: { engine: 'anthropic' } },
+        id: "src",
+        source: "profile-scope:src",
+        products: { aiReview: { engine: "anthropic" } },
       },
     };
 
     const config = await getProductConfig(
       {
         cwd: testDir,
-        product: 'aiReview',
+        product: "aiReview",
         cli: {},
         profileLayer: profileLayerInput,
       },
-      null
+      null,
     );
 
-    const scopeLayer = config.trace.find((t) => t.layer === 'profile-scope');
+    const scopeLayer = config.trace.find((t) => t.layer === "profile-scope");
     expect(scopeLayer).toBeDefined();
-    expect(scopeLayer?.source).toBe('profile-scope:src');
-    expect(config.config.engine).toBe('anthropic');
+    expect(scopeLayer?.source).toBe("profile-scope:src");
+    expect(config.config.engine).toBe("anthropic");
   });
 });
-

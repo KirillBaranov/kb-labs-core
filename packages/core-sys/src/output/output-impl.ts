@@ -117,7 +117,7 @@ export class OutputImpl implements Output {
             return;
         }
 
-        if (this.isQuiet) return;
+        if (this.isQuiet) {return;}
 
         const output = `${safeSymbols.success} ${message}`;
         console.log(safeColors.success(output));
@@ -204,7 +204,7 @@ export class OutputImpl implements Output {
     }
 
     warn(message: string, hint?: string): void {
-        if (this.isQuiet) return;
+        if (this.isQuiet) {return;}
 
         const output = `${safeSymbols.warning} ${message}`;
         console.warn(safeColors.warning(output));
@@ -218,7 +218,7 @@ export class OutputImpl implements Output {
     }
 
     progress(stage: string, details?: ProgressDetails): void {
-        if (this.isQuiet) return;
+        if (this.isQuiet) {return;}
 
         let output = stage;
         if (details?.current !== undefined && details?.total !== undefined) {
@@ -242,7 +242,7 @@ export class OutputImpl implements Output {
     }
 
     info(message: string, meta?: Record<string, unknown>): void {
-        if (!this.isVerbose) return;
+        if (!this.isVerbose) {return;}
 
         console.log(message);
         // Использовать глобальный logger для записи в файлы
@@ -250,7 +250,7 @@ export class OutputImpl implements Output {
     }
 
     debug(message: string, meta?: Record<string, unknown>): void {
-        if (!this.isDebug) return;
+        if (!this.isDebug) {return;}
 
         console.log(safeColors.muted(message));
         // Использовать глобальный logger для записи в файлы
@@ -258,7 +258,7 @@ export class OutputImpl implements Output {
     }
 
     trace(message: string, meta?: Record<string, unknown>): void {
-        if (this.verbosity !== "inspect") return;
+        if (this.verbosity !== "inspect") {return;}
 
         console.log(safeColors.muted(`[TRACE] ${message}`));
         // Использовать глобальный logger для записи в файлы (trace → debug)
@@ -270,7 +270,7 @@ export class OutputImpl implements Output {
     }
 
     write(text: string): void {
-        if (this.isQuiet) return;
+        if (this.isQuiet) {return;}
         console.log(text);
     }
 

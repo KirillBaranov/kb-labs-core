@@ -3,7 +3,6 @@
  * Main IPC message dispatcher
  */
 
-import type { Output } from '@kb-labs/core-sys/output';
 import { SANDBOX_ERROR_CODES } from '../../errors/error-codes';
 import type { IpcMessage } from './message-types';
 import type { RunHandlerOptions } from './run-handler';

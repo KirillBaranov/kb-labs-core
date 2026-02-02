@@ -9,7 +9,6 @@
  */
 
 import { getGlobalState } from "./state";
-import type { LogSink } from "./types/types";
 
 let shutdownHandlers: Array<() => Promise<void> | void> = [];
 let isShuttingDown = false;

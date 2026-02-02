@@ -34,7 +34,6 @@ setupSourceMaps({ enabled: false });
 // LAYER 2: OBSERVABILITY SYSTEM
 // ═══════════════════════════════════════════════════════════════════════════
 import { initializeObservability } from './initialization/observability-setup';
-import { createLogEvent, createErrorEvent, createMemoryEvent } from '../observability/index';
 
 // Initialize observability with all advanced features
 const { collector, fileLogger, traceRecorder, heapProfiler, patternDetector, preOOMDetector, heapAnalyzer, crashReporter, executionContext } = initializeObservability({
@@ -43,19 +42,11 @@ const { collector, fileLogger, traceRecorder, heapProfiler, patternDetector, pre
 
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { fileURLToPath } from 'node:url';
-import { pathToFileURL } from 'node:url';
-import * as path from 'node:path';
-import * as v8 from 'node:v8';
-import * as fs from 'node:fs/promises';
 import type { HandlerRef, ExecutionContext } from '../types/index';
 import type { SerializableContext } from './ipc-serializer';
-import type { CliHandlerContext, RestHandlerContext } from '../types/adapter-context';
 import { normalizeError } from '../errors/handler-error';
-import { SANDBOX_ERROR_CODES } from '../errors/error-codes';
 import type { Output } from '@kb-labs/core-sys/output';
 import { sendReadySignal } from './initialization/ipc-ready';
-import { createSandboxOutput } from '../output/index';
 
 // Signal readiness IMMEDIATELY - before any other operations
 // CRITICAL: Parent process is waiting for this message

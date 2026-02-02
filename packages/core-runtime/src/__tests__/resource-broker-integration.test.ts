@@ -12,7 +12,7 @@
  * - Real concurrent execution
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { ResourceBroker, InMemoryRateLimitBackend, createQueuedLLM, createQueuedEmbeddings } from '@kb-labs/core-resource-broker';
 import type { ILLM, IEmbeddings } from '@kb-labs/core-platform';
 

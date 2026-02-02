@@ -104,12 +104,12 @@ export class HeapAnalyzer {
       totalSize += selfSize;
 
       // Categorize by type
-      if (type === 'object') summary.objects += selfSize;
-      else if (type === 'string') summary.strings += selfSize;
-      else if (type === 'array') summary.arrays += selfSize;
-      else if (type === 'closure') summary.closures += selfSize;
-      else if (type === 'code') summary.code += selfSize;
-      else summary.other += selfSize;
+      if (type === 'object') {summary.objects += selfSize;}
+      else if (type === 'string') {summary.strings += selfSize;}
+      else if (type === 'array') {summary.arrays += selfSize;}
+      else if (type === 'closure') {summary.closures += selfSize;}
+      else if (type === 'code') {summary.code += selfSize;}
+      else {summary.other += selfSize;}
 
       // Aggregate consumers
       const key = `${type}:${name}`;

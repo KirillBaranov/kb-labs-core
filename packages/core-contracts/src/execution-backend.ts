@@ -4,8 +4,11 @@
  * Execution backend interfaces - contract for execution layer.
  */
 
-import type { ExecutionRequest } from './execution-request.js';
-import type { ExecutionResult, ExecutionError, ExecutionResponse, ExecuteOptions } from './execution-response.js';
+import type { ExecutionRequest } from "./execution-request.js";
+import type {
+  ExecutionResponse,
+  ExecuteOptions,
+} from "./execution-response.js";
 
 /**
  * Health status for execution backend.
@@ -15,7 +18,7 @@ export interface HealthStatus {
   healthy: boolean;
 
   /** Backend type */
-  backend: 'in-process' | 'subprocess' | 'worker-pool' | 'remote';
+  backend: "in-process" | "subprocess" | "worker-pool" | "remote";
 
   /** Additional health details */
   details?: Record<string, unknown>;
@@ -57,7 +60,10 @@ export interface IExecutionBackend {
    * Returns ExecutionResult on success, ExecutionError on failure.
    * Never throws - all errors are caught and returned as ExecutionError.
    */
-  execute(request: ExecutionRequest, options?: ExecuteOptions): Promise<ExecutionResponse>;
+  execute(
+    request: ExecutionRequest,
+    options?: ExecuteOptions,
+  ): Promise<ExecutionResponse>;
 
   /**
    * Get backend health status.

@@ -50,7 +50,7 @@ export function interceptConsole(output?: Output): void {
    */
   function shouldSuppress(level: 'debug' | 'log' | 'warn' | 'error'): boolean {
     // KB_QUIET suppresses everything except errors
-    if (isQuiet && level !== 'error') return true;
+    if (isQuiet && level !== 'error') {return true;}
 
     // Filter based on KB_LOG_LEVEL
     switch (logLevel) {

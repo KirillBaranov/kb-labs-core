@@ -183,7 +183,7 @@ export class ResourceBroker implements IResourceBroker {
     try {
       while (!this.queue.isEmpty() && !this.shuttingDown) {
         const item = this.queue.peek();
-        if (!item) break;
+        if (!item) {break;}
 
         const registered = this.resources.get(item.request.resource);
         if (!registered) {

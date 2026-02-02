@@ -25,7 +25,7 @@ const defaultFs: WorkspaceFs = {
 function resolveEnvRoot(
   env: Record<string, string | undefined> | undefined,
 ): string | undefined {
-  if (!env) return undefined
+  if (!env) {return undefined}
   return env.KB_LABS_WORKSPACE_ROOT ?? env.KB_LABS_REPO_ROOT
 }
 
@@ -37,6 +37,7 @@ async function findConfigRoot(
 
   while (true) {
     const configPath = path.join(current, WORKSPACE_CONFIG_RELATIVE)
+    // eslint-disable-next-line no-await-in-loop -- Searching for workspace root: must check each directory sequentially
     if (await fs.exists(configPath)) {
       return current
     }

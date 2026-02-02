@@ -34,7 +34,7 @@ export interface VectorFilter {
   /** Field name to filter on */
   field: string;
   /** Filter operator */
-  operator: 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'nin';
+  operator: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "in" | "nin";
   /** Filter value */
   value: unknown;
 }
@@ -50,7 +50,11 @@ export interface IVectorStore {
    * @param limit - Maximum number of results
    * @param filter - Optional metadata filter
    */
-  search(query: number[], limit: number, filter?: VectorFilter): Promise<VectorSearchResult[]>;
+  search(
+    query: number[],
+    limit: number,
+    filter?: VectorFilter,
+  ): Promise<VectorSearchResult[]>;
 
   /**
    * Upsert vectors into the store.

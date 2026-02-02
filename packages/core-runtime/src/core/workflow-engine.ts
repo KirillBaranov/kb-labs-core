@@ -161,7 +161,7 @@ export class WorkflowEngine implements IWorkflowEngine {
       let previousOutput: unknown = input;
 
       for (const stepDef of definition.steps) {
-        if (run.status !== 'running') break;
+        if (run.status !== 'running') {break;}
 
         const stepRun = await this.executeStep(run, stepDef, previousOutput);
         run.steps.push(stepRun);
@@ -174,7 +174,7 @@ export class WorkflowEngine implements IWorkflowEngine {
       }
 
       // Success
-      if (run.timeoutId) clearTimeout(run.timeoutId);
+      if (run.timeoutId) {clearTimeout(run.timeoutId);}
 
       run.status = 'completed';
       run.output = previousOutput;
@@ -211,7 +211,7 @@ export class WorkflowEngine implements IWorkflowEngine {
   async getStatus(runId: string): Promise<WorkflowRun | null> {
     // Check memory first
     const run = this.runs.get(runId);
-    if (run) return this.toPublicRun(run);
+    if (run) {return this.toPublicRun(run);}
 
     // Try to load from storage
     const stored = await this.storage.read(`workflows/${runId}.json`);
@@ -236,7 +236,7 @@ export class WorkflowEngine implements IWorkflowEngine {
       throw new Error(`Cannot cancel workflow in status: ${run.status}`);
     }
 
-    if (run.timeoutId) clearTimeout(run.timeoutId);
+    if (run.timeoutId) {clearTimeout(run.timeoutId);}
 
     run.status = 'cancelled';
     run.completedAt = new Date();
@@ -387,7 +387,7 @@ export class WorkflowEngine implements IWorkflowEngine {
    * Mark run as failed.
    */
   private failRun(run: InternalWorkflowRun, error: string): void {
-    if (run.timeoutId) clearTimeout(run.timeoutId);
+    if (run.timeoutId) {clearTimeout(run.timeoutId);}
 
     run.status = 'failed';
     run.error = error;

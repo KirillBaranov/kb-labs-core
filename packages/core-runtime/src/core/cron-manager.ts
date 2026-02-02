@@ -156,7 +156,7 @@ export class CronManager implements ICronManager {
 
   unregister(id: string): void {
     const entry = this.jobs.get(id);
-    if (!entry) return;
+    if (!entry) {return;}
 
     if (entry.timerId) {
       clearTimeout(entry.timerId);
@@ -188,7 +188,7 @@ export class CronManager implements ICronManager {
 
   pause(id: string): void {
     const entry = this.jobs.get(id);
-    if (!entry) return;
+    if (!entry) {return;}
 
     if (entry.timerId) {
       clearTimeout(entry.timerId);
@@ -201,7 +201,7 @@ export class CronManager implements ICronManager {
 
   resume(id: string): void {
     const entry = this.jobs.get(id);
-    if (!entry || entry.status !== 'paused') return;
+    if (!entry || entry.status !== 'paused') {return;}
 
     entry.status = 'active';
     entry.nextRun = parseNextRun(entry.schedule);
@@ -214,12 +214,12 @@ export class CronManager implements ICronManager {
    * Schedule the next execution of a cron job.
    */
   private scheduleNext(entry: CronEntry): void {
-    if (entry.status !== 'active' || !entry.nextRun) return;
+    if (entry.status !== 'active' || !entry.nextRun) {return;}
 
     const delay = Math.max(0, entry.nextRun.getTime() - Date.now());
 
     entry.timerId = setTimeout(async () => {
-      if (entry.status !== 'active') return;
+      if (entry.status !== 'active') {return;}
 
       try {
         await this.executeJob(entry);
@@ -285,8 +285,8 @@ export class CronManager implements ICronManager {
     let paused = 0;
 
     for (const entry of this.jobs.values()) {
-      if (entry.status === 'active') active++;
-      else paused++;
+      if (entry.status === 'active') {active++;}
+      else {paused++;}
     }
 
     return {

@@ -87,7 +87,7 @@ export class Profiler {
 
   endPhase(name: string): void {
     const phase = this.phases.get(name);
-    if (!phase) return;
+    if (!phase) {return;}
 
     const now = Date.now();
     phase.endTime = now;
@@ -241,7 +241,7 @@ export function exportChromeFormat(data: ProfileData): object {
     args?: Record<string, unknown>;
   }> = [];
 
-  let eventId = 0;
+  const eventId = 0;
   const pid = 1;
   const tid = 1;
 

@@ -58,7 +58,7 @@ export class BufferedSink implements LogSink {
     }
 
     private startFlushTimer(): void {
-        if (this.flushTimer) return;
+        if (this.flushTimer) {return;}
         
         this.flushTimer = setInterval(() => {
             void this.flush();

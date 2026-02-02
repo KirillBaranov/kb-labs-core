@@ -3,7 +3,7 @@
  * Cron manager interface for scheduled task registration.
  */
 
-import type { CronExpression } from './jobs.js';
+import type { CronExpression } from "./jobs.js";
 
 /**
  * Cron job context passed to handlers.
@@ -33,7 +33,7 @@ export interface CronJob {
   /** Cron schedule expression */
   schedule: CronExpression;
   /** Current status */
-  status: 'active' | 'paused';
+  status: "active" | "paused";
   /** Last execution time */
   lastRun?: Date;
   /** Next scheduled execution time */

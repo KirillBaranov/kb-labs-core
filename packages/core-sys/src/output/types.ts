@@ -3,7 +3,7 @@
  * Unified Output interface for KB Labs platform
  */
 
-import type { LogLevel, VerbosityLevel, OutputMode, DebugFormat } from "../logging/types/types";
+import type { VerbosityLevel, OutputMode, DebugFormat } from "../logging/types/types";
 
 // Re-export types for convenience
 export type { VerbosityLevel, OutputMode, DebugFormat };

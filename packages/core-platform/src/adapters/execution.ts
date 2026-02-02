@@ -20,7 +20,10 @@ export interface IExecutionBackend {
    * @param options - Optional execution options (signal, etc.)
    * @returns Execution result with data/error
    */
-  execute(request: ExecutionRequest, options?: ExecuteOptions): Promise<ExecutionResult>;
+  execute(
+    request: ExecutionRequest,
+    options?: ExecuteOptions,
+  ): Promise<ExecutionResult>;
 
   /**
    * Shutdown execution backend gracefully.

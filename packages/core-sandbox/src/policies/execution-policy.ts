@@ -19,7 +19,7 @@ export function startTimeoutWatch(
 ): NodeJS.Timeout {
   let sigtermSent = false;
 
-  const timeoutHandle = setTimeout(() => {
+  return setTimeout(() => {
     if (!sigtermSent) {
       sigtermSent = true;
       child.kill('SIGTERM');
@@ -32,8 +32,6 @@ export function startTimeoutWatch(
       }, graceMs);
     }
   }, timeoutMs);
-
-  return timeoutHandle;
 }
 
 /**

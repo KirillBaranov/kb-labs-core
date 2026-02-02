@@ -4,7 +4,9 @@
  * Execution request types for the execution layer.
  */
 
-import type { HostType, HostContext, PermissionSpec, PluginContextDescriptor } from '@kb-labs/plugin-contracts';
+import type {
+  PluginContextDescriptor,
+} from "@kb-labs/plugin-contracts";
 
 /**
  * Execution request - describes a handler invocation.

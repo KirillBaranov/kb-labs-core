@@ -6,7 +6,8 @@
 import type { LogRecord, LogSink } from "../types/types";
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
-import { createWriteStream, WriteStream } from "node:fs";
+import type { WriteStream } from "node:fs";
+import { createWriteStream } from "node:fs";
 
 export interface FileSinkConfig {
     path: string; // '.kb/logs/current.jsonl'
@@ -62,7 +63,7 @@ export class FileSink implements LogSink {
     }
 
     private write(rec: LogRecord): void {
-        if (!this.stream) return;
+        if (!this.stream) {return;}
 
         const line = JSON.stringify(rec) + "\n";
         const size = Buffer.byteLength(line, "utf8");

@@ -24,10 +24,7 @@ import { serializeContext } from './ipc-serializer';
 import { createTimeoutSignal } from '../cancellation/abort-controller';
 import {
   formatLogLine,
-  colorizeLevel,
   shouldUseColors,
-  type LiveMetrics,
-  formatLiveMetrics,
 } from '../debug/progress';
 
 /**
@@ -233,7 +230,7 @@ function findWorkspaceRoot(startDir: string): string | null {
       }
     }
     const parentDir = path.dirname(currentDir);
-    if (parentDir === currentDir) break;
+    if (parentDir === currentDir) {break;}
     currentDir = parentDir;
   }
   return null;
@@ -328,7 +325,7 @@ function getBootstrapPath(): string {
     }
     
     const parentDir = path.dirname(currentDir);
-    if (parentDir === currentDir) break;
+    if (parentDir === currentDir) {break;}
     currentDir = parentDir;
   }
   
@@ -522,7 +519,7 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
         process.stderr.write('[DIAGNOSTIC] Starting parent memory monitor\n');
       }
       const parentMemoryMonitor = setInterval(() => {
-        if (!DEBUG_MODE) return; // Skip monitoring if not in debug mode
+        if (!DEBUG_MODE) {return;} // Skip monitoring if not in debug mode
 
         const mem = process.memoryUsage();
         const heapUsedMB = (mem.heapUsed / 1024 / 1024).toFixed(0);
@@ -589,7 +586,7 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
         
         let resolved = false;
         const cleanup = () => {
-          if (resolved) return;
+          if (resolved) {return;}
           resolved = true;
           clearTimeout(timeout);
           child.off('message', readyHandler);
@@ -612,7 +609,7 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
         }, 5000);
         
         const readyHandler = (msg: unknown) => {
-          if (resolved) return;
+          if (resolved) {return;}
           const message = msg as { type?: string; payload?: unknown };
           logger.debug('Received message while waiting for READY', { type: message?.type });
           if (message?.type === 'READY') {
@@ -637,7 +634,7 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
         
         // Handle child exit before READY
         const exitHandler = (code: number | null, signal: NodeJS.Signals | null) => {
-          if (resolved) return;
+          if (resolved) {return;}
           cleanup();
           reject(new Error(`Subprocess exited before READY (code: ${code}, signal: ${signal})`));
         };
@@ -670,7 +667,7 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
       return new Promise<ExecutionResult<TOutput>>((resolve, reject) => {
         let resolved = false;
         const cleanup = () => {
-          if (resolved) return;
+          if (resolved) {return;}
           resolved = true;
           clearTimeoutWatch(timeoutHandle);
           if (!child.killed) {
@@ -680,7 +677,7 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
 
         // Timeout for waiting for response (should be less than execution timeout)
         const responseTimeout = setTimeout(() => {
-          if (resolved) return;
+          if (resolved) {return;}
           logger.error('Subprocess did not respond within timeout', {
             pid: child.pid,
             timeoutMs: config.execution.timeoutMs,
@@ -691,7 +688,7 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
 
         // Handle all message types (LOG, OK, ERR, READY)
         const messageHandler = (msg: unknown) => {
-          if (resolved) return;
+          if (resolved) {return;}
           const message = msg as { type?: string; payload?: unknown };
           logger.debug('Received message in result handler', { type: message?.type });
           
@@ -758,7 +755,7 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
 
         // Handle process exit without response
         const exitHandler = (code: number | null, signal: NodeJS.Signals | null) => {
-          if (resolved) return;
+          if (resolved) {return;}
           logger.error('Subprocess exited without sending response', {
             pid: child.pid,
             code,
@@ -771,7 +768,7 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
         child.once('exit', exitHandler);
 
         child.on('error', (error: Error) => {
-          if (resolved) return;
+          if (resolved) {return;}
           clearTimeout(responseTimeout);
           cleanup();
           const metrics = collectMetrics(startedAt, cpuStart, memStart);

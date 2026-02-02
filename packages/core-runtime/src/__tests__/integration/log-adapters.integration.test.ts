@@ -5,10 +5,10 @@
  * Tests the full flow: Logger + RingBuffer + Persistence extensions
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { AdapterLoader } from '../../adapter-loader.js';
-import type { AdapterManifest, ILogger, LogRecord } from '@kb-labs/core-platform';
-import type { LoadedAdapterModule, AdapterConfig } from '../../adapter-loader.js';
+import type { AdapterManifest, LogRecord } from '@kb-labs/core-platform';
+import type { AdapterConfig } from '../../adapter-loader.js';
 
 describe('Log Adapters Integration', () => {
   /**
@@ -31,7 +31,7 @@ describe('Log Adapters Integration', () => {
         mockLogger._callbacks.push(callback);
         return () => {
           const index = mockLogger._callbacks.indexOf(callback);
-          if (index !== -1) mockLogger._callbacks.splice(index, 1);
+          if (index !== -1) {mockLogger._callbacks.splice(index, 1);}
         };
       }),
       _callbacks: [] as Array<(record: LogRecord) => void>,
@@ -412,7 +412,7 @@ describe('Log Adapters Integration', () => {
         mockLogger._callbacks.push(callback);
         const unsubscribe = () => {
           const index = mockLogger._callbacks.indexOf(callback);
-          if (index !== -1) mockLogger._callbacks.splice(index, 1);
+          if (index !== -1) {mockLogger._callbacks.splice(index, 1);}
         };
         unsubscribeFns.push(unsubscribe);
         return unsubscribe;

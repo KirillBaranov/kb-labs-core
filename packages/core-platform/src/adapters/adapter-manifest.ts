@@ -10,7 +10,7 @@
  * - extension: Adapter that extends another adapter via hooks (e.g., log persistence)
  * - proxy: Adapter that wraps/delegates to another adapter (e.g., IPC proxy)
  */
-export type AdapterType = 'core' | 'extension' | 'proxy';
+export type AdapterType = "core" | "extension" | "proxy";
 
 /**
  * Adapter dependency specification.
@@ -18,9 +18,7 @@ export type AdapterType = 'core' | 'extension' | 'proxy';
  * Short form: just the adapter ID
  * Long form: { id, alias } where alias is used in factory deps parameter
  */
-export type AdapterDependency =
-  | string
-  | { id: string; alias?: string };
+export type AdapterDependency = string | { id: string; alias?: string };
 
 /**
  * Extension point configuration.
@@ -367,14 +365,17 @@ export interface AdapterManifest {
    * }
    * ```
    */
-  configSchema?: Record<string, {
-    type: 'string' | 'number' | 'boolean' | 'object' | 'array';
-    description?: string;
-    default?: unknown;
-    required?: boolean;
-    enum?: unknown[];
-    properties?: Record<string, unknown>;
-  }>;
+  configSchema?: Record<
+    string,
+    {
+      type: "string" | "number" | "boolean" | "object" | "array";
+      description?: string;
+      default?: unknown;
+      required?: boolean;
+      enum?: unknown[];
+      properties?: Record<string, unknown>;
+    }
+  >;
 }
 
 /**
@@ -402,5 +403,5 @@ export interface AdapterManifest {
 export type AdapterFactory<
   TConfig = unknown,
   TDeps = Record<string, unknown>,
-  TAdapter = unknown
+  TAdapter = unknown,
 > = (config: TConfig, deps: TDeps) => TAdapter | Promise<TAdapter>;

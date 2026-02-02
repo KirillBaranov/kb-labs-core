@@ -31,16 +31,13 @@ import {
 import {
   ResourceBroker,
   InMemoryRateLimitBackend,
-  StateBrokerRateLimitBackend,
   createQueuedLLM,
   createQueuedEmbeddings,
   createQueuedVectorStore,
-  getRateLimitConfig,
 } from '@kb-labs/core-resource-broker';
-import type { RateLimitBackend, ResourceConfig } from '@kb-labs/core-resource-broker';
+import type { RateLimitBackend } from '@kb-labs/core-resource-broker';
 
 // Import ExecutionBackend type only (implementation loaded dynamically to break circular dependency)
-import type { IExecutionBackend } from '@kb-labs/core-contracts';
 
 /**
  * Adapter factory function type.
@@ -58,8 +55,8 @@ type AdapterFactory<T> = (config?: unknown) => T | Promise<T>;
  * @returns Array of adapter package paths
  */
 function normalizeAdapterValue(value: AdapterValue | undefined): string[] {
-  if (!value) return [];
-  if (Array.isArray(value)) return value;
+  if (!value) {return [];}
+  if (Array.isArray(value)) {return value;}
   return [value];
 }
 
@@ -70,8 +67,8 @@ function normalizeAdapterValue(value: AdapterValue | undefined): string[] {
  * @returns Primary adapter package path or undefined
  */
 function getPrimaryAdapter(value: AdapterValue | undefined): string | undefined {
-  if (!value) return undefined;
-  if (Array.isArray(value)) return value[0];
+  if (!value) {return undefined;}
+  if (Array.isArray(value)) {return value[0];}
   return value;
 }
 
@@ -564,7 +561,7 @@ export async function initPlatform(
       const adapterPackages = normalizeAdapterValue(adapterValue as AdapterValue);
       const primaryAdapter = getPrimaryAdapter(adapterValue as AdapterValue);
 
-      if (!primaryAdapter) continue;
+      if (!primaryAdapter) {continue;}
 
       // Store all available adapters for this type (used by LLMRouter, etc.)
       availableAdapters[name] = adapterPackages;
@@ -653,6 +650,7 @@ export async function initPlatform(
     try {
       // Use dynamic import from plugin-execution-factory to eliminate circular dependency
       // plugin-execution-factory has no dependency on core-runtime
+      // @ts-ignore - Dynamic import to break circular dependency at build time
       const { createExecutionBackend } = await import('@kb-labs/plugin-execution-factory');
 
       // Map config types to backend options (explicit mapping, no type casts)

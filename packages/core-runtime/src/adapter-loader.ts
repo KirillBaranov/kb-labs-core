@@ -343,7 +343,7 @@ export class AdapterLoader {
     for (const node of graph.getAllNodes()) {
       if (node.manifest.extends) {
         const instance = adapters.get(node.name);
-        if (!instance) continue;
+        if (!instance) {continue;}
 
         extensions.push({
           name: node.name,

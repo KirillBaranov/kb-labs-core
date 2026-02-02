@@ -3,7 +3,7 @@
  * Datadog adapter for log aggregation
  */
 
-import type { LogSink, LogRecord, LogLevel } from '../types/types';
+import type { LogSink, LogRecord } from '../types/types';
 
 interface DatadogAdapterConfig {
   apiKey: string;

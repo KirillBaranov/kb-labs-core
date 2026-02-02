@@ -2,13 +2,12 @@
  * Tests for HybridLogReader
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { HybridLogReader } from '../hybrid-log-reader.js';
 import type {
   ILogPersistence,
   ILogBuffer,
   LogRecord,
-  LogQuery,
 } from '@kb-labs/core-platform';
 
 describe('HybridLogReader', () => {

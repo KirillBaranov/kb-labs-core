@@ -75,8 +75,7 @@ export function layeredMergeWithTrace(layers: ConfigLayer[]): LayeredMergeResult
   };
   
   const merged = layers.reduce((acc, layer) => {
-    const result = merge(acc, layer.value, layer);
-    return result;
+    return merge(acc, layer.value, layer);
   }, {});
   
   return { merged, trace };

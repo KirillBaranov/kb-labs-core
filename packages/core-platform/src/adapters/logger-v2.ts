@@ -12,7 +12,7 @@
 /**
  * Log level enumeration
  */
-export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
 
 /**
  * Service context - set once at logger creation
@@ -185,7 +185,11 @@ export interface ILogger {
    */
   error(payload: LogPayload & { error?: Error }): void;
   /** Convenience overload */
-  error(message: string, error?: Error, attributes?: Record<string, unknown>): void;
+  error(
+    message: string,
+    error?: Error,
+    attributes?: Record<string, unknown>,
+  ): void;
 
   /**
    * Log debug message.
@@ -235,7 +239,11 @@ export interface ILogger {
    * });
    * ```
    */
-  child(context: Partial<ServiceContext & CorrelationContext & Record<string, unknown>>): ILogger;
+  child(
+    context: Partial<
+      ServiceContext & CorrelationContext & Record<string, unknown>
+    >,
+  ): ILogger;
 
   /**
    * Get log buffer for streaming/querying (optional feature).
@@ -305,7 +313,10 @@ export interface ILogBuffer {
   query(query?: LogQuery): LogRecord[];
 
   /** Subscribe to real-time log stream */
-  subscribe(callback: (record: LogRecord) => void, filters?: LogQuery): () => void;
+  subscribe(
+    callback: (record: LogRecord) => void,
+    filters?: LogQuery,
+  ): () => void;
 
   /** Get buffer statistics */
   getStats(): {
@@ -327,7 +338,10 @@ export interface ILogPersistence {
   writeBatch(records: LogRecord[]): Promise<void>;
 
   /** Query logs from storage */
-  query(filters: LogQuery, options?: { sortOrder?: 'asc' | 'desc' }): Promise<{
+  query(
+    filters: LogQuery,
+    options?: { sortOrder?: "asc" | "desc" },
+  ): Promise<{
     logs: LogRecord[];
     total: number;
     hasMore: boolean;
@@ -337,7 +351,10 @@ export interface ILogPersistence {
   getById(id: string): Promise<LogRecord | null>;
 
   /** Search logs by text (full-text search) */
-  search(searchText: string, options?: { limit?: number; offset?: number }): Promise<{
+  search(
+    searchText: string,
+    options?: { limit?: number; offset?: number },
+  ): Promise<{
     logs: LogRecord[];
     total: number;
   }>;

@@ -7,7 +7,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import YAML from 'yaml';
 import { KbError, ERROR_HINTS } from '../errors/kb-error';
-import { readWorkspaceConfig, findGitRoot } from './read-config';
+import { findGitRoot } from './read-config';
 import { writeFileAtomic, ensureWithinWorkspace } from '../utils/fs-atomic';
 import { toFsProduct } from '../utils/product-normalize';
 import type { InitWorkspaceOptions, InitResult, InitAction } from '../types/init';

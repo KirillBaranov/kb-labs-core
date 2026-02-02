@@ -43,7 +43,7 @@ export interface LogQuery {
  * Match namespace pattern (supports wildcards)
  */
 function matchNamespace(pattern: string, namespace?: string): boolean {
-  if (!namespace) return false;
+  if (!namespace) {return false;}
   
   // Convert wildcard pattern to regex
   const regexPattern = pattern
@@ -103,7 +103,7 @@ function matchContext(
   filter: Record<string, unknown>,
   context?: Record<string, unknown>
 ): boolean {
-  if (!context) return false;
+  if (!context) {return false;}
   
   for (const [key, value] of Object.entries(filter)) {
     if (context[key] !== value) {
@@ -229,7 +229,7 @@ export function parseLogs(logLines: string[]): LogEntry[] {
   const entries: LogEntry[] = [];
 
   for (const line of logLines) {
-    if (!line.trim()) continue;
+    if (!line.trim()) {continue;}
 
     // Try to parse structured log (JSON)
     try {

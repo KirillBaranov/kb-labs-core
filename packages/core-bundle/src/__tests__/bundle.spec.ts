@@ -8,7 +8,6 @@ import { promises as fsp } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { loadBundle, explainBundle, clearCaches } from '../index';
-import { ProductId } from '../types/types';
 
 describe('Bundle System', () => {
   let testDir: string;

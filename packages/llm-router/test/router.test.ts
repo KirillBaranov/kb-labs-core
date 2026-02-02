@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { LLMRouter, type TierMapping, type LLMRouterConfig, type AdapterLoader } from '../src/router.js';
-import type { ILLM, LLMResponse, LLMOptions, ILogger } from '@kb-labs/core-platform';
+import { LLMRouter, type TierMapping, type AdapterLoader } from '../src/router.js';
+import type { ILLM, LLMResponse, ILogger } from '@kb-labs/core-platform';
 
 // Mock ILLM adapter
 function createMockAdapter(): ILLM {

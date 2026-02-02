@@ -49,7 +49,7 @@ export class MemoryHistoryStore implements IHistoryStore {
   async popular(scopeId: string, limit: number = 20): Promise<Array<{ query: string; count: number }>> {
     const counts = new Map<string, number>();
     for (const entry of this.entries) {
-      if (entry.scopeId !== scopeId) continue;
+      if (entry.scopeId !== scopeId) {continue;}
       const count = counts.get(entry.query) ?? 0;
       counts.set(entry.query, count + 1);
     }
@@ -72,7 +72,7 @@ export class MemoryHistoryStore implements IHistoryStore {
   }
 
   private cosineSimilarity(vec1: number[], vec2: number[]): number {
-    if (vec1.length !== vec2.length) return 0;
+    if (vec1.length !== vec2.length) {return 0;}
     let dot = 0;
     let norm1 = 0;
     let norm2 = 0;

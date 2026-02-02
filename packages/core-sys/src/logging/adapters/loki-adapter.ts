@@ -35,7 +35,9 @@ export async function createLokiAdapter(config: LokiAdapterConfig): Promise<LogS
       flushTimer = null;
     }
     
-    if (batch.length === 0) return;
+    if (batch.length === 0) {
+      return;
+    }
     
     const toSend = [...batch];
     batch.length = 0;

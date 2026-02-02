@@ -3,7 +3,7 @@
  * AI enrichment functions for log records
  */
 
-import type { LogRecord, LogLevel, AIConfig } from './types';
+import type { LogRecord, LogLevel } from './types';
 import { getGlobalState } from './state';
 import { trackCausality } from './causality-tracker';
 import { addToContextWindow } from './context-window';
@@ -44,11 +44,11 @@ function inferSemanticIntent(msg: string, level: LogLevel): {
         outcome = 'success'; // Already checked for error/warn above
         
         // Extract operation
-        if (lowerMsg.includes('created')) operation = 'create';
-        else if (lowerMsg.includes('deleted')) operation = 'delete';
-        else if (lowerMsg.includes('updated')) operation = 'update';
-        else if (lowerMsg.includes('read') || lowerMsg.includes('fetched')) operation = 'read';
-        else if (lowerMsg.includes('executed') || lowerMsg.includes('processed')) operation = 'execute';
+        if (lowerMsg.includes('created')) {operation = 'create';}
+        else if (lowerMsg.includes('deleted')) {operation = 'delete';}
+        else if (lowerMsg.includes('updated')) {operation = 'update';}
+        else if (lowerMsg.includes('read') || lowerMsg.includes('fetched')) {operation = 'read';}
+        else if (lowerMsg.includes('executed') || lowerMsg.includes('processed')) {operation = 'execute';}
     }
     // State intent
     else if (
@@ -77,13 +77,13 @@ function inferSemanticIntent(msg: string, level: LogLevel): {
  * Extract entities from meta object based on key patterns
  */
 function extractEntitiesFromMeta(meta?: Record<string, unknown>): Array<{ type: string; value: string }> {
-    if (!meta) return [];
+    if (!meta) {return [];}
     
     const entities: Array<{ type: string; value: string }> = [];
     
     // Common patterns: *Id, *Name, *Email, *Url, etc.
     for (const [key, value] of Object.entries(meta)) {
-        if (typeof value !== 'string') continue;
+        if (typeof value !== 'string') {continue;}
         
         const lowerKey = key.toLowerCase();
         
@@ -199,12 +199,12 @@ function prepareEmbeddingText(rec: LogRecord): string {
     const parts: string[] = [];
     
     // Add plugin/command context
-    if (rec.plugin) parts.push(`plugin:${rec.plugin}`);
-    if (rec.command) parts.push(`command:${rec.command}`);
-    if (rec.category) parts.push(`category:${rec.category}`);
+    if (rec.plugin) {parts.push(`plugin:${rec.plugin}`);}
+    if (rec.command) {parts.push(`command:${rec.command}`);}
+    if (rec.category) {parts.push(`category:${rec.category}`);}
     
     // Add message
-    if (rec.msg) parts.push(rec.msg);
+    if (rec.msg) {parts.push(rec.msg);}
     
         // Add key meta fields (exclude sensitive data)
         if (rec.meta) {
@@ -240,13 +240,13 @@ function prepareEmbeddingText(rec: LogRecord): string {
  */
 function extractKeywords(msg: string): string[] {
     // Simple keyword extraction: split by common separators and filter
-    const words = msg
+    // Limit to 10 keywords
+    
+    return msg
         .toLowerCase()
         .split(/[\s\-_.,;:!?()\[\]{}]+/)
         .filter(w => w.length > 2 && !['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 'did', 'its', 'let', 'put', 'say', 'she', 'too', 'use'].includes(w))
-        .slice(0, 10); // Limit to 10 keywords
-    
-    return words;
+        .slice(0, 10);
 }
 
 /**

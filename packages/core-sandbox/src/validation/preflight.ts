@@ -68,7 +68,7 @@ async function checkBootstrapFile(): Promise<boolean> {
       }
       
       const parentDir = path.dirname(searchDir);
-      if (parentDir === searchDir) break;
+      if (parentDir === searchDir) {break;}
       searchDir = parentDir;
     }
     

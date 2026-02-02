@@ -93,7 +93,7 @@ export class TraceRecorder {
    * Begin span
    */
   begin(name: string, category: string = 'function', args?: Record<string, any>): void {
-    if (!this.enabled) return;
+    if (!this.enabled) {return;}
 
     const now = performance.now();
     const ts = this.timeToMicroseconds(now);
@@ -121,7 +121,7 @@ export class TraceRecorder {
    * End span
    */
   end(name: string): void {
-    if (!this.enabled) return;
+    if (!this.enabled) {return;}
 
     const now = performance.now();
     const ts = this.timeToMicroseconds(now);
@@ -142,7 +142,7 @@ export class TraceRecorder {
    * Complete event (duration event)
    */
   complete(name: string, category: string, startTime: number, endTime: number, args?: Record<string, any>): void {
-    if (!this.enabled) return;
+    if (!this.enabled) {return;}
 
     const ts = this.timeToMicroseconds(startTime);
     const dur = this.timeToMicroseconds(endTime - startTime);
@@ -163,7 +163,7 @@ export class TraceRecorder {
    * Instant event (point in time)
    */
   instant(name: string, category: string, args?: Record<string, any>, scope: 'g' | 'p' | 't' = 't'): void {
-    if (!this.enabled) return;
+    if (!this.enabled) {return;}
 
     const now = performance.now();
     const ts = this.timeToMicroseconds(now);
@@ -184,7 +184,7 @@ export class TraceRecorder {
    * Counter event (memory, CPU, etc)
    */
   counter(name: string, value: number, category: string = 'system'): void {
-    if (!this.enabled) return;
+    if (!this.enabled) {return;}
 
     const now = performance.now();
     const ts = this.timeToMicroseconds(now);

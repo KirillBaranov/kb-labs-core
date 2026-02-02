@@ -4,7 +4,6 @@
  */
 
 import { promises as fsp } from 'node:fs';
-import path from 'node:path';
 
 interface CacheEntry {
   data: any;

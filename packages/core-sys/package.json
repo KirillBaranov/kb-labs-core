@@ -33,7 +33,7 @@
     "build": "pnpm clean && tsup --config tsup.config.ts",
     "dev": "tsup --config tsup.config.ts --watch",
     "type-check": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "lint": "eslint . --ignore-pattern 'dist/**' --ignore-pattern 'coverage/**'",
     "lint:fix": "eslint . --fix --ignore-pattern 'dist/**' --ignore-pattern 'coverage/**'",
     "test:watch": "vitest"

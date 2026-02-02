@@ -46,7 +46,9 @@ export async function createElasticsearchAdapter(config: ElasticsearchAdapterCon
       flushTimer = null;
     }
     
-    if (batch.length === 0) return;
+    if (batch.length === 0) {
+      return;
+    }
     
     const toSend = [...batch];
     batch.length = 0;

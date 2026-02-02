@@ -6,7 +6,7 @@
 import type { Output, OutputMode, VerbosityLevel, DebugFormat } from "./types";
 import type { LogSink } from "../logging/types/types";
 import { createConsoleSink } from "../logging/sinks/console-sink";
-import { getLogger, type Logger } from "../logging/index";
+import { getLogger } from "../logging/index";
 import { OutputImpl } from "./output-impl";
 
 export interface OutputConfig {

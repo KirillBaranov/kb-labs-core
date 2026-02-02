@@ -9,7 +9,6 @@ import { extname } from 'node:path';
 import YAML from 'yaml';
 import { KbError, ERROR_HINTS } from '../errors/kb-error';
 import { fsCache } from '../cache/fs-cache';
-import { JsonReadResult } from '../types';
 
 export interface ConfigFileResult {
   data: unknown;

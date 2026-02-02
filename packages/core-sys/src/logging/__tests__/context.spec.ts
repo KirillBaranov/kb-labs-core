@@ -87,7 +87,9 @@ describe('LogContext', () => {
     logger.info('message');
     
     await Promise.resolve();
-    await new Promise(r => setTimeout(r, 10));
+    await new Promise((r) => {
+      setTimeout(r, 10);
+    });
     
     expect(records.length).toBeGreaterThan(0);
     const record = records[0];

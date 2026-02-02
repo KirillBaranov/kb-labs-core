@@ -93,19 +93,19 @@ export function classifyError(error: unknown): ErrorType {
     // Check status code
     const status = obj.status ?? obj.statusCode ?? obj.code;
     if (typeof status === 'number') {
-      if (status === 429) return 'rate_limit';
-      if (status >= 500) return 'server_error';
-      if (status >= 400) return 'client_error';
+      if (status === 429) {return 'rate_limit';}
+      if (status >= 500) {return 'server_error';}
+      if (status >= 400) {return 'client_error';}
     }
 
     // Check error code string
     const code = obj.code;
     if (typeof code === 'string') {
       const lowerCode = code.toLowerCase();
-      if (lowerCode.includes('timeout')) return 'timeout';
-      if (lowerCode.includes('econnrefused')) return 'network';
-      if (lowerCode.includes('econnreset')) return 'network';
-      if (lowerCode.includes('enotfound')) return 'network';
+      if (lowerCode.includes('timeout')) {return 'timeout';}
+      if (lowerCode.includes('econnrefused')) {return 'network';}
+      if (lowerCode.includes('econnreset')) {return 'network';}
+      if (lowerCode.includes('enotfound')) {return 'network';}
     }
   }
 

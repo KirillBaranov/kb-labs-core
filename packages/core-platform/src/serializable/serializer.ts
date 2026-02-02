@@ -24,13 +24,14 @@
  * ```
  */
 
-import {
+import type {
   SerializableValue,
   SerializableBuffer,
   SerializableDate,
   SerializableError,
   SerializableArray,
-  SerializableObject,
+  SerializableObject} from './types';
+import {
   SerializationError,
   DeserializationError,
 } from './types';

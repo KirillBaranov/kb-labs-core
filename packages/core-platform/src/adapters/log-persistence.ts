@@ -12,8 +12,8 @@
  * - Low-latency access to recent logs
  */
 
-import type { LogRecord, LogQuery } from './logger.ts';
-import type { ISQLDatabase } from './database.ts';
+import type { LogRecord, LogQuery } from "./logger";
+import type { ISQLDatabase } from "./database";
 
 /**
  * Persistent log storage for historical queries.
@@ -93,10 +93,10 @@ export interface ILogPersistence {
       /** Number of logs to skip (default: 0) */
       offset?: number;
       /** Sort by field (default: 'timestamp') */
-      sortBy?: 'timestamp' | 'level';
+      sortBy?: "timestamp" | "level";
       /** Sort order (default: 'desc') */
-      sortOrder?: 'asc' | 'desc';
-    }
+      sortOrder?: "asc" | "desc";
+    },
   ): Promise<{
     /** Logs matching query */
     logs: LogRecord[];
@@ -138,7 +138,7 @@ export interface ILogPersistence {
       limit?: number;
       /** Number of logs to skip (default: 0) */
       offset?: number;
-    }
+    },
   ): Promise<{
     /** Logs matching search query */
     logs: LogRecord[];

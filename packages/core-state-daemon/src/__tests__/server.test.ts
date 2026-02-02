@@ -174,7 +174,9 @@ describe('StateDaemonServer', () => {
       expect(res.status).toBe(200);
 
       // Wait for expiration
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 300);
+      });
 
       // Should be expired
       res = await fetch(`${baseURL}/state/${key}`);

@@ -9,7 +9,7 @@
  */
 export interface LLMRequestMetadata {
   /** Tier used for this request */
-  tier?: import('./llm-types.js').LLMTier;
+  tier?: import("./llm-types.js").LLMTier;
   /** Provider identifier (e.g., 'openai', 'anthropic') */
   provider?: string;
   /** Resource name in broker (e.g., 'llm:openai') */
@@ -78,11 +78,13 @@ export interface LLMToolCall {
  */
 export interface LLMMessage {
   /** Message role */
-  role: 'system' | 'user' | 'assistant' | 'tool';
+  role: "system" | "user" | "assistant" | "tool";
   /** Message content (text or tool results) */
   content: string;
-  /** Tool call ID (for tool role) */
+  /** Tool call ID (for tool role - identifies which tool call this result belongs to) */
   toolCallId?: string;
+  /** Tool calls made by assistant (for assistant role - when LLM requests tool execution) */
+  toolCalls?: LLMToolCall[];
 }
 
 /**
@@ -98,7 +100,11 @@ export interface LLMToolCallOptions extends LLMOptions {
    * - 'none': LLM cannot call tools (text-only response)
    * - { type: 'function', function: { name: 'tool_name' } }: Force specific tool
    */
-  toolChoice?: 'auto' | 'required' | 'none' | { type: 'function'; function: { name: string } };
+  toolChoice?:
+    | "auto"
+    | "required"
+    | "none"
+    | { type: "function"; function: { name: string } };
 }
 
 /**
@@ -140,6 +146,6 @@ export interface ILLM {
    */
   chatWithTools?(
     messages: LLMMessage[],
-    options: LLMToolCallOptions
+    options: LLMToolCallOptions,
   ): Promise<LLMToolCallResponse>;
 }

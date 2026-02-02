@@ -13,7 +13,7 @@
  * - Long-term storage
  */
 
-import type { LogRecord, LogQuery } from './logger.ts';
+import type { LogRecord, LogQuery } from "./logger";
 
 /**
  * Ring buffer for real-time log streaming.

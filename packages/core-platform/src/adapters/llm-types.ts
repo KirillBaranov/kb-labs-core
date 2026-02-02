@@ -28,7 +28,7 @@
  *
  * User decides what model maps to each tier in their config.
  */
-export type LLMTier = 'small' | 'medium' | 'large';
+export type LLMTier = "small" | "medium" | "large";
 
 /**
  * Model capabilities - task-optimized features.
@@ -38,7 +38,7 @@ export type LLMTier = 'small' | 'medium' | 'large';
  * - `coding`    - Code-optimized (better at code generation/review)
  * - `vision`    - Image input support
  */
-export type LLMCapability = 'reasoning' | 'coding' | 'vision' | 'fast';
+export type LLMCapability = "reasoning" | "coding" | "vision" | "fast";
 
 /**
  * Options for useLLM() - plugin-facing API.
@@ -104,7 +104,11 @@ export interface ILLMRouter {
 /**
  * Tier order for resolution (lowest to highest).
  */
-export const TIER_ORDER: readonly LLMTier[] = ['small', 'medium', 'large'] as const;
+export const TIER_ORDER: readonly LLMTier[] = [
+  "small",
+  "medium",
+  "large",
+] as const;
 
 /**
  * Check if tier A is higher than tier B.

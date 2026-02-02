@@ -1,7 +1,7 @@
-import type { ConfigureOpts, LogLevel, LogRecord, LogSink, Logger, Redactor } from "./types";
+import type { ConfigureOpts, LogLevel, LogRecord, LogSink, Logger } from "./types";
 import { recordLogWritten, recordLogDropped, recordSinkFailure, recordSinkSuccess } from "./metrics";
 import { getLogContext } from "./context";
-import { getGlobalState, type LoggingState } from "./state";
+import { getGlobalState } from "./state";
 import { enrichLogRecord } from "./ai-enrichment";
 import { initLogging } from "./init";
 

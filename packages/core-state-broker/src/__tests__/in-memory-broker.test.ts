@@ -77,7 +77,9 @@ describe('InMemoryStateBroker', () => {
       expect(await broker.get('short-lived')).toBe('value');
 
       // Wait for expiration
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 150);
+      });
 
       // Should be expired
       expect(await broker.get('short-lived')).toBeNull();
@@ -86,7 +88,9 @@ describe('InMemoryStateBroker', () => {
     it('should return null when checking expired entry', async () => {
       await broker.set('key', 'value', 50); // 50ms TTL
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
 
       const result = await broker.get('key');
       expect(result).toBeNull();
@@ -95,7 +99,9 @@ describe('InMemoryStateBroker', () => {
     it('should not expire entry before TTL', async () => {
       await broker.set('key', 'value', 500); // 500ms TTL
 
-      await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms
+      await new Promise((resolve) => {
+        setTimeout(resolve, 200);
+      }); // Wait 200ms
 
       const result = await broker.get('key');
       expect(result).toBe('value'); // Still valid
@@ -113,14 +119,18 @@ describe('InMemoryStateBroker', () => {
       await fastBroker.set('long', 'value3', 10_000);
 
       // Wait for expiration
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 150);
+      });
 
       // Entries expired but not cleaned yet (lazy deletion on get)
       const stats1 = await fastBroker.getStats();
       expect(stats1.totalEntries).toBe(3); // Still in store
 
       // Wait for cleanup interval
-      await new Promise(resolve => setTimeout(resolve, 600));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 600);
+      });
 
       // After cleanup, expired entries removed
       const stats2 = await fastBroker.getStats();
@@ -247,7 +257,9 @@ describe('InMemoryStateBroker', () => {
     it('should track uptime', async () => {
       const stats1 = await broker.getStats();
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
 
       const stats2 = await broker.getStats();
       expect(stats2.uptime).toBeGreaterThan(stats1.uptime);
@@ -261,7 +273,9 @@ describe('InMemoryStateBroker', () => {
       await fastBroker.set('exp2', 'v2', 50);
 
       // Wait for expiration + cleanup
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 300);
+      });
 
       const stats = await fastBroker.getStats();
       expect(stats.evictions).toBe(2);

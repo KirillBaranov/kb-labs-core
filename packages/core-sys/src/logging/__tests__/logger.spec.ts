@@ -21,7 +21,9 @@ describe.sequential('logging', () => {
     log.warn('w')
     log.error('e')
     await Promise.resolve();
-    await new Promise(r => setTimeout(r, 1))
+    await new Promise((r) => {
+      setTimeout(r, 1);
+    })
     expect(records.map(r => r.level)).toEqual(['info', 'warn', 'error'])
   })
 
@@ -32,7 +34,9 @@ describe.sequential('logging', () => {
     const log = getLogger('cat')
     log.debug('ok')
     await Promise.resolve();
-    await new Promise(r => setTimeout(r, 1))
+    await new Promise((r) => {
+      setTimeout(r, 1);
+    })
     expect(records[0].level).toBe('debug')
   })
 
@@ -42,7 +46,9 @@ describe.sequential('logging', () => {
     addSink(sink as any)
     getLogger('blocked').info('no')
     getLogger('allowed').info('yes')
-    await new Promise(r => setTimeout(r, 0))
+    await new Promise((r) => {
+      setTimeout(r, 0);
+    })
     expect(records.length).toBe(1)
     expect(records[0].category).toBe('allowed')
   })
@@ -53,7 +59,9 @@ describe.sequential('logging', () => {
     const root = getLogger('root')
     const child = root.child({ meta: { a: 1 } })
     child.info('msg', { b: 2 })
-    await new Promise(r => setTimeout(r, 0))
+    await new Promise((r) => {
+      setTimeout(r, 0);
+    })
     expect(records[0]).toBeDefined()
     expect(records[0].category).toBe('root')
     expect(records[0].meta).toEqual({ a: 1, b: 2 })
@@ -64,7 +72,9 @@ describe.sequential('logging', () => {
     addSink(sink as any)
     const err = new Error('boom')
     getLogger('x').error('oops', err)
-    await new Promise(r => setTimeout(r, 0))
+    await new Promise((r) => {
+      setTimeout(r, 0);
+    })
     expect(records[0]).toBeDefined()
     expect(records[0].err?.message).toBe('boom')
   })

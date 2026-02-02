@@ -3,7 +3,7 @@
  * Priority queue implementation with three levels: high, normal, low.
  */
 
-import type { QueueItem, ResourcePriority } from '../types.js';
+import type { QueueItem } from '../types.js';
 
 /**
  * Priority queue with three priority levels.

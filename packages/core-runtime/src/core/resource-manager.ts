@@ -225,7 +225,7 @@ export class ResourceManager implements IResourceManager {
   async getQuota(tenantId: string): Promise<TenantQuotas> {
     // Check local cache first
     const cached = this.quotas.get(tenantId);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     // Try to load from cache
     const stored = await this.cache.get<TenantQuotas>(`quota:${tenantId}`);
@@ -243,7 +243,7 @@ export class ResourceManager implements IResourceManager {
    */
   private getResourceCount(resource: ResourceType, tenantId: string): number {
     const tenantSet = this.tenantSlots.get(tenantId);
-    if (!tenantSet) return 0;
+    if (!tenantSet) {return 0;}
 
     let count = 0;
     for (const slotId of tenantSet) {

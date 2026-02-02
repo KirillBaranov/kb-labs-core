@@ -4,10 +4,17 @@
  * Subprocess runner interface - contract for running handlers in subprocesses.
  */
 
-import type { RunResult, ExecutionMeta, PluginContextDescriptor } from '@kb-labs/plugin-contracts';
+import type {
+  RunResult,
+  PluginContextDescriptor,
+} from "@kb-labs/plugin-contracts";
 
 // Re-export for convenience
-export type { RunResult, ExecutionMeta, PluginContextDescriptor } from '@kb-labs/plugin-contracts';
+export type {
+  RunResult,
+  ExecutionMeta,
+  PluginContextDescriptor,
+} from "@kb-labs/plugin-contracts";
 
 /**
  * Options for subprocess execution.

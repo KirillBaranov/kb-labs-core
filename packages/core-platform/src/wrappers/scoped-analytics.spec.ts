@@ -3,9 +3,9 @@
  * Tests for ScopedAnalytics wrapper that overrides source attribution
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { IAnalytics, AnalyticsEvent, AnalyticsContext } from '../../adapters/analytics.js';
-import { ScopedAnalytics } from './scoped-analytics.js';
+import { describe, it, expect, beforeEach } from 'vitest';
+import type { IAnalytics, AnalyticsEvent, AnalyticsContext } from '../../adapters/analytics';
+import { ScopedAnalytics } from './scoped-analytics';
 
 // Mock analytics adapter for testing
 class MockAnalytics implements IAnalytics {

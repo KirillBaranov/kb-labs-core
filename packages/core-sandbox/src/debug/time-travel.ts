@@ -4,8 +4,6 @@
  */
 
 import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
-import type { ExecutionContext } from '../types/index';
 import type { DebugLogEntry } from './logger';
 
 /**

@@ -6,7 +6,7 @@ import path from 'node:path'
 import { findRepoRoot } from '../repo'
 
 async function mkd(prefix = 'kb-core-sys-repo-') {
-  return await fsp.mkdtemp(path.join(os.tmpdir(), prefix))
+  return fsp.mkdtemp(path.join(os.tmpdir(), prefix))
 }
 
 describe('findRepoRoot', () => {

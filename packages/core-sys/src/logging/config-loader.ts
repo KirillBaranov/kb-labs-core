@@ -11,7 +11,6 @@ import { configureAI } from "./ai-config";
 import { initLogging } from "./init";
 import { createFileSink } from "./sinks/file-sink";
 import { createConsoleSink } from "./sinks/console-sink";
-import { jsonSink } from "./sinks/json";
 import { createRedactor } from "./redaction";
 import { createEnrichmentSink } from "./adapters/enrichment-adapter";
 import type { LogLevel, AIConfig } from "./types/types";
@@ -104,7 +103,7 @@ export async function initLoggingFromConfig(configPath: string = './kb.config.js
   const sinks: LogSink[] = [];
   
   for (const adapterConfig of resolvedConfig.adapters || []) {
-    if (!adapterConfig.enabled) continue;
+    if (!adapterConfig.enabled) {continue;}
     
     // Проверить встроенные адаптеры
     const builtinFactory = BUILTIN_ADAPTERS[adapterConfig.type];
