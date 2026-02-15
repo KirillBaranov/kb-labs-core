@@ -7,7 +7,7 @@ import { fork, type ChildProcess } from 'node:child_process';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:net';
-import { existsSync } from 'node:fs';
+import { existsSync, appendFileSync } from 'node:fs';
 import type { SandboxRunner } from './sandbox-runner';
 import type {
   HandlerRef,
@@ -68,7 +68,7 @@ function setupLogPipes(
   quiet: boolean
 ): RingBuffer {
   // DEBUG: Log setupLogPipes called
-  require('fs').appendFileSync('/tmp/subprocess-runner-debug.log',
+  appendFileSync('/tmp/subprocess-runner-debug.log',
     `[SETUP-LOG-PIPES] Called, child.stdout exists: ${!!child.stdout}\n`
   );
 
@@ -76,7 +76,7 @@ function setupLogPipes(
   const ringBuffer = new RingBuffer(bufferSizeMb * 1024 * 1024);
 
   if (child.stdout) {
-    require('fs').appendFileSync('/tmp/subprocess-runner-debug.log',
+    appendFileSync('/tmp/subprocess-runner-debug.log',
       `[SETUP-LOG-PIPES] Attaching stdout listener\n`
     );
     child.stdout.setEncoding('utf8');
@@ -476,7 +476,7 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
       }
       
       // DEBUG: Log before fork
-      require('fs').appendFileSync('/tmp/subprocess-runner-debug.log',
+      appendFileSync('/tmp/subprocess-runner-debug.log',
         `[SUBPROCESS-RUNNER] About to fork child process\n`
       );
 
@@ -487,7 +487,7 @@ export function createSubprocessRunner(config: SandboxConfig): SandboxRunner {
         cwd: ctx.workdir,
       });
 
-      require('fs').appendFileSync('/tmp/subprocess-runner-debug.log',
+      appendFileSync('/tmp/subprocess-runner-debug.log',
         `[SUBPROCESS-RUNNER] Child forked, PID: ${child.pid}\n`
       );
 
