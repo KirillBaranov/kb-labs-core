@@ -42,7 +42,7 @@ async function readPackageJson(pkgPath: string): Promise<any> {
  */
 async function loadAdapterModule(distPath: string): Promise<any> {
   const fileUrl = pathToFileURL(distPath).href;
-  return await import(fileUrl);
+  return import(fileUrl);
 }
 
 /**

@@ -354,9 +354,9 @@ export class WorkflowEngine implements IWorkflowEngine {
       const timeout = stepDef.timeout ?? 60000;
       const result = await Promise.race([
         stepDef.handler(input, context),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Step timeout')), timeout)
-        ),
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Step timeout')), timeout);
+        }),
       ]);
 
       stepRun.status = 'completed';

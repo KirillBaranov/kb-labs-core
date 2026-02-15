@@ -32,7 +32,7 @@ export async function getMonitoringSnapshot(
     return [];
   }
 
-  return await Promise.all(
+  return Promise.all(
     resources.map(async (resource) => {
       const availability = await resourcesManager
         .getAvailability(resource, tenantId)

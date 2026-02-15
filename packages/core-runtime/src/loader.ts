@@ -238,7 +238,7 @@ function initializeResourceBroker(
           return realEmbeddings.embed(args[0] as string);
         }
         if (operation === 'embedBatch') {
-          return await realEmbeddings.embedBatch(args[0] as string[]);
+          return realEmbeddings.embedBatch(args[0] as string[]);
         }
         throw new Error(`Unknown Embeddings operation: ${operation}`);
       },
@@ -650,7 +650,7 @@ export async function initPlatform(
     try {
       // Use dynamic import from plugin-execution-factory to eliminate circular dependency
       // plugin-execution-factory has no dependency on core-runtime
-      // @ts-ignore - Dynamic import to break circular dependency at build time
+      // @ts-expect-error - Dynamic import to break circular dependency at build time
       const { createExecutionBackend } = await import('@kb-labs/plugin-execution-factory');
 
       // Map config types to backend options (explicit mapping, no type casts)

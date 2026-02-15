@@ -95,7 +95,7 @@ export class HybridLogReader implements ILogReader {
   async getById(id: string): Promise<LogRecord | null> {
     // Try persistence first (complete data)
     if (this.persistence) {
-      return await this.persistence.getById(id);
+      return this.persistence.getById(id);
     }
 
     // Fallback to buffer (recent logs only)
@@ -118,7 +118,7 @@ export class HybridLogReader implements ILogReader {
   ): Promise<LogSearchResult> {
     // Use persistence FTS if available
     if (this.persistence) {
-      return await this.persistence.search(searchText, {
+      return this.persistence.search(searchText, {
         limit: options.limit,
         offset: options.offset,
       });

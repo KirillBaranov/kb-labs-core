@@ -135,7 +135,7 @@ export class VectorStoreProxy extends RemoteAdapter<IVectorStore> implements IVe
 
     // Large result - deserialize if it's BulkTransfer
     if (BulkTransferHelper.isBulkTransfer(resultTransfer)) {
-      return await BulkTransferHelper.deserialize<VectorRecord[]>(resultTransfer);
+      return BulkTransferHelper.deserialize<VectorRecord[]>(resultTransfer);
     }
     return resultTransfer as VectorRecord[];
   }
@@ -154,7 +154,7 @@ export class VectorStoreProxy extends RemoteAdapter<IVectorStore> implements IVe
 
     // Large result - deserialize if it's BulkTransfer
     if (BulkTransferHelper.isBulkTransfer(resultTransfer)) {
-      return await BulkTransferHelper.deserialize<VectorRecord[]>(resultTransfer);
+      return BulkTransferHelper.deserialize<VectorRecord[]>(resultTransfer);
     }
     return resultTransfer as VectorRecord[];
   }
