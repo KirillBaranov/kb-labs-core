@@ -85,6 +85,8 @@ export interface LLMMessage {
   toolCallId?: string;
   /** Tool calls made by assistant (for assistant role - when LLM requests tool execution) */
   toolCalls?: LLMToolCall[];
+  /** Metadata from tool execution (e.g., reflection results, file counts, etc.) */
+  metadata?: Record<string, unknown>;
 }
 
 /**
