@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsup';
 import nodePreset from '@kb-labs/devkit/tsup/node';
-import binPreset from '@kb-labs/devkit/tsup/bin.js';
+import binPreset from '@kb-labs/devkit/tsup/bin';
 
 export default defineConfig([
   // Bin build (bin.js) - standalone executable (build first to clean)
