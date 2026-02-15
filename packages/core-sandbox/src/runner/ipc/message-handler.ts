@@ -8,9 +8,7 @@ import type { IpcMessage } from './message-types';
 import type { RunHandlerOptions } from './run-handler';
 import { handleRunMessage } from './run-handler';
 
-export interface MessageHandlerOptions extends Omit<RunHandlerOptions, 'payload'> {
-  // sandboxOutput, collector, traceRecorder, executionContext, recreateContext, executeHandler
-}
+export type MessageHandlerOptions = Omit<RunHandlerOptions, 'payload'>;
 
 /**
  * Setup IPC message listener
