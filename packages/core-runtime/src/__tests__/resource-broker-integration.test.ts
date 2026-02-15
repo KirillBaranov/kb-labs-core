@@ -243,7 +243,9 @@ describe('ResourceBroker Integration (Real)', () => {
       const mockLLM: ILLM = {
         complete: async () => {
           // Simulate slow operation (2 seconds)
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+          await new Promise((resolve) => {
+          setTimeout(resolve, 2000);
+        });
           return { content: 'Too late', model: "mock-llm", usage: { promptTokens: 10, completionTokens: 5 } };
         },
       };
@@ -277,7 +279,9 @@ describe('ResourceBroker Integration (Real)', () => {
       const mockLLM: ILLM = {
         complete: async () => {
           // Fast operation (100ms)
-          await new Promise((resolve) => setTimeout(resolve, 100));
+          await new Promise((resolve) => {
+          setTimeout(resolve, 100);
+        });
           return { content: 'Fast response', model: "mock-llm", usage: { promptTokens: 10, completionTokens: 5 } };
         },
       };
@@ -353,7 +357,9 @@ describe('ResourceBroker Integration (Real)', () => {
           maxConcurrent = Math.max(maxConcurrent, currentConcurrent);
 
           // Simulate work
-          await new Promise((resolve) => setTimeout(resolve, 100));
+          await new Promise((resolve) => {
+          setTimeout(resolve, 100);
+        });
 
           currentConcurrent--;
           return [0.1, 0.2, 0.3];
@@ -395,7 +401,9 @@ describe('ResourceBroker Integration (Real)', () => {
       const mockLLM: ILLM = {
         complete: async (prompt: string) => {
           llmCalls.push(Date.now());
-          await new Promise((resolve) => setTimeout(resolve, 50));
+          await new Promise((resolve) => {
+          setTimeout(resolve, 50);
+        });
           return { content: prompt, model: "mock-llm", usage: { promptTokens: 10, completionTokens: 5 } };
         },
       };
@@ -403,7 +411,9 @@ describe('ResourceBroker Integration (Real)', () => {
       const mockEmbeddings: IEmbeddings = {
         embed: async (text: string) => {
           embeddingCalls.push(Date.now());
-          await new Promise((resolve) => setTimeout(resolve, 50));
+          await new Promise((resolve) => {
+          setTimeout(resolve, 50);
+        });
           return [0.1, 0.2, 0.3];
         },
         embedBatch: async () => [],
