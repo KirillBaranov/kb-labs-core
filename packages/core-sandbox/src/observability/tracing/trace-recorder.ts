@@ -7,6 +7,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as os from 'node:os';
 import type { ChromeTraceEvent, ChromeTraceFormat } from './types';
 
 export interface TraceRecorderOptions {
@@ -219,8 +220,8 @@ export class TraceRecorder {
       metadata: {
         product: 'kb-labs',
         'os-name': process.platform,
-        'num-cpus': require('os').cpus().length,
-        'physical-memory': require('os').totalmem(),
+        'num-cpus': os.cpus().length,
+        'physical-memory': os.totalmem(),
       },
     };
   }
