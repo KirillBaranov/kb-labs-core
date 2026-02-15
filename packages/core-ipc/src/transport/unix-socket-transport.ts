@@ -26,8 +26,8 @@ import {
   type PendingRequest,
   TransportError,
   TimeoutError,
-} from './transport.js';
-import { selectTimeout } from './timeout-config.js';
+} from './transport';
+import { selectTimeout } from './timeout-config';
 
 /**
  * Configuration for Unix Socket transport.
@@ -75,7 +75,9 @@ export class UnixSocketTransport implements ITransport {
 
     if (this.connecting) {
       // Wait for existing connection attempt
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
       return this.connect();
     }
 

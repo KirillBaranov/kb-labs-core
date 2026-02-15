@@ -139,7 +139,9 @@ export class IPCTransport implements ITransport {
 
       // Wait with exponential backoff (sleep instead of drain event)
       const delay = Math.min(baseDelayMs * Math.pow(1.5, retryCount), 5000); // Cap at 5s
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise(resolve => {
+        setTimeout(resolve, delay);
+      });
 
       // Retry sending
       return this.trySendWithBackpressure(call, retryCount + 1);

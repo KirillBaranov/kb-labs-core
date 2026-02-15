@@ -39,7 +39,7 @@ import {
   TransportError,
   TimeoutError,
 } from './transport';
-import { selectTimeout } from './timeout-config.js';
+import { selectTimeout } from './timeout-config';
 
 /**
  * IPC transport using process.send/process.on('message').
@@ -139,7 +139,9 @@ export class IPCTransport implements ITransport {
 
       // Wait with exponential backoff (sleep instead of drain event)
       const delay = Math.min(baseDelayMs * Math.pow(1.5, retryCount), 5000); // Cap at 5s
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise(resolve => {
+        setTimeout(resolve, delay);
+      });
 
       // Retry sending
       return this.trySendWithBackpressure(call, retryCount + 1);
