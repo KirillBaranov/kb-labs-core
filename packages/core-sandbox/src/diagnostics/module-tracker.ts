@@ -30,6 +30,7 @@ export class ModuleTracker {
    */
   start(): void {
     const originalLoad = Module._load;
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
 
     // @ts-expect-error - Monkey-patch Module._load for tracking
