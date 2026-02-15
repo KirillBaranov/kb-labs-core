@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { UnixSocketServer } from '../ipc/unix-socket-server.js';
+import { UnixSocketServer } from '../ipc/unix-socket-server';
 import type { IPlatformAdapters } from '@kb-labs/core-platform';
 import * as net from 'net';
 import * as fs from 'fs';
@@ -134,7 +134,9 @@ describe('UnixSocketServer', () => {
       await server.start();
 
       const client = net.createConnection(testSocketPath);
-      await new Promise((resolve) => client.on('connect', resolve));
+      await new Promise((resolve) => {
+        client.on('connect', resolve);
+      });
 
       // Mock cache.get to return a value
       vi.mocked(mockPlatform.cache.get).mockResolvedValue({ foo: 'bar' });
@@ -175,7 +177,9 @@ describe('UnixSocketServer', () => {
       await server.start();
 
       const client = net.createConnection(testSocketPath);
-      await new Promise((resolve) => client.on('connect', resolve));
+      await new Promise((resolve) => {
+        client.on('connect', resolve);
+      });
 
       const expectedResults = [
         { id: '1', score: 0.9, metadata: {} },
@@ -218,7 +222,9 @@ describe('UnixSocketServer', () => {
       await server.start();
 
       const client = net.createConnection(testSocketPath);
-      await new Promise((resolve) => client.on('connect', resolve));
+      await new Promise((resolve) => {
+        client.on('connect', resolve);
+      });
 
       // Mock cache.get to throw error
       vi.mocked(mockPlatform.cache.get).mockRejectedValue(new Error('Cache is down'));
@@ -258,7 +264,9 @@ describe('UnixSocketServer', () => {
       await server.start();
 
       const client = net.createConnection(testSocketPath);
-      await new Promise((resolve) => client.on('connect', resolve));
+      await new Promise((resolve) => {
+        client.on('connect', resolve);
+      });
 
       const call = {
         type: 'adapter:call',
@@ -295,7 +303,9 @@ describe('UnixSocketServer', () => {
       await server.start();
 
       const client = net.createConnection(testSocketPath);
-      await new Promise((resolve) => client.on('connect', resolve));
+      await new Promise((resolve) => {
+        client.on('connect', resolve);
+      });
 
       const call = {
         type: 'adapter:call',
@@ -334,7 +344,9 @@ describe('UnixSocketServer', () => {
       await server.start();
 
       const client = net.createConnection(testSocketPath);
-      await new Promise((resolve) => client.on('connect', resolve));
+      await new Promise((resolve) => {
+        client.on('connect', resolve);
+      });
 
       const call = {
         type: 'adapter:call',
@@ -375,8 +387,12 @@ describe('UnixSocketServer', () => {
       const client2 = net.createConnection(testSocketPath);
 
       await Promise.all([
-        new Promise((resolve) => client1.on('connect', resolve)),
-        new Promise((resolve) => client2.on('connect', resolve)),
+        new Promise((resolve) => {
+          client1.on('connect', resolve);
+        }),
+        new Promise((resolve) => {
+          client2.on('connect', resolve);
+        }),
       ]);
 
       vi.mocked(mockPlatform.cache.get).mockResolvedValue({ value: 'test' });
