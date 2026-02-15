@@ -19,8 +19,8 @@
 // IPC SERVERS (Parent Process Side)
 // ═══════════════════════════════════════════════════════════════════════════
 
-export { UnixSocketServer, type UnixSocketServerConfig } from './ipc/unix-socket-server.js';
-export { IPCServer, createIPCServer } from './ipc/ipc-server.js';
+export { UnixSocketServer, type UnixSocketServerConfig } from './ipc/unix-socket-server';
+export { IPCServer, createIPCServer } from './ipc/ipc-server';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TRANSPORT LAYER (Child Process Side)
@@ -34,19 +34,19 @@ export {
   TimeoutError,
   CircuitOpenError,
   isRetryableError,
-} from './transport/transport.js';
+} from './transport/transport';
 
-export { IPCTransport, createIPCTransport } from './transport/ipc-transport.js';
-export { UnixSocketTransport, createUnixSocketTransport, type UnixSocketConfig } from './transport/unix-socket-transport.js';
+export { IPCTransport, createIPCTransport } from './transport/ipc-transport';
+export { UnixSocketTransport, createUnixSocketTransport, type UnixSocketConfig } from './transport/unix-socket-transport';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // BULK TRANSFER (Large Message Optimization)
 // ═══════════════════════════════════════════════════════════════════════════
 
-export { BulkTransferHelper, type BulkTransfer, type BulkTransferOptions } from './transport/bulk-transfer.js';
+export { BulkTransferHelper, type BulkTransfer, type BulkTransferOptions } from './transport/bulk-transfer';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TIMEOUT CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-export { selectTimeout, getOperationTimeout, OPERATION_TIMEOUTS } from './transport/timeout-config.js';
+export { selectTimeout, getOperationTimeout, OPERATION_TIMEOUTS } from './transport/timeout-config';

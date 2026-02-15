@@ -23,6 +23,7 @@
 
 import * as net from 'net';
 import * as fs from 'fs';
+import * as os from 'os';
 import type { PlatformContainer } from '../container.js';
 import type { AdapterCall, AdapterResponse } from '@kb-labs/core-platform/serializable';
 import { serialize, deserialize, IPC_PROTOCOL_VERSION } from '@kb-labs/core-platform/serializable';
@@ -185,7 +186,7 @@ export class UnixSocketServer {
         call.args.map(async (arg) => {
           const deserialized = deserialize(arg);
           if (BulkTransferHelper.isBulkTransfer(deserialized)) {
-            return await BulkTransferHelper.deserialize(deserialized);
+            return BulkTransferHelper.deserialize(deserialized);
           }
           return deserialized;
         })
@@ -202,7 +203,7 @@ export class UnixSocketServer {
         if (resultJson.length > 1_000_000) {
           const transfer = await BulkTransferHelper.serialize(result, {
             maxInlineSize: 1_000_000,
-            tempDir: process.env.KB_TEMP_DIR ?? require('os').tmpdir(),
+            tempDir: process.env.KB_TEMP_DIR ?? os.tmpdir(),
           });
           serializedResult = serialize(transfer);
         } else {
