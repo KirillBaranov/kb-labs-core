@@ -13,6 +13,11 @@ import { resolveAdapter } from './discover-adapters.js';
 import { createAnalyticsContext } from './analytics-context.js';
 import { AdapterLoader } from './adapter-loader.js';
 import type { AdapterConfig, LoadedAdapterModule } from './adapter-loader.js';
+import { EnvironmentManager } from './environment-manager.js';
+import { WorkspaceManager } from './workspace-manager.js';
+import { SnapshotManager } from './snapshot-manager.js';
+import { RunExecutor } from './run-executor.js';
+import { RunOrchestrator } from './run-orchestrator.js';
 
 import { ResourceManager } from './core/resource-manager.js';
 import { JobScheduler } from './core/job-scheduler.js';
@@ -331,9 +336,20 @@ export async function initPlatform(
 
   // 🔍 Detect if running in child process (sandbox worker)
   const isChildProcess = !!process.send; // Has IPC channel = forked child
+  const initStartedAt = Date.now();
 
+  await platform.emitLifecyclePhase('start', {
+    cwd,
+    isChildProcess,
+    metadata: {
+      adapterKeys: Object.keys(adapters),
+      hasExecutionConfig: Object.keys(execution).length > 0,
+      pid: process.pid,
+    },
+  });
 
-  if (isChildProcess) {
+  try {
+    if (isChildProcess) {
     // ══════════════════════════════════════════════════════════════════════
     // CHILD PROCESS (Sandbox Worker)
     // ══════════════════════════════════════════════════════════════════════
@@ -406,7 +422,7 @@ export async function initPlatform(
 
     platform.logger.debug('initPlatform child process initialization complete');
 
-  } else {
+    } else {
     // ══════════════════════════════════════════════════════════════════════
     // PARENT PROCESS (CLI bin)
     // ══════════════════════════════════════════════════════════════════════
@@ -650,7 +666,6 @@ export async function initPlatform(
     try {
       // Use dynamic import from plugin-execution-factory to eliminate circular dependency
       // plugin-execution-factory has no dependency on core-runtime
-      // @ts-expect-error - Dynamic import to break circular dependency at build time
       const { createExecutionBackend } = await import('@kb-labs/plugin-execution-factory');
 
       // Map config types to backend options (explicit mapping, no type casts)
@@ -696,6 +711,69 @@ export async function initPlatform(
         platform.logger.error('ExecutionBackend initialization failed');
         throw error;
       }
+    }
+
+    // Initialize capability services (workspace/snapshot managers)
+    try {
+      const workspaceManager = new WorkspaceManager(platform);
+      const snapshotManager = new SnapshotManager(platform);
+      platform.initCapabilityServices(workspaceManager, snapshotManager);
+      platform.registerLifecycleHooks('capability-managers', {
+        onShutdown: async () => {
+          await workspaceManager.shutdown();
+          await snapshotManager.shutdown();
+        },
+      });
+
+      platform.logger.debug('initPlatform initialized capability services', {
+        hasWorkspaceProvider: workspaceManager.hasProvider(),
+        hasSnapshotProvider: snapshotManager.hasProvider(),
+      });
+    } catch (error) {
+      platform.logger.warn('Failed to initialize capability services, continuing without them', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+
+    // Initialize orchestration services (environment manager + run executor/orchestrator)
+    try {
+      if (platform.hasExecutionBackend) {
+        const environmentOptions = (adapterOptions.environment ?? {}) as Record<string, unknown>;
+        const environmentManager = new EnvironmentManager(platform, {
+          janitorIntervalMs: typeof environmentOptions.janitorIntervalMs === 'number'
+            ? environmentOptions.janitorIntervalMs
+            : undefined,
+          janitorBatchSize: typeof environmentOptions.janitorBatchSize === 'number'
+            ? environmentOptions.janitorBatchSize
+            : undefined,
+        });
+        const runExecutor = new RunExecutor(platform.executionBackend, platform.logger);
+        const runOrchestrator = new RunOrchestrator(
+          environmentManager,
+          runExecutor,
+          platform.logger
+        );
+
+        platform.initOrchestrationServices(
+          environmentManager,
+          runExecutor,
+          runOrchestrator
+        );
+        environmentManager.startJanitor();
+        platform.registerLifecycleHooks('environment-manager', {
+          onShutdown: async () => {
+            await environmentManager.shutdown();
+          },
+        });
+
+        platform.logger.debug('initPlatform initialized orchestration services', {
+          hasEnvironmentProvider: environmentManager.hasProvider(),
+        });
+      }
+    } catch (error) {
+      platform.logger.warn('Failed to initialize orchestration services, continuing without them', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
     // Initialize core features (gracefully degrade if workflow unavailable)
@@ -814,10 +892,32 @@ export async function initPlatform(
       });
     }
 
-    platform.logger.debug('initPlatform parent process initialization complete');
-  }
+      platform.logger.debug('initPlatform parent process initialization complete');
+    }
 
-  return platform;
+    await platform.emitLifecyclePhase('ready', {
+      cwd,
+      isChildProcess,
+      metadata: {
+        adapterKeys: platform.listAdapters(),
+        durationMs: Date.now() - initStartedAt,
+        pid: process.pid,
+      },
+    });
+
+    return platform;
+  } catch (error) {
+    await platform.emitLifecycleError(error, 'start', {
+      cwd,
+      isChildProcess,
+      metadata: {
+        adapterKeys: Object.keys(adapters),
+        durationMs: Date.now() - initStartedAt,
+        pid: process.pid,
+      },
+    });
+    throw error;
+  }
 }
 
 /**

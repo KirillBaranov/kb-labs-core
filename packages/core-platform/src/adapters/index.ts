@@ -19,6 +19,7 @@ export type {
   AnalyticsContext,
   AnalyticsEvent,
   EventsQuery,
+  StatsQuery,
   EventsResponse,
   EventsStats,
   BufferStatus,
@@ -52,6 +53,7 @@ export type {
   LLMCapability,
   UseLLMOptions,
   LLMResolution,
+  LLMAdapterBinding,
   ILLMRouter,
 } from "./llm-types.js";
 export { TIER_ORDER, isTierHigher, isTierLower } from "./llm-types.js";
@@ -109,6 +111,17 @@ export type {
   LogPersistenceConfig,
 } from "./log-persistence.js";
 
+// Log Reader
+export type {
+  ILogReader,
+  LogCapabilities,
+  LogQueryOptions,
+  LogQueryResult,
+  LogSearchOptions,
+  LogSearchResult,
+  LogStats,
+} from "./log-reader.js";
+
 // Event Bus
 export type { IEventBus, EventHandler, Unsubscribe } from "./event-bus.js";
 
@@ -129,3 +142,43 @@ export type {
   ExecutionResult,
   ExecuteOptions,
 } from "./execution.js";
+
+// Environment lifecycle (provisioning/destroy, separate from execution backend)
+export type {
+  IEnvironmentProvider,
+  EnvironmentStatus,
+  EnvironmentResources,
+  EnvironmentLease,
+  EnvironmentEndpoint,
+  CreateEnvironmentRequest,
+  EnvironmentDescriptor,
+  EnvironmentStatusResult,
+  EnvironmentProviderCapabilities,
+} from "../environment/environment-provider.js";
+
+// Workspace lifecycle
+export type {
+  IWorkspaceProvider,
+  WorkspaceStatus,
+  WorkspaceMount,
+  MaterializeWorkspaceRequest,
+  WorkspaceDescriptor,
+  AttachWorkspaceRequest,
+  WorkspaceAttachment,
+  WorkspaceStatusResult,
+  WorkspaceProviderCapabilities,
+} from "../workspace/workspace-provider.js";
+
+// Snapshot lifecycle
+export type {
+  ISnapshotProvider,
+  SnapshotStatus,
+  CaptureSnapshotRequest,
+  SnapshotDescriptor,
+  RestoreSnapshotRequest,
+  RestoreSnapshotResult,
+  SnapshotStatusResult,
+  SnapshotGarbageCollectRequest,
+  SnapshotGarbageCollectResult,
+  SnapshotProviderCapabilities,
+} from "../snapshot/snapshot-provider.js";

@@ -22,7 +22,13 @@
 
 // Container
 export { PlatformContainer, platform } from './container.js';
-export type { CoreAdapterTypes, AdapterTypes } from './container.js';
+export type {
+  CoreAdapterTypes,
+  AdapterTypes,
+  PlatformLifecyclePhase,
+  PlatformLifecycleContext,
+  PlatformLifecycleHooks,
+} from './container.js';
 
 // Loader
 export { initPlatform, resetPlatform } from './loader.js';
@@ -40,6 +46,7 @@ export type {
   ResourceBrokerConfig,
   JobsConfig,
   WorkflowsConfig,
+  ExecutionConfig,
 } from './config.js';
 
 // Analytics context
@@ -117,3 +124,15 @@ export {
   type DegradedStatus,
   type DegradedOptions,
 } from './monitoring.js';
+
+// Orchestration services
+export { EnvironmentManager } from './environment-manager.js';
+export { WorkspaceManager } from './workspace-manager.js';
+export { SnapshotManager } from './snapshot-manager.js';
+export { RunExecutor } from './run-executor.js';
+export type { RunStepExecutionRequest } from './run-executor.js';
+export { RunOrchestrator } from './run-orchestrator.js';
+export type { StartFullCycleRequest } from './run-orchestrator.js';
+
+// Use-cases
+export { startFullCycle } from './use-cases/start-full-cycle.js';

@@ -202,6 +202,53 @@ describe('AdapterLoader', () => {
     ).rejects.toThrow('requires adapter "db"');
   });
 
+  it('should explain runtime token vs manifest id mismatch', async () => {
+    const loader = new AdapterLoader();
+
+    const configs: Record<string, AdapterConfig> = {
+      cache: { module: '@kb-labs/adapters-redis', config: {} },
+      eventBus: { module: '@kb-labs/adapters-eventbus-cache', config: {} },
+    };
+
+    const loadModule = vi.fn(async (modulePath: string) => {
+      if (modulePath === '@kb-labs/adapters-redis') {
+        return {
+          manifest: {
+            manifestVersion: '1.0.0',
+            id: 'redis-cache',
+            name: 'Redis Cache',
+            version: '1.0.0',
+            type: 'core',
+            implements: 'ICache',
+          } as AdapterManifest,
+          createAdapter: vi.fn(),
+        };
+      }
+
+      if (modulePath === '@kb-labs/adapters-eventbus-cache') {
+        return {
+          manifest: {
+            manifestVersion: '1.0.0',
+            id: 'eventbus-cache',
+            name: 'EventBus Cache',
+            version: '1.0.0',
+            type: 'core',
+            implements: 'IEventBus',
+            // Intentionally wrong: uses manifest.id instead of runtime token "cache"
+            requires: { adapters: ['redis-cache'] },
+          } as AdapterManifest,
+          createAdapter: vi.fn(),
+        };
+      }
+
+      throw new Error(`Unknown module: ${modulePath}`);
+    });
+
+    await expect(
+      loader.buildDependencyGraph(configs, loadModule)
+    ).rejects.toThrow('runtime adapter tokens');
+  });
+
   it('should handle optional dependencies gracefully', async () => {
     const loader = new AdapterLoader();
 

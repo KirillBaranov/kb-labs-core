@@ -21,10 +21,7 @@ import {
 } from '@kb-labs/core-policy';
 import { KbError, ERROR_HINTS } from '@kb-labs/core-config';
 import { resolveWorkspaceRoot } from '@kb-labs/core-workspace';
-import { getLogger } from '@kb-labs/core-sys';
 import type { LoadBundleOptions, Bundle } from '../types/types';
-
-const log = getLogger('core-bundle');
 
 /**
  * Load bundle with config, profile, and policy
@@ -104,7 +101,8 @@ export async function loadBundle<T = any>(opts: LoadBundleOptions): Promise<Bund
     const result = validateProductConfig(product, configResult.config);
     if (!result.ok) {
       if (validate === 'warn') {
-        log.warn('Config validation warnings', { errors: result.errors });
+        // Warning: validation failed but continuing
+        console.warn('[core-bundle] Config validation warnings:', result.errors);
       } else {
         const err = new Error('Config validation failed') as Error & { details: unknown };
         err.details = result.errors;

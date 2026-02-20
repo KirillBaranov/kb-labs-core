@@ -58,6 +58,7 @@ export type {
   LLMCapability,
   UseLLMOptions,
   LLMResolution,
+  LLMAdapterBinding,
   ILLMRouter,
 } from './adapters/llm-types.js';
 export { TIER_ORDER, isTierHigher, isTierLower } from './adapters/llm-types.js';
@@ -141,6 +142,59 @@ export type {
   ExecutionResult,
   ExecuteOptions,
 } from './adapters/execution.js';
+
+// Environment lifecycle abstraction (long-lived runtime environments)
+export type {
+  IEnvironmentProvider,
+  EnvironmentStatus,
+  EnvironmentResources,
+  EnvironmentLease,
+  EnvironmentEndpoint,
+  CreateEnvironmentRequest,
+  EnvironmentDescriptor,
+  EnvironmentStatusResult,
+  EnvironmentProviderCapabilities,
+} from './environment/environment-provider.js';
+
+// Workspace lifecycle abstraction
+export type {
+  IWorkspaceProvider,
+  WorkspaceStatus,
+  WorkspaceMount,
+  MaterializeWorkspaceRequest,
+  WorkspaceDescriptor,
+  AttachWorkspaceRequest,
+  WorkspaceAttachment,
+  WorkspaceStatusResult,
+  WorkspaceProviderCapabilities,
+} from './workspace/workspace-provider.js';
+
+// Snapshot lifecycle abstraction
+export type {
+  ISnapshotProvider,
+  SnapshotStatus,
+  CaptureSnapshotRequest,
+  SnapshotDescriptor,
+  RestoreSnapshotRequest,
+  RestoreSnapshotResult,
+  SnapshotStatusResult,
+  SnapshotGarbageCollectRequest,
+  SnapshotGarbageCollectResult,
+  SnapshotProviderCapabilities,
+} from './snapshot/snapshot-provider.js';
+
+// Full-cycle run state model and event schema
+export type {
+  RunStatus,
+  RunStepStatus,
+  RunStepDefinition,
+  CreateRunRequest,
+  RunRecord,
+  RunStepRecord,
+  RunEventType,
+  RunEvent,
+} from './runs/run-types.js';
+export { TERMINAL_RUN_STATUSES } from './runs/run-types.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CORE FEATURE INTERFACES (built-in, not replaceable)

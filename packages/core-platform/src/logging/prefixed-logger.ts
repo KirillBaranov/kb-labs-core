@@ -48,7 +48,12 @@ import type { ILogger } from '../adapters/logger.js';
 export const SYSTEM_LOG_FIELDS = new Set([
   // Core observability
   'reqId',
+  'requestId',
   'traceId',
+  'spanId',
+  'parentSpanId',
+  'invocationId',
+  'executionId',
   'tenantId',
   'layer',
 

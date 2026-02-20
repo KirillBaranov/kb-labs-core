@@ -25,6 +25,11 @@ import type {
 } from '@kb-labs/core-platform';
 
 import type { IResourceBroker } from '@kb-labs/core-resource-broker';
+import type { EnvironmentManager } from './environment-manager.js';
+import type { WorkspaceManager } from './workspace-manager.js';
+import type { SnapshotManager } from './snapshot-manager.js';
+import type { RunExecutor } from './run-executor.js';
+import type { RunOrchestrator } from './run-orchestrator.js';
 
 import {
   NoOpAnalytics,
@@ -73,11 +78,48 @@ export type AdapterTypes = CoreAdapterTypes & {
 };
 
 /**
+ * Platform lifecycle phase.
+ */
+export type PlatformLifecyclePhase =
+  | 'start'
+  | 'ready'
+  | 'beforeShutdown'
+  | 'shutdown';
+
+/**
+ * Platform lifecycle event context.
+ */
+export interface PlatformLifecycleContext {
+  phase: PlatformLifecyclePhase;
+  cwd?: string;
+  isChildProcess?: boolean;
+  reason?: string;
+  error?: unknown;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Platform lifecycle hooks.
+ */
+export interface PlatformLifecycleHooks {
+  onStart?(context: PlatformLifecycleContext): void | Promise<void>;
+  onReady?(context: PlatformLifecycleContext): void | Promise<void>;
+  onBeforeShutdown?(context: PlatformLifecycleContext): void | Promise<void>;
+  onShutdown?(context: PlatformLifecycleContext): void | Promise<void>;
+  onError?(
+    error: unknown,
+    phase: PlatformLifecyclePhase,
+    context: PlatformLifecycleContext
+  ): void | Promise<void>;
+}
+
+/**
  * Platform DI container.
  * Provides access to all platform services through lazy-loaded getters.
  */
 export class PlatformContainer {
   private adapters = new Map<string, unknown>();
+  private lifecycleHooks = new Map<string, PlatformLifecycleHooks>();
   private initialized = false;
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -160,6 +202,110 @@ export class PlatformContainer {
   }
 
   /**
+   * Register platform lifecycle hooks.
+   * If hooks with this id already exist, they are replaced.
+   */
+  registerLifecycleHooks(id: string, hooks: PlatformLifecycleHooks): void {
+    this.lifecycleHooks.set(id, hooks);
+  }
+
+  /**
+   * Unregister platform lifecycle hooks by id.
+   */
+  unregisterLifecycleHooks(id: string): void {
+    this.lifecycleHooks.delete(id);
+  }
+
+  /**
+   * List registered lifecycle hook ids.
+   */
+  listLifecycleHookIds(): string[] {
+    return Array.from(this.lifecycleHooks.keys());
+  }
+
+  /**
+   * Emit lifecycle phase to registered hooks.
+   */
+  async emitLifecyclePhase(
+    phase: PlatformLifecyclePhase,
+    context: Omit<PlatformLifecycleContext, 'phase'> = {}
+  ): Promise<void> {
+    const event: PlatformLifecycleContext = { phase, ...context };
+    const hookEntries = Array.from(this.lifecycleHooks.entries());
+
+    for (const [hookId, hooks] of hookEntries) {
+      let phaseHandler: ((ctx: PlatformLifecycleContext) => void | Promise<void>) | undefined;
+      switch (phase) {
+        case 'start':
+          phaseHandler = hooks.onStart;
+          break;
+        case 'ready':
+          phaseHandler = hooks.onReady;
+          break;
+        case 'beforeShutdown':
+          phaseHandler = hooks.onBeforeShutdown;
+          break;
+        case 'shutdown':
+          phaseHandler = hooks.onShutdown;
+          break;
+      }
+
+      if (!phaseHandler) {
+        continue;
+      }
+
+      try {
+        await phaseHandler(event);
+      } catch (hookError) {
+        this.logger.warn('Platform lifecycle hook failed', {
+          hookId,
+          phase,
+          error: hookError instanceof Error ? hookError.message : String(hookError),
+        });
+
+        if (hooks.onError) {
+          try {
+            await hooks.onError(hookError, phase, event);
+          } catch (onErrorFailure) {
+            this.logger.warn('Platform lifecycle onError hook failed', {
+              hookId,
+              phase,
+              error: onErrorFailure instanceof Error ? onErrorFailure.message : String(onErrorFailure),
+            });
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Emit lifecycle error to registered onError hooks.
+   */
+  async emitLifecycleError(
+    error: unknown,
+    phase: PlatformLifecyclePhase,
+    context: Omit<PlatformLifecycleContext, 'phase'> = {}
+  ): Promise<void> {
+    const event: PlatformLifecycleContext = { phase, ...context, error };
+
+    for (const [hookId, hooks] of this.lifecycleHooks.entries()) {
+      if (!hooks.onError) {
+        continue;
+      }
+
+      try {
+        await hooks.onError(error, phase, event);
+      } catch (onErrorFailure) {
+        this.logger.warn('Platform lifecycle onError hook failed', {
+          hookId,
+          phase,
+          error: onErrorFailure instanceof Error ? onErrorFailure.message : String(onErrorFailure),
+        });
+      }
+    }
+  }
+
+  /**
    * Check if a service is explicitly configured (not using fallback).
    * @param service - Service name (e.g., 'llm', 'vectorStore', 'workflows')
    * @returns true if service is configured, false if using NoOp/fallback
@@ -202,6 +348,22 @@ export class PlatformContainer {
     // Resource broker (if initialized)
     if (this._resourceBroker) {
       services.add('resourceBroker');
+    }
+
+    if (this._environmentManager) {
+      services.add('environmentManager');
+    }
+    if (this._workspaceManager) {
+      services.add('workspaceManager');
+    }
+    if (this._snapshotManager) {
+      services.add('snapshotManager');
+    }
+    if (this._runExecutor) {
+      services.add('runExecutor');
+    }
+    if (this._runOrchestrator) {
+      services.add('runOrchestrator');
     }
 
     return services;
@@ -308,6 +470,11 @@ export class PlatformContainer {
   private _resourceBroker?: IResourceBroker;
   private _socketServer?: { getSocketPath(): string };
   private _executionBackend?: IExecutionBackend;
+  private _environmentManager?: EnvironmentManager;
+  private _workspaceManager?: WorkspaceManager;
+  private _snapshotManager?: SnapshotManager;
+  private _runExecutor?: RunExecutor;
+  private _runOrchestrator?: RunOrchestrator;
 
   /** Workflow engine (throws if not initialized) */
   get workflows(): IWorkflowEngine {
@@ -442,6 +609,90 @@ export class PlatformContainer {
   }
 
   /**
+   * Initialize orchestration services.
+   * Called internally by initPlatform() after ExecutionBackend init.
+   */
+  initOrchestrationServices(
+    environmentManager: EnvironmentManager,
+    runExecutor: RunExecutor,
+    runOrchestrator: RunOrchestrator
+  ): void {
+    this._environmentManager = environmentManager;
+    this._runExecutor = runExecutor;
+    this._runOrchestrator = runOrchestrator;
+  }
+
+  /**
+   * Initialize infrastructure capability services.
+   * Called internally by initPlatform().
+   */
+  initCapabilityServices(
+    workspaceManager: WorkspaceManager,
+    snapshotManager: SnapshotManager
+  ): void {
+    this._workspaceManager = workspaceManager;
+    this._snapshotManager = snapshotManager;
+  }
+
+  /**
+   * Environment manager service.
+   */
+  get environmentManager(): EnvironmentManager {
+    if (!this._environmentManager) {
+      throw new Error(
+        'EnvironmentManager not initialized. Call initPlatform() first.'
+      );
+    }
+    return this._environmentManager;
+  }
+
+  /**
+   * Workspace manager service.
+   */
+  get workspaceManager(): WorkspaceManager {
+    if (!this._workspaceManager) {
+      throw new Error(
+        'WorkspaceManager not initialized. Call initPlatform() first.'
+      );
+    }
+    return this._workspaceManager;
+  }
+
+  /**
+   * Snapshot manager service.
+   */
+  get snapshotManager(): SnapshotManager {
+    if (!this._snapshotManager) {
+      throw new Error(
+        'SnapshotManager not initialized. Call initPlatform() first.'
+      );
+    }
+    return this._snapshotManager;
+  }
+
+  /**
+   * Run executor service.
+   */
+  get runExecutor(): RunExecutor {
+    if (!this._runExecutor) {
+      throw new Error('RunExecutor not initialized. Call initPlatform() first.');
+    }
+    return this._runExecutor;
+  }
+
+  /**
+   * Run orchestrator service.
+   */
+  get runOrchestrator(): RunOrchestrator {
+    if (!this._runOrchestrator) {
+      throw new Error(
+        'RunOrchestrator not initialized. Call initPlatform() first.'
+      );
+    }
+    return this._runOrchestrator;
+  }
+
+  /**
    * Check if platform is initialized.
    */
   get isInitialized(): boolean {
@@ -455,6 +706,7 @@ export class PlatformContainer {
    */
   reset(): void {
     this.adapters.clear();
+    this.lifecycleHooks.clear();
     this._workflows = undefined;
     this._jobs = undefined;
     this._cron = undefined;
@@ -462,6 +714,11 @@ export class PlatformContainer {
     this._resourceBroker = undefined;
     this._socketServer = undefined;
     this._executionBackend = undefined;
+    this._environmentManager = undefined;
+    this._workspaceManager = undefined;
+    this._snapshotManager = undefined;
+    this._runExecutor = undefined;
+    this._runOrchestrator = undefined;
     this.initialized = false;
   }
 
@@ -470,6 +727,14 @@ export class PlatformContainer {
    * Closes all resources, stops workers, cleanup.
    */
   async shutdown(): Promise<void> {
+    await this.emitLifecyclePhase('beforeShutdown', {
+      reason: 'platform.shutdown',
+      metadata: {
+        adapterCount: this.adapters.size,
+        hasExecutionBackend: !!this._executionBackend,
+      },
+    });
+
     // Shutdown execution backend (closes worker pool)
     if (this._executionBackend) {
       try {
@@ -481,7 +746,71 @@ export class PlatformContainer {
       }
     }
 
+    if (this._environmentManager) {
+      try {
+        await this._environmentManager.shutdown();
+      } catch (error) {
+        this.logger.warn('EnvironmentManager shutdown failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    if (this._workspaceManager) {
+      try {
+        await this._workspaceManager.shutdown();
+      } catch (error) {
+        this.logger.warn('WorkspaceManager shutdown failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    if (this._snapshotManager) {
+      try {
+        await this._snapshotManager.shutdown();
+      } catch (error) {
+        this.logger.warn('SnapshotManager shutdown failed', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Gracefully close adapters that expose close()/dispose()/shutdown()
+    for (const [adapterId, adapter] of this.adapters.entries()) {
+      if (!adapter || adapter === this._executionBackend) {
+        continue;
+      }
+
+      const candidate = adapter as {
+        close?: () => Promise<void> | void;
+        dispose?: () => Promise<void> | void;
+        shutdown?: () => Promise<void> | void;
+      };
+
+      try {
+        if (typeof candidate.close === 'function') {
+          await candidate.close.call(adapter);
+        } else if (typeof candidate.dispose === 'function') {
+          await candidate.dispose.call(adapter);
+        } else if (typeof candidate.shutdown === 'function') {
+          await candidate.shutdown.call(adapter);
+        }
+      } catch (error) {
+        this.logger.warn('Adapter shutdown failed', {
+          adapterId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
     // TODO: Shutdown other resources (workflows, jobs, cron, etc.)
+    await this.emitLifecyclePhase('shutdown', {
+      reason: 'platform.shutdown',
+      metadata: {
+        adapterCount: this.adapters.size,
+      },
+    });
   }
 }
 

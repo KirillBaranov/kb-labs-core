@@ -168,6 +168,34 @@ export class DependencyGraph {
  */
 export class AdapterLoader {
   /**
+   * Create rich missing-dependency error with runtime-token guidance.
+   */
+  private createMissingDependencyError(
+    nodeName: string,
+    depToken: string,
+    graph: DependencyGraph
+  ): Error {
+    const nodes = graph.getAllNodes();
+    const configuredTokens = nodes.map((n) => n.name);
+    const matchingManifestIds = nodes
+      .filter((n) => n.manifest.id === depToken)
+      .map((n) => n.name);
+
+    let message =
+      `Adapter "${nodeName}" requires adapter "${depToken}" but it's not configured. ` +
+      `Dependencies must reference runtime adapter tokens (config keys), not manifest.id.`;
+
+    if (matchingManifestIds.length > 0) {
+      message +=
+        ` Token "${depToken}" matches manifest.id of configured adapter token(s): ` +
+        `${matchingManifestIds.join(', ')}.`;
+    }
+
+    message += ` Configured tokens: ${configuredTokens.join(', ') || '(none)'}.`;
+    return new Error(message);
+  }
+
+  /**
    * Build dependency graph from adapter configurations.
    *
    * @param configs - Adapter configurations from kb.config.json
@@ -205,9 +233,7 @@ export class AdapterLoader {
       for (const depId of node.requiredDeps) {
         const depNode = graph.getNode(depId);
         if (!depNode) {
-          throw new Error(
-            `Adapter "${node.name}" requires adapter "${depId}" but it's not configured`
-          );
+          throw this.createMissingDependencyError(node.name, depId, graph);
         }
         // Edge from dependency to dependent (dependency must load first)
         // db -> logPersistence means db loads before logPersistence

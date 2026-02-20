@@ -15,7 +15,7 @@ export type AdapterType = "core" | "extension" | "proxy";
 /**
  * Adapter dependency specification.
  *
- * Short form: just the adapter ID
+ * Short form: runtime adapter token (config key in `platform.adapters`)
  * Long form: { id, alias } where alias is used in factory deps parameter
  */
 export type AdapterDependency = string | { id: string; alias?: string };
@@ -225,15 +225,22 @@ export interface AdapterManifest {
    * @example
    * ```typescript
    * requires: {
-   *   adapters: ['db'],                          // Short form
-   *   adapters: [{ id: 'db', alias: 'database' }], // Explicit alias
+   *   adapters: ['db'],                          // Runtime token from config
+   *   adapters: [{ id: 'db', alias: 'database' }], // Runtime token + factory alias
    *   platform: '>= 1.0.0'                       // Semver range
    * }
    * ```
    */
   requires?: {
     /**
-     * Required adapters (by ID).
+     * Required adapters by runtime token (config key), NOT by `manifest.id`.
+     *
+     * Example:
+     * - `platform.adapters.cache = "@kb-labs/adapters-redis"`
+     * - runtime token is `cache`
+     * - provider manifest id can be `redis-cache`
+     * - dependency must reference `cache`, not `redis-cache`
+     *
      * Each will be passed to factory function in `deps` parameter.
      */
     adapters?: AdapterDependency[];

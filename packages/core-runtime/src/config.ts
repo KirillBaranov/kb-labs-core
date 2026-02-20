@@ -92,6 +92,12 @@ export interface AdaptersConfig {
   logger?: AdapterValue;
   /** Event bus adapter package(s) */
   eventBus?: AdapterValue;
+  /** Environment provider adapter package(s) (e.g., "@kb-labs/adapters-environment-docker") */
+  environment?: AdapterValue;
+  /** Workspace provider adapter package(s) (e.g., "@kb-labs/adapters-workspace-localfs") */
+  workspace?: AdapterValue;
+  /** Snapshot provider adapter package(s) (e.g., "@kb-labs/adapters-snapshot-localfs") */
+  snapshot?: AdapterValue;
 }
 
 /**
