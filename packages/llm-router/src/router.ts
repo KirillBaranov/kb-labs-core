@@ -15,6 +15,7 @@ import type {
   LLMCapability,
   UseLLMOptions,
   LLMResolution,
+  LLMAdapterBinding,
   ILLMRouter,
   ILogger,
   LLMRequestMetadata,
@@ -402,6 +403,49 @@ export class LLMRouter implements ILLM, ILLMRouter {
    */
   getCapabilities(): LLMCapability[] {
     return this.capabilityResolver.getCapabilities();
+  }
+
+  /**
+   * Resolve tier and return an immutable adapter binding.
+   * Does NOT mutate router state — safe for concurrent useLLM() calls.
+   */
+  async resolveAdapter(options?: UseLLMOptions): Promise<LLMAdapterBinding> {
+    const requestedTier = options?.tier;
+    const defaultTier = this.getConfiguredTier();
+
+    // Determine actualTier without mutating this.*
+    let actualTier: LLMTier;
+    if (this.config.tierMapping) {
+      const tierToUse = requestedTier ?? defaultTier;
+      const hasModels = (this.config.tierMapping[tierToUse]?.length ?? 0) > 0;
+      if (hasModels) {
+        actualTier = tierToUse;
+      } else {
+        actualTier = defaultTier;
+        if (requestedTier && requestedTier !== defaultTier && this.logger) {
+          this.logger.warn(
+            `resolveAdapter: requested '${requestedTier}' tier has no models. Using '${actualTier}'.`
+          );
+        }
+      }
+    } else {
+      const tierResult = this.tierResolver.resolve(requestedTier);
+      actualTier = tierResult.tier;
+      if (tierResult.warning && this.logger) {
+        this.logger.warn(tierResult.warning);
+      }
+    }
+
+    const entry = this.getEntryForTier(actualTier, options?.capabilities);
+    const model = entry?.model ?? this.currentModel ?? 'default';
+    // eslint-disable-next-line deprecation/deprecation
+    const adapterPackage = entry?.adapter;
+
+    const adapter = await this.getAdapter(adapterPackage);
+
+    this.logger?.debug(`resolveAdapter: tier=${actualTier}, model=${model}`);
+
+    return { adapter, model, tier: actualTier };
   }
 
   /**
