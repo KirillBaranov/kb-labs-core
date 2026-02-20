@@ -4,7 +4,14 @@
  */
 
 import type { Output } from '@kb-labs/core-sys/output';
-import type { Logger } from '@kb-labs/core-sys/logging';
+
+export interface Logger {
+  info(message: string, meta?: Record<string, unknown>): void;
+  warn(message: string, meta?: Record<string, unknown>): void;
+  error(message: string, error?: Error, meta?: Record<string, unknown>): void;
+  debug(message: string, meta?: Record<string, unknown>): void;
+  child(bindings: Record<string, unknown>): Logger;
+}
 
 /**
  * Runtime API for plugin handlers (compatible with @kb-labs/plugin-runtime RuntimeAPI)
@@ -149,8 +156,6 @@ export function isCliContext(ctx: HandlerContext): ctx is CliHandlerContext {
 export function isRestContext(ctx: HandlerContext): ctx is RestHandlerContext {
   return ctx.type === 'rest';
 }
-
-
 
 
 

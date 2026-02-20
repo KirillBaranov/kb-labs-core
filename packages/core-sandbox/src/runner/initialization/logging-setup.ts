@@ -3,8 +3,72 @@
  * Subprocess logging initialization - ensures KB_LOG_LEVEL from parent is respected
  */
 
-import { initLogging, getLogger } from '@kb-labs/core-sys/logging';
-import type { Logger } from '@kb-labs/core-sys/logging';
+import type { Logger } from '../../types/adapter-context';
+
+type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
+
+class NoOpLogger implements Logger {
+  info(_message: string, _meta?: Record<string, unknown>): void {}
+  warn(_message: string, _meta?: Record<string, unknown>): void {}
+  error(_message: string, _error?: Error, _meta?: Record<string, unknown>): void {}
+  debug(_message: string, _meta?: Record<string, unknown>): void {}
+  child(_bindings: Record<string, unknown>): Logger {
+    return this;
+  }
+}
+
+class ConsoleLogger implements Logger {
+  constructor(
+    private readonly level: LogLevel,
+    private readonly bindings: Record<string, unknown> = {}
+  ) {}
+
+  private canLog(target: LogLevel): boolean {
+    const rank: Record<LogLevel, number> = {
+      silent: 0,
+      error: 1,
+      warn: 2,
+      info: 3,
+      debug: 4,
+      trace: 5,
+    };
+    return rank[target] <= rank[this.level];
+  }
+
+  private withMeta(meta?: Record<string, unknown>): string {
+    const merged = { ...this.bindings, ...(meta ?? {}) };
+    return Object.keys(merged).length > 0 ? ` ${JSON.stringify(merged)}` : '';
+  }
+
+  info(message: string, meta?: Record<string, unknown>): void {
+    if (this.canLog('info')) {
+      console.log(`[INFO] ${message}${this.withMeta(meta)}`);
+    }
+  }
+
+  warn(message: string, meta?: Record<string, unknown>): void {
+    if (this.canLog('warn')) {
+      console.warn(`[WARN] ${message}${this.withMeta(meta)}`);
+    }
+  }
+
+  error(message: string, error?: Error, meta?: Record<string, unknown>): void {
+    if (this.canLog('error')) {
+      const errorMeta = error ? { ...meta, error: { message: error.message, stack: error.stack } } : meta;
+      console.error(`[ERROR] ${message}${this.withMeta(errorMeta)}`);
+    }
+  }
+
+  debug(message: string, meta?: Record<string, unknown>): void {
+    if (this.canLog('debug')) {
+      console.debug(`[DEBUG] ${message}${this.withMeta(meta)}`);
+    }
+  }
+
+  child(bindings: Record<string, unknown>): Logger {
+    return new ConsoleLogger(this.level, { ...this.bindings, ...bindings });
+  }
+}
 
 /**
  * Subprocess logger instance (singleton)
@@ -47,22 +111,21 @@ export function initializeSubprocessLogging(options: SubprocessLoggingOptions = 
   }
 
   // Read KB_LOG_LEVEL from parent (inherited via environment)
-  const logLevel = (process.env.KB_LOG_LEVEL || 'silent').toLowerCase();
+  const rawLevel = (process.env.KB_LOG_LEVEL || 'silent').toLowerCase();
   const isQuiet = process.env.KB_QUIET === 'true';
-  const isDebug = logLevel === 'debug';
+  const level: LogLevel =
+    rawLevel === 'trace' || rawLevel === 'debug' || rawLevel === 'info' || rawLevel === 'warn' || rawLevel === 'error' || rawLevel === 'silent'
+      ? rawLevel
+      : 'silent';
 
-  // Initialize logging system ONCE with parent's settings
-  // This ensures all subsequent getLogger() calls use correct level
-  initLogging({
-    level: logLevel as any,
-    quiet: isQuiet,
-    debug: isDebug,
-    mode: 'auto',
-    replaceSinks: true, // Replace any existing sinks from auto-init
-  });
-
-  // Create subprocess logger for internal platform use
-  subprocessLogger = getLogger('subprocess');
+  // Use platform-compatible logger implementations only.
+  if (isQuiet || level === 'silent') {
+    subprocessLogger = new NoOpLogger();
+  } else {
+    subprocessLogger = new ConsoleLogger(level, { layer: 'sandbox' }).child({
+      category: 'subprocess',
+    });
+  }
   isInitialized = true;
 
   // If enforceLevel is true, any future calls to initializeSubprocessLogging
