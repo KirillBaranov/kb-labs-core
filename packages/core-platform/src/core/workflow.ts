@@ -20,6 +20,17 @@ export interface RetryPolicy {
 /**
  * Workflow execution options.
  */
+export interface WorkflowExecutionTarget {
+  /** Target environment identifier */
+  environmentId?: string;
+  /** Target workspace identifier */
+  workspaceId?: string;
+  /** Namespace boundary */
+  namespace?: string;
+  /** Working directory override */
+  workdir?: string;
+}
+
 export interface WorkflowOptions {
   /** Tenant identifier for multi-tenancy */
   tenantId?: string;
@@ -31,6 +42,8 @@ export interface WorkflowOptions {
   retryPolicy?: RetryPolicy;
   /** Custom tags for tracking */
   tags?: Record<string, string>;
+  /** Optional execution target affinity */
+  target?: WorkflowExecutionTarget;
 }
 
 /**
