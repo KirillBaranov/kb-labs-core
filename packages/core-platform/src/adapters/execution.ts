@@ -72,6 +72,14 @@ export interface ExecutionRequest {
   /** Execution timeout in milliseconds */
   timeoutMs?: number;
 
+  /** Optional execution target affinity */
+  target?: {
+    environmentId?: string;
+    workspaceId?: string;
+    namespace?: string;
+    workdir?: string;
+  };
+
   /** Additional configuration */
   [key: string]: unknown;
 }
