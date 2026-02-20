@@ -70,9 +70,36 @@ export interface EventsStats {
  * Daily aggregated statistics for time-series visualization
  */
 export interface DailyStats {
-  date: string; // YYYY-MM-DD format
+  date: string; // Bucket key — format depends on groupBy: 'YYYY-MM-DD' (day), 'YYYY-MM-DDTHH' (hour), 'YYYY-WXX' (week), 'YYYY-MM' (month)
   count: number;
   metrics?: Record<string, number>; // Optional metrics (e.g., totalTokens, totalCost, avgDurationMs)
+  breakdown?: string; // Present when StatsQuery.breakdownBy is specified — the value of that field for this bucket
+}
+
+/**
+ * Extended query for getDailyStats — adds time bucketing and breakdown support on top of EventsQuery.
+ * Adapters implement what they can; unsupported fields are silently ignored (graceful degradation).
+ */
+export interface StatsQuery extends EventsQuery {
+  /**
+   * Time bucket granularity. Default: 'day'.
+   * Controls the format of DailyStats.date in the response.
+   */
+  groupBy?: "hour" | "day" | "week" | "month";
+
+  /**
+   * Dot-notation path to a field to split results by (e.g. 'payload.model', 'payload.tier', 'source.product').
+   * When specified, each time bucket returns multiple DailyStats rows — one per unique value of this field.
+   * Rows include a `breakdown` field with the field value.
+   * Adapters that do not support breakdownBy return data without breakdown (no error).
+   */
+  breakdownBy?: string;
+
+  /**
+   * Specific payload metric field names to aggregate (e.g. ['totalCost', 'totalTokens']).
+   * When omitted, adapters aggregate all metrics they know about for the given event type.
+   */
+  metrics?: string[];
 }
 
 /**
@@ -246,18 +273,20 @@ export interface IAnalytics {
   setSource?(source: { product: string; version: string }): void;
 
   /**
-   * Get daily aggregated statistics (optional - for time-series visualization).
+   * Get time-bucketed aggregated statistics (optional - for time-series visualization).
    *
-   * Groups events by day (date only, no time) and returns aggregated counts
-   * and metrics for each day. Useful for rendering charts and graphs.
+   * Groups events by time bucket and returns aggregated counts and metrics.
+   * Useful for rendering charts and graphs.
    *
-   * @param query - Event query with type, from/to filters
-   * @returns Array of daily statistics sorted by date ascending
+   * @param query - StatsQuery extending EventsQuery with groupBy, breakdownBy, metrics
+   * @returns Array of stats sorted by date ascending. When breakdownBy is used,
+   *          multiple rows per time bucket are returned (one per unique breakdown value).
    *
    * Implementation notes:
-   * - FileAnalytics: Groups events in memory using date-fns
-   * - PostgresAnalytics: Uses SQL GROUP BY DATE(ts) for efficiency
+   * - FileAnalytics: Groups events in memory using date-fns; supports all StatsQuery fields
+   * - PostgresAnalytics: Uses SQL GROUP BY + date_trunc() for efficiency
    * - NoOpAnalytics: Not implemented (returns empty array)
+   * - Adapters that don't support breakdownBy/groupBy silently ignore those fields
    *
    * The metrics object contains aggregated values specific to the event type:
    * - LLM events: totalTokens, totalCost, avgDurationMs
@@ -268,18 +297,26 @@ export interface IAnalytics {
    *
    * @example
    * ```typescript
-   * const stats = await analytics.getDailyStats?.({
+   * // Basic daily stats
+   * const daily = await analytics.getDailyStats?.({
    *   type: 'llm.completion.completed',
    *   from: '2026-01-01T00:00:00Z',
-   *   to: '2026-01-31T23:59:59Z'
+   *   to: '2026-01-31T23:59:59Z',
    * });
+   * // [{ date: '2026-01-01', count: 45, metrics: { totalTokens: 12500, totalCost: 2.34 } }, ...]
    *
-   * // stats = [
-   * //   { date: '2026-01-01', count: 45, metrics: { totalTokens: 12500, totalCost: 2.34 } },
-   * //   { date: '2026-01-02', count: 52, metrics: { totalTokens: 14200, totalCost: 2.89 } },
-   * //   ...
+   * // Hourly breakdown by model
+   * const byModel = await analytics.getDailyStats?.({
+   *   type: ['llm.chatWithTools.completed', 'llm.completion.completed'],
+   *   groupBy: 'hour',
+   *   breakdownBy: 'payload.model',
+   *   metrics: ['totalCost', 'totalTokens'],
+   * });
+   * // [
+   * //   { date: '2026-01-01T10', count: 12, breakdown: 'gpt-4o-mini', metrics: { totalCost: 0.05 } },
+   * //   { date: '2026-01-01T10', count: 3,  breakdown: 'gpt-5.1-codex-max', metrics: { totalCost: 1.20 } },
    * // ]
    * ```
    */
-  getDailyStats?(query?: EventsQuery): Promise<DailyStats[]>;
+  getDailyStats?(query?: StatsQuery): Promise<DailyStats[]>;
 }
