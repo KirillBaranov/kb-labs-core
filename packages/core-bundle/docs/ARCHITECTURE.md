@@ -153,7 +153,7 @@ export async function loadBundle<T = any>(
   - `@kb-labs/core-config`: Configuration resolution (`getProductConfig`, `resolveProfileV2`)
   - `@kb-labs/core-profiles`: Profile loading (`loadProfile`, `extractProfileInfo`)
   - `@kb-labs/core-policy`: Policy resolution (`resolvePolicy`, `createPermitsFunction`)
-  - `@kb-labs/core-sys`: Logging (`getLogger`)
+  - `@kb-labs/core-sys`: Output utilities (`createOutput`)
   - `@kb-labs/core-workspace`: Workspace root resolution (`resolveWorkspaceRoot`)
 - **External**: 
   - `node:fs/promises`: File system operations (minimal, mostly delegated)
@@ -175,7 +175,7 @@ export async function loadBundle<T = any>(
 - **Error Types**: `KbError` with error codes (`ERR_CONFIG_NOT_FOUND`, `ERR_PROFILE_NOT_DEFINED`)
 - **Error Propagation**: Errors thrown, caught by caller
 - **Recovery Strategy**: No automatic recovery, caller must handle
-- **Error Logging**: Structured logging via `core-sys/logging`
+- **Error Logging**: Structured logging via platform logger adapters
 
 #### Performance Characteristics
 - **Time Complexity**: O(n) where n = number of config layers + profile depth
@@ -323,7 +323,7 @@ loadBundle({ product, profileId, ... })
 
 - **Return Value**: Bundle object returned to caller
 - **Optional**: Final config written to disk (if `writeFinalConfig: true`)
-- **Logging**: Structured logs via `core-sys/logging`
+- **Logging**: Structured logs via platform logger adapters
 
 ### 4.4 Data Transformations
 
@@ -443,7 +443,7 @@ loadBundle() called
 - **Error Types**: `KbError` with error codes and hints
 - **Error Propagation**: Errors thrown, caught by caller
 - **Error Recovery**: No automatic recovery (caller must handle)
-- **Error Logging**: Structured logging via `core-sys/logging`
+- **Error Logging**: Structured logging via platform logger adapters
 
 ### 8.2 Resilience Patterns
 
@@ -701,4 +701,3 @@ User Code          Bundle          Config        Profiles      Policy
 
 **Last Updated**: 2025-11-16
 **Next Review**: 2025-12-16
-

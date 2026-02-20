@@ -60,7 +60,7 @@
 
 - [x] **API Stability**: API is stable and won't change without major version bump
 - [x] **Error Handling**: Comprehensive error handling with clear error messages
-- [x] **Logging**: Structured logging implemented via `@kb-labs/core-sys/logging`
+- [x] **Logging**: Structured logging via platform logger adapters (`@kb-labs/core-platform` / `@kb-labs/core-runtime`)
 - [x] **Testing**: Unit tests, integration tests present (4 test files)
 - [x] **Performance**: LRU caching implemented for performance
 - [x] **Security**: Uses security constraints from profiles and policy
@@ -82,7 +82,7 @@ The bundle package acts as a facade that orchestrates four main systems:
               ├──► @kb-labs/core-config (6-layer config resolution)
               ├──► @kb-labs/core-profiles (Profile loading & artifacts)
               ├──► @kb-labs/core-policy (Policy resolution & enforcement)
-              └──► @kb-labs/core-sys (Logging & utilities)
+              └──► @kb-labs/core-sys (Output & utilities)
 ```
 
 ### Core Components
@@ -173,7 +173,7 @@ loadBundle({ product, profileId, ... })
 - **Error Types**: `KbError` with error codes and hints
 - **Error Propagation**: Errors thrown and caught by caller
 - **Error Recovery**: No automatic recovery (caller must handle)
-- **Error Logging**: Structured logging via `@kb-labs/core-sys/logging`
+- **Error Logging**: Structured logging via platform logger adapters
 
 ## 🚀 Quick Start
 
@@ -726,7 +726,7 @@ Bundle uses the 6-layer configuration system from `@kb-labs/core-config`:
 - `@kb-labs/core-config` (`link:`): 6-layer configuration system
 - `@kb-labs/core-policy` (`link:`): Policy resolution and enforcement
 - `@kb-labs/core-profiles` (`link:`): Profile loading and artifact management
-- `@kb-labs/core-sys` (`link:`): Logging and system utilities
+- `@kb-labs/core-sys` (`link:`): Output and system utilities
 - `@kb-labs/core-types` (`link:`): TypeScript type definitions
 - `glob` (`^11.0.0`): File pattern matching
 - `picomatch` (`^4.0.2`): Pattern matching for artifacts

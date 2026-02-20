@@ -1,6 +1,6 @@
 # @kb-labs/core-sys
 
-> **Core system utilities for KB Labs, including structured logging, file system operations, and repository utilities.** Provides foundational system-level functionality used across all KB Labs packages.
+> **Core system utilities for KB Labs, including output utilities, file system operations, and repository utilities.** Provides foundational system-level functionality used across all KB Labs packages.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18.18.0+-green.svg)](https://nodejs.org/)
@@ -8,11 +8,11 @@
 
 ## 🎯 Vision & Purpose
 
-**@kb-labs/core-sys** provides core system utilities for KB Labs packages. It includes structured logging with multiple sinks, file system operations, repository utilities, and type definitions. This package is the foundation for system-level operations across the KB Labs ecosystem.
+**@kb-labs/core-sys** provides core system utilities for KB Labs packages. It includes output utilities, file system operations, repository utilities, and type definitions. This package is the foundation for system-level operations across the KB Labs ecosystem.
 
 ### What Problem Does This Solve?
 
-- **Logging Consistency**: Packages need consistent structured logging - sys provides unified logging system
+- **Output Consistency**: Packages need unified console/output behavior - sys provides shared Output primitives
 - **File System Operations**: Packages need file system utilities - sys provides path resolution and file operations
 - **Repository Detection**: Packages need to find repository roots - sys provides repository utilities
 - **Type Definitions**: Packages need shared types - sys provides common type definitions
@@ -20,14 +20,14 @@
 ### Why Does This Package Exist?
 
 - **Unified System Utilities**: All KB Labs packages use the same system utilities
-- **Structured Logging**: Centralized logging with multiple sinks (stdout, JSON)
+- **Unified Output**: Centralized output abstraction for CLI/runtime surfaces
 - **Code Reuse**: Avoid duplicating system utilities across packages
 - **Consistency**: Ensure consistent behavior across packages
 
 ### What Makes This Package Unique?
 
-- **Structured Logging**: Multiple sinks (stdout, JSON) with redaction support
-- **Environment Configuration**: Logging configuration from environment variables
+- **Unified Output**: Consistent user-facing output formatting
+- **Environment Configuration**: Output behavior can be configured via environment/flags
 - **Repository Utilities**: Git repository root detection
 - **Path Utilities**: Absolute path resolution
 
@@ -60,10 +60,10 @@
 
 - [x] **API Stability**: API is stable
 - [x] **Error Handling**: Comprehensive error handling
-- [x] **Logging**: Structured logging implemented
+- [x] **Output**: Unified output interface implemented
 - [x] **Testing**: Unit tests present
 - [x] **Performance**: Efficient operations
-- [x] **Security**: Path validation, redaction support
+- [x] **Security**: Path validation support
 - [x] **Documentation**: API documentation
 - [x] **Migration Guide**: N/A (no breaking changes)
 
@@ -76,7 +76,7 @@ The sys package provides system utilities:
 ```
 System Utilities
     │
-    ├──► Logging (structured, multiple sinks)
+    ├──► Output (unified interface)
     ├──► File System (path resolution, file operations)
     ├──► Repository (Git root detection)
     └──► Types (shared type definitions)
@@ -84,10 +84,10 @@ System Utilities
 
 ### Core Components
 
-#### Logging System
+#### Output System
 
-- **Purpose**: Structured logging with multiple sinks
-- **Responsibilities**: Log formatting, sink management, level filtering, redaction
+- **Purpose**: Unified output interface for CLI/runtime layers
+- **Responsibilities**: User-facing messages, formatting, verbosity handling
 - **Dependencies**: None (pure TypeScript)
 
 #### File System Utilities
@@ -104,27 +104,17 @@ System Utilities
 
 ### Design Patterns
 
-- **Sink Pattern**: Multiple logging sinks (stdout, JSON)
-- **Factory Pattern**: Logger creation
-- **Strategy Pattern**: Different logging strategies
+- **Factory Pattern**: Output creation
+- **Strategy Pattern**: Different output/verbosity strategies
 
 ### Data Flow
 
 ```
-getLogger(category)
+createOutput(config)
     │
-    ├──► Create logger instance
-    ├──► Configure from environment
-    ├──► Add sinks
-    └──► return Logger
-
-log.info(message, context)
-    │
-    ├──► Check log level
-    ├──► Format message
-    ├──► Redact sensitive data
-    ├──► Send to sinks
-    └──► return void
+    ├──► Resolve mode/verbosity
+    ├──► Prepare output helpers
+    └──► return Output
 ```
 
 ## 🚀 Quick Start
@@ -138,13 +128,13 @@ pnpm add @kb-labs/core-sys
 ### Basic Usage
 
 ```typescript
-import { getLogger } from '@kb-labs/core-sys/logging';
+import { createOutput } from '@kb-labs/core-sys/output';
 import { toAbsolute } from '@kb-labs/core-sys/fs';
 import { findRepoRoot } from '@kb-labs/core-sys/repo';
 
-// Logging
-const log = getLogger('my-package');
-log.info('Hello world', { userId: 123 });
+// Output
+const out = createOutput({ verbosity: 'normal' });
+out.success('Hello world');
 
 // File System
 const absPath = toAbsolute('/base', './relative');
@@ -155,13 +145,11 @@ const repoRoot = await findRepoRoot();
 
 ## ✨ Features
 
-### Logging
+### Output
 
-- **Structured Logging**: JSON-formatted logs with context
-- **Multiple Sinks**: stdout, JSON file, custom sinks
-- **Log Levels**: debug, info, warn, error
-- **Redaction**: Automatic redaction of sensitive data
-- **Environment Configuration**: Configure via environment variables
+- **Unified Interface**: One Output API for CLI/runtime surfaces
+- **Verbosity Modes**: quiet, normal, verbose, debug, inspect
+- **Structured JSON Output**: optional machine-readable output mode
 
 ### File System
 
@@ -174,33 +162,11 @@ const repoRoot = await findRepoRoot();
 
 ## 📦 API Reference
 
-### Logging
+### Output
 
-#### `getLogger(category?: string): Logger`
+#### `createOutput(config?: OutputConfig): Output`
 
-Creates a logger instance for a category.
-
-**Parameters:**
-- `category` (`string?`): Logger category name
-
-**Returns:**
-- `Logger`: Logger instance
-
-#### `configureLogger(opts: ConfigureOpts): void`
-
-Configures global logger settings.
-
-**Parameters:**
-- `opts.level` (`LogLevel?`): Global log level
-- `opts.sinks` (`LogSink[]?`): Log sinks
-
-#### `addSink(sink: LogSink): void`
-
-Adds a log sink.
-
-#### `setLogLevel(level: LogLevel): void`
-
-Sets global log level.
+Creates a unified output instance.
 
 ### File System
 
@@ -229,19 +195,13 @@ Finds Git repository root directory.
 
 ## 🔧 Configuration
 
-### Logging Configuration
+### Output Configuration
 
-Configure logging via environment variables:
-
-- `KB_LOG_LEVEL`: Log level (debug, info, warn, error)
-- `KB_LOG_SINK`: Sink type (stdout, json)
-- `KB_LOG_REDACT_KEYS`: Comma-separated keys to redact
+Configure output via verbosity/mode flags and runtime settings.
 
 ### Environment Variables
 
-- `KB_LOG_LEVEL`: Logging level
-- `KB_LOG_SINK`: Log sink type
-- `KB_LOG_REDACT_KEYS`: Keys to redact
+- `KB_LOG_LEVEL`: Used by runtime/platform logger adapters (outside `core-sys`)
 
 ## 🔗 Dependencies
 
@@ -333,4 +293,3 @@ See [CONTRIBUTING.md](../../CONTRIBUTING.md) for development guidelines.
 ## 📄 License
 
 MIT © KB Labs
-
