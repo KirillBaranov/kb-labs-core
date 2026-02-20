@@ -8,13 +8,14 @@ import type {
     OutputMode,
     VerbosityLevel,
     DebugFormat,
+    OutputLogSink,
+    OutputLogRecord,
+    OutputLogger,
     ErrorOptions,
     ProgressDetails,
     UIUtilities,
     Spinner,
 } from "./types";
-import type { LogSink, LogRecord } from "../logging/types/types";
-import type { Logger } from "../logging/index";
 import {
     box,
     keyValue,
@@ -33,8 +34,8 @@ export class OutputImpl implements Output {
             verbosity: VerbosityLevel;
             format: DebugFormat;
             json: boolean;
-            sinks: LogSink[]; // Только для форматированного вывода (ConsoleSink)
-            logger: Logger; // Глобальный logger для записи в файлы
+            sinks: OutputLogSink[]; // Только для форматированного вывода (ConsoleSink)
+            logger: OutputLogger; // Глобальный logger для записи в файлы
             category?: string;
             context?: Record<string, unknown>;
         }
@@ -289,11 +290,11 @@ export class OutputImpl implements Output {
     // Internal method для форматированного вывода через ConsoleSink
     // Используется только для UI вывода, не для записи в файлы
     private logToConsoleSink(
-        level: LogRecord["level"],
+        level: OutputLogRecord["level"],
         msg: string,
         meta?: Record<string, unknown>
     ): void {
-        const record: LogRecord = {
+        const record: OutputLogRecord = {
             time: new Date().toISOString(),
             ts: new Date().toISOString(),
             level,
@@ -314,4 +315,3 @@ export class OutputImpl implements Output {
         }
     }
 }
-

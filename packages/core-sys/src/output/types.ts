@@ -3,10 +3,32 @@
  * Unified Output interface for KB Labs platform
  */
 
-import type { VerbosityLevel, OutputMode, DebugFormat } from "../logging/types/types";
+export type VerbosityLevel = "quiet" | "normal" | "verbose" | "debug" | "inspect";
+export type OutputMode = "tty" | "pipe" | "ci";
+export type DebugFormat = "human" | "ai";
 
-// Re-export types for convenience
-export type { VerbosityLevel, OutputMode, DebugFormat };
+export type OutputLogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
+
+export interface OutputLogRecord {
+    time: string;
+    ts: string;
+    level: OutputLogLevel;
+    category?: string;
+    msg: string;
+    meta?: Record<string, unknown>;
+}
+
+export interface OutputLogSink {
+    handle(record: OutputLogRecord): void | Promise<void>;
+}
+
+export interface OutputLogger {
+    info(message: string, meta?: Record<string, unknown>): void;
+    warn(message: string, meta?: Record<string, unknown>): void;
+    error(message: string, error?: Error, meta?: Record<string, unknown>): void;
+    debug(message: string, meta?: Record<string, unknown>): void;
+    child(bindings: Record<string, unknown>): OutputLogger;
+}
 
 /**
  * Spinner interface for progress indicators
@@ -107,12 +129,11 @@ export interface Output {
     groupEnd(): void;
 
     // === Режимы ===
-    readonly mode: import("../logging/types/types").OutputMode;
-    readonly verbosity: import("../logging/types/types").VerbosityLevel;
+    readonly mode: OutputMode;
+    readonly verbosity: VerbosityLevel;
     readonly isQuiet: boolean;
     readonly isVerbose: boolean;
     readonly isDebug: boolean;
     readonly isJSON: boolean;
     readonly isAIFormat: boolean;
 }
-
