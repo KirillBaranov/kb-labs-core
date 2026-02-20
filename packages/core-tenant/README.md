@@ -532,12 +532,10 @@ if (!result.allowed) {
 ### 4. Log Tenant Context
 
 ```typescript
-import { setTenantContext } from '@kb-labs/core-sys/logging/context';
+// Add tenant fields through child logger context
+const tenantLogger = logger.child({ tenantId, tier });
 
-// Set tenant context for structured logging
-setTenantContext(tenantId, tier);
-
-logger.info('Processing request');
+tenantLogger.info('Processing request');
 // Logs: { tenantId: "acme-corp", tier: "pro", message: "Processing request" }
 ```
 
