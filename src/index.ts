@@ -19,42 +19,6 @@ export {
 } from '@kb-labs/core-config';
 
 export {
-  // Types
-  type LogLevel,
-  type LogRecord,
-  type LogSink,
-  type Redactor,
-  type ConfigureOpts,
-  type Logger,
-  type InitLoggingOptions,
-  type LogContext,
-
-  // Functions
-  configureLogger,
-  configureFromEnv,
-  addSink,
-  removeSink,
-  setLogLevel,
-  getLogLevel,
-  getLogger,
-  createRedactor,
-  stdoutSink,
-  jsonSink,
-  initLogging,
-  resetLogging,
-  consoleLog,
-  consoleError,
-  consoleWarn,
-  consoleDebug,
-  getCurrentLogLevel,
-  setLogContext,
-  getLogContext,
-  clearLogContext,
-  withLogContext,
-  mergeLogContext
-} from '@kb-labs/core-sys/logging';
-
-export {
   resolveWorkspaceRoot,
   type ResolveWorkspaceRootOptions,
   type WorkspaceRootResolution,
