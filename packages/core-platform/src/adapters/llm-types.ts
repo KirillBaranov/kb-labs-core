@@ -15,6 +15,8 @@
  * ```
  */
 
+import type { ILLM } from './llm.js';
+
 /**
  * Model quality tier - user-defined slots.
  *
@@ -84,6 +86,19 @@ export interface LLMResolution {
 }
 
 /**
+ * Resolved adapter binding — immutable snapshot of a tier resolution.
+ * Returned by resolveAdapter() to avoid global state mutation.
+ */
+export interface LLMAdapterBinding {
+  /** The concrete adapter instance (already wrapped with analytics, etc.) */
+  adapter: ILLM;
+  /** Resolved model name */
+  model: string;
+  /** Actual tier used */
+  tier: LLMTier;
+}
+
+/**
  * LLM Router interface - extends ILLM with routing capabilities.
  * Implemented by @kb-labs/llm-router.
  */
@@ -91,8 +106,14 @@ export interface ILLMRouter {
   /** Get configured tier (what user set in config) */
   getConfiguredTier(): LLMTier;
 
-  /** Resolve tier request to actual model */
+  /** Resolve tier request to actual model (mutates router state — legacy) */
   resolve(options?: UseLLMOptions): LLMResolution;
+
+  /**
+   * Resolve tier and return an immutable adapter binding.
+   * Does NOT mutate router state — safe for concurrent useLLM() calls.
+   */
+  resolveAdapter(options?: UseLLMOptions): Promise<LLMAdapterBinding>;
 
   /** Check if capability is available */
   hasCapability(capability: LLMCapability): boolean;
