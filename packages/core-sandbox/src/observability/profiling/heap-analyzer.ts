@@ -210,11 +210,11 @@ export class HeapAnalyzer {
     }
 
     // Pattern 5: Single large consumer
-    if (topConsumers.length > 0 && topConsumers[0].percentage > 50) {
+    if (topConsumers.length > 0 && topConsumers[0]!.percentage > 50) {
       patterns.push({
         pattern: 'single-large-consumer',
         confidence: 0.95,
-        description: `Single consumer (${topConsumers[0].type}:${topConsumers[0].name}) using ${topConsumers[0].percentage.toFixed(0)}% of heap.`,
+        description: `Single consumer (${topConsumers[0]!.type}:${topConsumers[0]!.name}) using ${topConsumers[0]!.percentage.toFixed(0)}% of heap.`,
       });
     }
 
@@ -261,7 +261,7 @@ export class HeapAnalyzer {
     // Top consumers
     lines.push('🔥 TOP MEMORY CONSUMERS:');
     for (let i = 0; i < analysis.topConsumers.length && i < 10; i++) {
-      const consumer = analysis.topConsumers[i];
+      const consumer = analysis.topConsumers[i]!;
       const sizeMB = (consumer.retainedSize / 1024 / 1024).toFixed(1);
       const percent = consumer.percentage.toFixed(1);
       const name = consumer.name.substring(0, 40);

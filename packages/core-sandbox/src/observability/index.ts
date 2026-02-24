@@ -83,7 +83,7 @@ export function setupObservability(options: {
   let heapProfiler: HeapProfiler | undefined;
   if (options.enableHeapProfiling) {
     heapProfiler = new HeapProfiler({
-      outputDir: logDir,
+      snapshotDir: logDir,
       interval: options.heapProfileInterval || 30000, // 30s default
     });
     heapProfiler.start();
@@ -99,7 +99,6 @@ export function setupObservability(options: {
 
     // Create a sink that analyzes events
     collector.addSink({
-      name: 'pattern-detector',
       write: (event) => {
         const matches = patternDetector!.analyze(event);
 

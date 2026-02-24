@@ -29,7 +29,7 @@ export class ModuleTracker {
    * Start tracking module loads by proxying Module._load
    */
   start(): void {
-    const originalLoad = Module._load;
+    const originalLoad = (Module as any)._load as (request: string, parent: any, isMain: boolean) => any;
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
 

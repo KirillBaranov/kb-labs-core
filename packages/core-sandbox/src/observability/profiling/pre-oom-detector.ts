@@ -181,8 +181,8 @@ export class PreOOMDetector {
     const first = recent[0];
     const last = recent[recent.length - 1];
 
-    const growth = last.heapUsed - first.heapUsed;
-    const duration = (last.time - first.time) / 1000; // seconds
+    const growth = last!.heapUsed - first!.heapUsed;
+    const duration = (last!.time - first!.time) / 1000; // seconds
     const growthRate = growth / duration; // bytes per second
 
     if (growthRate <= 0) {
@@ -191,7 +191,7 @@ export class PreOOMDetector {
 
     // Calculate remaining heap
     const heapStats = v8.getHeapStatistics();
-    const remaining = heapStats.heap_size_limit - last.heapUsed;
+    const remaining = heapStats.heap_size_limit - last!.heapUsed;
 
     return remaining / growthRate;
   }
@@ -242,7 +242,7 @@ export class PreOOMDetector {
    * Get last warning
    */
   getLastWarning(): OOMWarning | null {
-    return this.warnings.length > 0 ? this.warnings[this.warnings.length - 1] : null;
+    return this.warnings.length > 0 ? this.warnings[this.warnings.length - 1]! : null;
   }
 
   /**
@@ -275,8 +275,8 @@ export class PreOOMDetector {
     const first = this.memoryHistory[0];
     const last = this.memoryHistory[this.memoryHistory.length - 1];
 
-    const totalGrowth = last.heapUsed - first.heapUsed;
-    const duration = (last.time - first.time) / 1000; // seconds
+    const totalGrowth = last!.heapUsed - first!.heapUsed;
+    const duration = (last!.time - first!.time) / 1000; // seconds
     const avgGrowthRate = totalGrowth / duration; // bytes per second
 
     return {

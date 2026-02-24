@@ -92,7 +92,7 @@ export class CrashReporter {
 
       const consumers = diagnostics.heapAnalysis.topConsumers.slice(0, 5);
       for (let i = 0; i < consumers.length; i++) {
-        const consumer = consumers[i];
+        const consumer = consumers[i]!;
         const name = this.truncate(consumer.name, 25);
         const sizeMB = (consumer.retainedSize / 1024 / 1024).toFixed(0);
         const percent = consumer.percentage.toFixed(0);
@@ -103,7 +103,7 @@ export class CrashReporter {
 
     // Root cause
     if (diagnostics.heapAnalysis && diagnostics.heapAnalysis.patterns.length > 0) {
-      const pattern = diagnostics.heapAnalysis.patterns[0];
+      const pattern = diagnostics.heapAnalysis.patterns[0]!;
       const confidence = (pattern.confidence * 100).toFixed(0);
 
       lines.push('║ 🎯 ROOT CAUSE (' + confidence + '% confidence)'.padEnd(47) + '║');
@@ -130,7 +130,7 @@ export class CrashReporter {
     if (includeStackTrace && context.errorStack && context.errorStack.length > 0) {
       lines.push('║ 📋 STACK TRACE (top ' + Math.min(maxStackLines, context.errorStack.length) + ' lines)'.padEnd(47) + '║');
       for (let i = 0; i < Math.min(maxStackLines, context.errorStack.length); i++) {
-        const line = this.truncate(context.errorStack[i].trim(), 60);
+        const line = this.truncate(context.errorStack[i]!.trim(), 60);
         lines.push(`║  ${line}`.padEnd(63) + '║');
       }
       lines.push('║                                                              ║');
@@ -189,8 +189,8 @@ export class CrashReporter {
           recommendations.push('Use lazy loading for large modules');
           break;
 
-        case 'single-large-consumer':
-          const topConsumer = analysis.topConsumers[0];
+        case 'single-large-consumer': {
+          const topConsumer = analysis.topConsumers[0]!;
           if (topConsumer.type === 'array') {
             recommendations.push(`Check array allocation for: ${topConsumer.name}`);
           } else if (topConsumer.type === 'string') {
@@ -199,6 +199,7 @@ export class CrashReporter {
             recommendations.push(`Investigate large consumer: ${topConsumer.type}:${topConsumer.name}`);
           }
           break;
+        }
       }
     }
 

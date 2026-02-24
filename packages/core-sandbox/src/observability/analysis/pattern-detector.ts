@@ -109,8 +109,8 @@ export class PatternDetector {
     const first = recent[0];
     const last = recent[recent.length - 1];
 
-    const growth = last.heapUsed - first.heapUsed;
-    const duration = (last.timestamp - first.timestamp) / 1000; // seconds
+    const growth = last!.heapUsed - first!.heapUsed;
+    const duration = (last!.timestamp - first!.timestamp) / 1000; // seconds
     const growthRate = growth / duration; // bytes per second
 
     // Detect significant growth
@@ -145,7 +145,7 @@ export class PatternDetector {
     // Detect moderate but consistent growth
     let isConsistentGrowth = true;
     for (let i = 1; i < recent.length; i++) {
-      if (recent[i].heapUsed <= recent[i - 1].heapUsed) {
+      if (recent[i]!.heapUsed <= recent[i - 1]!.heapUsed) {
         isConsistentGrowth = false;
         break;
       }

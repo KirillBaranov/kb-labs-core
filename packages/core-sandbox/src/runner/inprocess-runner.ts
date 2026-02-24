@@ -184,38 +184,7 @@ export function createInProcessRunner(): SandboxRunner {
           // Need to build runtime using buildRuntime() from plugin-runtime
           logger.debug('Using cron job handler signature', { signature: 'cron' });
 
-          // CRITICAL: Import buildRuntime from plugin-runtime to create ctx.runtime.fs
-          // This is the ONLY way to get proper sandboxed fs access with permissions
-          const { buildRuntime, pickEnv } = await import('@kb-labs/plugin-runtime');
-
-          // Get manifest and perms from ctx.extensions (passed by execute())
-          const manifest = ctx.extensions?.manifest;
-          const perms = ctx.extensions?.perms;
-
-          if (!manifest || !perms) {
-            throw new Error('manifest and perms are required in ctx.extensions for cron jobs');
-          }
-
-          // Build full runtime with proper sandboxed fs
-          const env = pickEnv(process.env, perms.env?.allow);
-          const builtRuntime = buildRuntime(
-            perms,
-            ctx,
-            env,
-            manifest,
-            ctx.extensions?.invoke,
-            ctx.extensions?.artifacts,
-            ctx.extensions?.shell
-          );
-
-          // Extract API groups from built runtime
-          const jobCtx = {
-            ...adapterContext,
-            runtime: builtRuntime.runtime,
-            output: builtRuntime.output,
-          };
-
-          result = (await handlerFn(input, jobCtx)) as TOutput;
+          result = (await handlerFn(input, adapterContext)) as TOutput;
         } else {
           // Fallback to basic context (for backwards compatibility)
           // This should not happen with new architecture, but kept for safety

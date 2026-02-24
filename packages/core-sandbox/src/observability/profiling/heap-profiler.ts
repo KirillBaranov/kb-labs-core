@@ -147,8 +147,8 @@ export class HeapProfiler {
     const recent = this.snapshots.slice(-3);
 
     // Calculate growth rate
-    const growth1 = recent[1].heapUsed - recent[0].heapUsed;
-    const growth2 = recent[2].heapUsed - recent[1].heapUsed;
+    const growth1 = recent[1]!.heapUsed - recent[0]!.heapUsed;
+    const growth2 = recent[2]!.heapUsed - recent[1]!.heapUsed;
 
     // Detect consistent growth
     const avgGrowth = (growth1 + growth2) / 2;
@@ -162,7 +162,7 @@ export class HeapProfiler {
 
       // Estimate time to OOM
       const heapLimit = v8.getHeapStatistics().heap_size_limit;
-      const currentHeap = recent[2].heapUsed;
+      const currentHeap = recent[2]!.heapUsed;
       const remaining = heapLimit - currentHeap;
       const timeToOOM = remaining / growthRate;
 
@@ -196,8 +196,8 @@ export class HeapProfiler {
     const first = this.snapshots[0];
     const last = this.snapshots[this.snapshots.length - 1];
 
-    const totalGrowth = last.heapUsed - first.heapUsed;
-    const duration = (last.timestamp - first.timestamp) / 1000; // seconds
+    const totalGrowth = last!.heapUsed - first!.heapUsed;
+    const duration = (last!.timestamp - first!.timestamp) / 1000; // seconds
     const avgGrowthRate = totalGrowth / duration; // bytes per second
 
     return {

@@ -9,7 +9,7 @@ import type { Output } from '@kb-labs/core-sys/output';
 export interface OutputSetupOptions {
   verbosity?: 'debug' | 'normal' | 'quiet';
   category?: string;
-  format?: 'human' | 'json';
+  format?: 'human' | 'ai';
   context?: Record<string, unknown>;
 }
 

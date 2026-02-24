@@ -42,8 +42,7 @@ export async function executeHandlerFn(options: HandlerExecutorOptions): Promise
     // This ensures events tracked by the plugin show the correct source
     if (ctx.pluginId && ctx.pluginVersion) {
       try {
-        const { getPlatform } = await import('@kb-labs/core-runtime');
-        const platform = getPlatform();
+        const { platform } = await import('@kb-labs/core-runtime');
 
         if (platform?.analytics) {
           // Save original source for restore (in-process mode)
@@ -189,8 +188,7 @@ export async function executeHandlerFn(options: HandlerExecutorOptions): Promise
     // But for in-process mode, we must restore to avoid cross-plugin contamination
     if (originalSource) {
       try {
-        const { getPlatform } = await import('@kb-labs/core-runtime');
-        const platform = getPlatform();
+        const { platform } = await import('@kb-labs/core-runtime');
 
         if (platform?.analytics?.setSource) {
           platform.analytics.setSource(originalSource);
