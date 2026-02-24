@@ -112,7 +112,7 @@ describe('Platform Loader', () => {
       await initPlatform({
         core: {
           workflows: { maxConcurrent: 5 },
-          jobs: { maxRetries: 3 },
+          jobs: { maxConcurrent: 3 },
         },
       });
 

@@ -49,7 +49,8 @@ describe('PlatformContainer', () => {
   describe('Adapter Management', () => {
     it('should set and get adapter', () => {
       const mockLLM: ILLM = {
-        complete: async () => ({ content: 'test', usage: { input: 10, output: 5 } }),
+        complete: async () => ({ content: 'test', model: 'test', usage: { promptTokens: 10, completionTokens: 5 } }),
+        stream: async function* () { yield 'test'; },
       };
 
       platform.setAdapter('llm', mockLLM);
@@ -65,14 +66,15 @@ describe('PlatformContainer', () => {
 
     it('should set multiple adapters', () => {
       const mockLLM: ILLM = {
-        complete: async () => ({ content: 'test', usage: { input: 10, output: 5 } }),
+        complete: async () => ({ content: 'test', model: 'test', usage: { promptTokens: 10, completionTokens: 5 } }),
+        stream: async function* () { yield 'test'; },
       };
 
-      const mockCache: ICache = {
+      const mockCache = {
         get: async () => null,
         set: async () => {},
         delete: async () => {},
-      };
+      } as unknown as ICache;
 
       platform.setAdapter('llm', mockLLM);
       platform.setAdapter('cache', mockCache);
@@ -85,11 +87,13 @@ describe('PlatformContainer', () => {
 
     it('should replace existing adapter', () => {
       const mockLLM1: ILLM = {
-        complete: async () => ({ content: 'v1', usage: { input: 10, output: 5 } }),
+        complete: async () => ({ content: 'v1', model: 'test', usage: { promptTokens: 10, completionTokens: 5 } }),
+        stream: async function* () { yield 'v1'; },
       };
 
       const mockLLM2: ILLM = {
-        complete: async () => ({ content: 'v2', usage: { input: 10, output: 5 } }),
+        complete: async () => ({ content: 'v2', model: 'test', usage: { promptTokens: 10, completionTokens: 5 } }),
+        stream: async function* () { yield 'v2'; },
       };
 
       platform.setAdapter('llm', mockLLM1);
@@ -128,7 +132,8 @@ describe('PlatformContainer', () => {
 
     it('should return configured adapter instead of fallback', () => {
       const mockLLM: ILLM = {
-        complete: async () => ({ content: 'custom', usage: { input: 10, output: 5 } }),
+        complete: async () => ({ content: 'custom', model: 'test', usage: { promptTokens: 10, completionTokens: 5 } }),
+        stream: async function* () { yield 'custom'; },
       };
 
       platform.setAdapter('llm', mockLLM);
@@ -222,7 +227,8 @@ describe('PlatformContainer', () => {
   describe('Service Configuration Check', () => {
     it('should detect configured adapters', () => {
       const mockLLM: ILLM = {
-        complete: async () => ({ content: 'test', usage: { input: 10, output: 5 } }),
+        complete: async () => ({ content: 'test', model: 'test', usage: { promptTokens: 10, completionTokens: 5 } }),
+        stream: async function* () { yield 'test'; },
       };
 
       platform.setAdapter('llm', mockLLM);
@@ -246,7 +252,8 @@ describe('PlatformContainer', () => {
 
     it('should return all configured services', () => {
       const mockLLM: ILLM = {
-        complete: async () => ({ content: 'test', usage: { input: 10, output: 5 } }),
+        complete: async () => ({ content: 'test', model: 'test', usage: { promptTokens: 10, completionTokens: 5 } }),
+        stream: async function* () { yield 'test'; },
       };
 
       platform.setAdapter('llm', mockLLM);
@@ -272,7 +279,8 @@ describe('PlatformContainer', () => {
   describe('Platform Reset', () => {
     it('should clear all adapters', () => {
       const mockLLM: ILLM = {
-        complete: async () => ({ content: 'test', usage: { input: 10, output: 5 } }),
+        complete: async () => ({ content: 'test', model: 'test', usage: { promptTokens: 10, completionTokens: 5 } }),
+        stream: async function* () { yield 'test'; },
       };
 
       platform.setAdapter('llm', mockLLM);
@@ -312,7 +320,8 @@ describe('PlatformContainer', () => {
 
     it('should reset to NoOp fallbacks', () => {
       const mockLLM: ILLM = {
-        complete: async () => ({ content: 'test', usage: { input: 10, output: 5 } }),
+        complete: async () => ({ content: 'test', model: 'test', usage: { promptTokens: 10, completionTokens: 5 } }),
+        stream: async function* () { yield 'test'; },
       };
 
       platform.setAdapter('llm', mockLLM);
@@ -333,7 +342,8 @@ describe('PlatformContainer', () => {
 
       // Set custom adapter
       const mockLLM: ILLM = {
-        complete: async () => ({ content: 'test', usage: { input: 10, output: 5 } }),
+        complete: async () => ({ content: 'test', model: 'test', usage: { promptTokens: 10, completionTokens: 5 } }),
+        stream: async function* () { yield 'test'; },
       };
       platform.setAdapter('llm', mockLLM);
 
@@ -346,11 +356,11 @@ describe('PlatformContainer', () => {
       const cache1 = platform.cache;
       expect(cache1).toBeDefined();
 
-      const mockCache: ICache = {
-        get: async () => 'cached',
+      const mockCache = {
+        get: async () => 'cached' as any,
         set: async () => {},
         delete: async () => {},
-      };
+      } as unknown as ICache;
       platform.setAdapter('cache', mockCache);
 
       const cache2 = platform.cache;

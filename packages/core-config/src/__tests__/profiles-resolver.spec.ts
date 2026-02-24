@@ -67,7 +67,7 @@ describe("resolveProfile", () => {
       maxComments: 20,
     });
     expect(result.scopes).toHaveLength(1);
-    expect(result.scopes[0].products?.aiReview).toEqual({
+    expect(result.scopes[0]!.products?.aiReview).toEqual({
       engine: "anthropic",
     });
     expect(result.productsByScope?.src?.aiReview).toEqual({

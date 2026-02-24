@@ -60,8 +60,8 @@ describe("readProfilesSection", () => {
 
     const result = await readProfilesSection(tmpDir);
     expect(result.profiles).toHaveLength(1);
-    expect(result.profiles[0].id).toBe("default");
-    expect(result.profiles[0].products?.aiReview).toBeDefined();
+    expect(result.profiles[0]!.id).toBe("default");
+    expect(result.profiles[0]!.products?.aiReview).toBeDefined();
   });
 
   it("throws KbError when profiles section invalid", async () => {

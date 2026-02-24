@@ -116,7 +116,6 @@ describe("initWorkspaceConfig", () => {
     const result = await initWorkspaceConfig({
       cwd: tmpDir,
       format: "yaml",
-      // @ts-expect-error - profiles is deprecated, testing warning
       profiles: { default: "legacy" },
     });
 

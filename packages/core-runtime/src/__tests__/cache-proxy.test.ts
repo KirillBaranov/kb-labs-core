@@ -53,8 +53,8 @@ describe('CacheProxy', () => {
       const result = await cacheProxy.get('test-key');
 
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockSend.mock.calls[0][0].adapter).toBe('cache');
-      expect(mockSend.mock.calls[0][0].method).toBe('get');
+      expect(mockSend.mock.calls[0]![0]!.adapter).toBe('cache');
+      expect(mockSend.mock.calls[0]![0]!.method).toBe('get');
       expect(result).toEqual({ value: 'test-data' });
     });
 
@@ -72,8 +72,8 @@ describe('CacheProxy', () => {
       await cacheProxy.set('test-key', { value: 'data' }, 60000);
 
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockSend.mock.calls[0][0].adapter).toBe('cache');
-      expect(mockSend.mock.calls[0][0].method).toBe('set');
+      expect(mockSend.mock.calls[0]![0]!.adapter).toBe('cache');
+      expect(mockSend.mock.calls[0]![0]!.method).toBe('set');
     });
 
     it('should call set without TTL', async () => {
@@ -90,8 +90,8 @@ describe('CacheProxy', () => {
       await cacheProxy.delete('test-key');
 
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockSend.mock.calls[0][0].adapter).toBe('cache');
-      expect(mockSend.mock.calls[0][0].method).toBe('delete');
+      expect(mockSend.mock.calls[0]![0]!.adapter).toBe('cache');
+      expect(mockSend.mock.calls[0]![0]!.method).toBe('delete');
     });
 
     it('should call clear with pattern', async () => {
@@ -100,8 +100,8 @@ describe('CacheProxy', () => {
       await cacheProxy.clear('user:*');
 
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockSend.mock.calls[0][0].adapter).toBe('cache');
-      expect(mockSend.mock.calls[0][0].method).toBe('clear');
+      expect(mockSend.mock.calls[0]![0]!.adapter).toBe('cache');
+      expect(mockSend.mock.calls[0]![0]!.method).toBe('clear');
     });
 
     it('should call clear without pattern', async () => {
@@ -120,8 +120,8 @@ describe('CacheProxy', () => {
       await cacheProxy.zadd('jobs:scheduled', 1234567890, 'job-123');
 
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockSend.mock.calls[0][0].adapter).toBe('cache');
-      expect(mockSend.mock.calls[0][0].method).toBe('zadd');
+      expect(mockSend.mock.calls[0]![0]!.adapter).toBe('cache');
+      expect(mockSend.mock.calls[0]![0]!.method).toBe('zadd');
     });
 
     it('should call zrangebyscore via IPC', async () => {
@@ -131,8 +131,8 @@ describe('CacheProxy', () => {
       const result = await cacheProxy.zrangebyscore('jobs:scheduled', 0, 1000000);
 
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockSend.mock.calls[0][0].adapter).toBe('cache');
-      expect(mockSend.mock.calls[0][0].method).toBe('zrangebyscore');
+      expect(mockSend.mock.calls[0]![0]!.adapter).toBe('cache');
+      expect(mockSend.mock.calls[0]![0]!.method).toBe('zrangebyscore');
       expect(result).toEqual(expectedMembers);
     });
 
@@ -142,8 +142,8 @@ describe('CacheProxy', () => {
       await cacheProxy.zrem('jobs:scheduled', 'job-123');
 
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockSend.mock.calls[0][0].adapter).toBe('cache');
-      expect(mockSend.mock.calls[0][0].method).toBe('zrem');
+      expect(mockSend.mock.calls[0]![0]!.adapter).toBe('cache');
+      expect(mockSend.mock.calls[0]![0]!.method).toBe('zrem');
     });
   });
 
@@ -158,8 +158,8 @@ describe('CacheProxy', () => {
       );
 
       expect(mockSend).toHaveBeenCalledTimes(1);
-      expect(mockSend.mock.calls[0][0].adapter).toBe('cache');
-      expect(mockSend.mock.calls[0][0].method).toBe('setIfNotExists');
+      expect(mockSend.mock.calls[0]![0]!.adapter).toBe('cache');
+      expect(mockSend.mock.calls[0]![0]!.method).toBe('setIfNotExists');
       expect(result).toBe(true);
     });
 
