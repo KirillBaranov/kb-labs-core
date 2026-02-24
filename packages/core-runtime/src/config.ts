@@ -3,7 +3,12 @@
  * Platform configuration types.
  */
 
-import type { TenantQuotas, LLMTier, LLMCapability } from '@kb-labs/core-platform';
+import type {
+  TenantQuotas,
+  LLMTier,
+  LLMCapability,
+  LLMExecutionPolicy,
+} from '@kb-labs/core-platform';
 import type { RateLimitConfig, RateLimitPreset } from '@kb-labs/core-resource-broker';
 
 /**
@@ -44,6 +49,11 @@ export interface LLMAdapterOptions {
   capabilities?: LLMCapability[];
   /** Default model for the underlying adapter (simple config) */
   defaultModel?: string;
+  /**
+   * Platform-managed default execution policy.
+   * Applied to all LLM calls unless explicitly overridden by plugin via useLLM(...execution...).
+   */
+  executionDefaults?: LLMExecutionPolicy;
   /** Any other adapter-specific options */
   [key: string]: unknown;
 }

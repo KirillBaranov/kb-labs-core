@@ -18,6 +18,7 @@ import { WorkspaceManager } from './workspace-manager.js';
 import { SnapshotManager } from './snapshot-manager.js';
 import { RunExecutor } from './run-executor.js';
 import { RunOrchestrator } from './run-orchestrator.js';
+import { createDefaultExecutionPolicyLLM } from './wrappers/default-execution-policy-llm.js';
 
 import { ResourceManager } from './core/resource-manager.js';
 import { JobScheduler } from './core/job-scheduler.js';
@@ -810,12 +811,19 @@ export async function initPlatform(
     // ══════════════════════════════════════════════════════════════════════
     if (platform.hasAdapter('llm')) {
       const llmOptions = (adapterOptions.llm ?? {}) as LLMAdapterOptions;
+      const executionDefaults = llmOptions.executionDefaults;
+      const llmWithDefaults = createDefaultExecutionPolicyLLM(platform.llm, executionDefaults);
+
+      if (llmWithDefaults !== platform.llm) {
+        platform.setAdapter('llm', llmWithDefaults);
+        platform.logger.debug('initPlatform applied centralized LLM execution defaults');
+      }
 
       try {
         const { LLMRouter } = await import('@kb-labs/llm-router');
 
         // Get current LLM (already QueuedLLM → AnalyticsLLM → RawAdapter)
-        const queuedLLM = platform.llm;
+        const queuedLLM = llmWithDefaults;
 
         // Create adapter loader function for multi-adapter support
         // CRITICAL: Wrap loaded adapters with AnalyticsLLM for tracking
@@ -826,9 +834,13 @@ export async function initPlatform(
 
             // Wrap with AnalyticsLLM if analytics is available
             const analytics = platform.analytics;
-            const wrappedAdapter = analytics && analytics.constructor.name !== 'NoOpAnalytics'
+            const analyticsWrapped = analytics && analytics.constructor.name !== 'NoOpAnalytics'
               ? new AnalyticsLLM(loadedAdapter as any, analytics)
               : loadedAdapter;
+            const wrappedAdapter = createDefaultExecutionPolicyLLM(
+              analyticsWrapped as any,
+              executionDefaults
+            );
 
             platform.logger.debug(`LLMRouter loaded adapter: ${adapterPackage}`, {
               wrapped: wrappedAdapter !== loadedAdapter,

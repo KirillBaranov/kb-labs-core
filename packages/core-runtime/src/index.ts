@@ -103,6 +103,7 @@ export {
   closeProxyPlatform,
   type CreateProxyPlatformOptions
 } from './proxy/create-proxy-platform.js';
+export { createNoOpPlatform } from '@kb-labs/core-platform/noop';
 
 export type {
   ResourceManagerConfig,

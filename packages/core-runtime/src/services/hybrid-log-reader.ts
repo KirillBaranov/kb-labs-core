@@ -171,7 +171,13 @@ export class HybridLogReader implements ILogReader {
 
     // Get buffer stats if available
     if (this.buffer) {
-      stats.buffer = this.buffer.getStats();
+      const raw = this.buffer.getStats();
+      stats.buffer = {
+        size: raw.total,
+        maxSize: raw.bufferSize,
+        oldestTimestamp: raw.oldestTimestamp,
+        newestTimestamp: raw.newestTimestamp,
+      };
     }
 
     // Get persistence stats if available

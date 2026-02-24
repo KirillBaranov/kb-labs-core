@@ -200,7 +200,7 @@ export class OutputImpl implements Output {
         if (error instanceof Error) {
             this.config.logger.error(message, error);
         } else {
-            this.config.logger.error(message, errorMeta);
+            this.config.logger.error(message, undefined, errorMeta);
         }
     }
 

@@ -58,7 +58,7 @@ describe('initPlatform - Manifest-based Context Injection', () => {
         contexts: ['workspace', 'analytics'], // Request both contexts
       };
 
-      const runtimeContexts = {
+      const runtimeContexts: Record<string, unknown> = {
         workspace: { cwd: '/test/workspace' },
         analytics: {
           source: { product: 'test', version: '1.0.0' },
@@ -95,7 +95,7 @@ describe('initPlatform - Manifest-based Context Injection', () => {
         contexts: ['workspace'], // Only workspace
       };
 
-      const runtimeContexts = {
+      const runtimeContexts: Record<string, unknown> = {
         workspace: { cwd: '/test/workspace' },
         analytics: {
           source: { product: 'test', version: '1.0.0' },
@@ -128,7 +128,7 @@ describe('initPlatform - Manifest-based Context Injection', () => {
         // No contexts field
       };
 
-      const runtimeContexts = {
+      const runtimeContexts: Record<string, unknown> = {
         workspace: { cwd: '/test/workspace' },
         analytics: {
           source: { product: 'test', version: '1.0.0' },
@@ -158,7 +158,7 @@ describe('initPlatform - Manifest-based Context Injection', () => {
         contexts: ['workspace', 'unknown-context', 'analytics'], // unknown-context not in registry
       };
 
-      const runtimeContexts = {
+      const runtimeContexts: Record<string, unknown> = {
         workspace: { cwd: '/test/workspace' },
         analytics: {
           source: { product: 'test', version: '1.0.0' },
@@ -256,7 +256,7 @@ describe('initPlatform - Manifest-based Context Injection', () => {
         contexts: ['workspace', 'analytics'],
       };
 
-      const runtimeContexts = {
+      const runtimeContexts: Record<string, unknown> = {
         workspace: { cwd: '/Users/kirillbaranov/Desktop/kb-labs' },
         analytics: {
           source: { product: '@kb-labs/workspace-root', version: '0.0.1' },
@@ -306,7 +306,7 @@ describe('initPlatform - Manifest-based Context Injection', () => {
         // No contexts field - legacy adapter
       };
 
-      const runtimeContexts = {
+      const runtimeContexts: Record<string, unknown> = {
         workspace: { cwd: '/test/workspace' },
         analytics: {
           source: { product: 'test', version: '1.0.0' },

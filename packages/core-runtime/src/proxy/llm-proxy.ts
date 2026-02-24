@@ -10,8 +10,8 @@
  * - Reduced memory usage (no duplicate API clients)
  * - Centralized quota enforcement (tenant rate limits)
  *
- * Note: `stream()` method is NOT supported over IPC (returns empty async iterable).
- * Use `complete()` for one-shot completions.
+ * Note: true token-by-token streaming is not supported over IPC.
+ * This proxy falls back to complete() and emits a single chunk.
  *
  * @example
  * ```typescript
@@ -37,6 +37,7 @@ import type {
   LLMMessage,
   LLMToolCallOptions,
   LLMToolCallResponse,
+  LLMProtocolCapabilities,
 } from '@kb-labs/core-platform';
 import type { ITransport } from '../transport/transport';
 import { RemoteAdapter } from './remote-adapter';
@@ -48,9 +49,9 @@ import { RemoteAdapter } from './remote-adapter';
  * The parent process executes the call on the real LLM adapter
  * (e.g., OpenAILLM) and returns the result.
  *
- * **Limitation**: `stream()` method is not supported over IPC.
+ * **Limitation**: true token-by-token `stream()` is not supported over IPC.
  * Streaming requires bidirectional communication which is not
- * currently implemented. Use `complete()` for one-shot completions.
+ * currently implemented. This proxy falls back to `complete()`.
  */
 export class LLMProxy extends RemoteAdapter<ILLM> implements ILLM {
   /**
@@ -73,27 +74,32 @@ export class LLMProxy extends RemoteAdapter<ILLM> implements ILLM {
     return (await this.callRemote('complete', [prompt, options])) as LLMResponse;
   }
 
+  getProtocolCapabilities(): LLMProtocolCapabilities {
+    return {
+      cache: { supported: false },
+      stream: { supported: false },
+    };
+  }
+
   /**
    * Stream a completion for the given prompt.
    *
-   * **NOT SUPPORTED over IPC**: Returns empty async iterable.
+   * **Fallback over IPC**: Uses complete() and emits a single chunk.
    *
    * Streaming requires bidirectional communication which is not
-   * currently implemented in the IPC protocol. Use `complete()`
-   * for one-shot completions instead.
+   * currently implemented in the IPC protocol. This fallback preserves
+   * API compatibility for callers expecting AsyncIterable<string>.
    *
    * @param prompt - Text prompt
    * @param options - Optional generation options
-   * @returns Empty async iterable (streaming not supported)
+   * @returns Async iterable with a single chunk from complete()
    */
   async *stream(prompt: string, options?: LLMOptions): AsyncIterable<string> {
-    // Streaming not supported over IPC
-    // Would require bidirectional communication (e.g., WebSocket, SSE)
-    // For now, return empty iterable
-    console.warn('[LLMProxy] stream() not supported over IPC. Use complete() instead.');
-    return;
-    // Make TypeScript happy - this is unreachable but ensures correct return type
-    yield '';
+    console.warn('[LLMProxy] stream() fallback via complete() over IPC.');
+    const response = await this.complete(prompt, options);
+    if (response.content) {
+      yield response.content;
+    }
   }
 
   /**
