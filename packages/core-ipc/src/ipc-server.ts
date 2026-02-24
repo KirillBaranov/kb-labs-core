@@ -24,7 +24,7 @@
  * ```
  */
 
-import type { PlatformContainer } from '../container';
+import type { IPlatformAdapters } from '@kb-labs/core-platform';
 import type { AdapterResponse } from '@kb-labs/core-platform/serializable';
 import { isAdapterCall, serialize, deserialize, IPC_PROTOCOL_VERSION } from '@kb-labs/core-platform/serializable';
 
@@ -47,7 +47,7 @@ export class IPCServer {
    *
    * @param platform - Platform container with real adapters
    */
-  constructor(private readonly platform: PlatformContainer) {
+  constructor(private readonly platform: IPlatformAdapters) {
     // Bind handler to preserve 'this' context
     this.messageHandler = this.handleMessage.bind(this);
   }
@@ -240,7 +240,7 @@ export class IPCServer {
  * // Server is now handling IPC calls
  * ```
  */
-export function createIPCServer(platform: PlatformContainer): IPCServer {
+export function createIPCServer(platform: IPlatformAdapters): IPCServer {
   const server = new IPCServer(platform);
   server.start();
   return server;

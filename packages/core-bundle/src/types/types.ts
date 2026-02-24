@@ -37,6 +37,10 @@ export interface Bundle<T = any> {
     permits: (action: string, resource?: any) => boolean;
   };
   trace: MergeTrace[];
+  artifacts?: {
+    summary: Record<string, unknown>;
+    list: (type: string) => Promise<Array<{ relPath: string; sha256: string }>>;
+  };
 }
 
 export interface ExplainBundleOptions {

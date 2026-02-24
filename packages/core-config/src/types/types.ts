@@ -62,7 +62,7 @@ export interface ConfigLayer {
   source: string;
 }
 
-export interface ProductConfigResult<T> {
+export interface ProductConfigResult<T = Record<string, any>> {
   config: T;
   trace: MergeTrace[];
 }

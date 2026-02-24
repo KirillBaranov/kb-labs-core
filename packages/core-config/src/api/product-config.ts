@@ -17,7 +17,7 @@ import { updateLockfile } from '../lockfile/lockfile';
 /**
  * Get product configuration with layered merge and trace
  */
-export async function getProductConfig<T>(
+export async function getProductConfig<T = Record<string, any>>(
   opts: ResolveOptions,
   schema: any
 ): Promise<ProductConfigResult<T>> {
