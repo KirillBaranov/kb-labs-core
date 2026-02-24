@@ -7,27 +7,28 @@ This document defines the documentation standards for **KB Labs Core**. This pro
 
 ## Project-Specific Customizations
 
-KB Labs Core is the runtime core with profiles resolver/validator and infrastructure abstractions. Documentation should focus on:
+KB Labs Core is the runtime foundation providing profiles, configuration, platform abstractions, IPC, LLM routing, and shared infrastructure. Documentation should focus on:
 
-- Configuration system (6-layer architecture)
-- Profile system and artifacts
-- Bundle API and usage
-- Migration from legacy systems
-- API reference for all core packages
+- 6-layer configuration system and profile resolution
+- Platform adapter architecture and IPC protocol
+- LLM router and adapter binding
+- Multi-tenancy and rate limiting primitives
+- Bundle API and package integration patterns
 
 ## Project Documentation Structure
 
 ```
 docs/
-├── DOCUMENTATION.md       # This standard (REQUIRED)
-├── BUNDLE_OVERVIEW.md     # Bundle system overview
-├── CONFIG_API.md          # Configuration API reference
-├── CLI_README.md          # CLI commands documentation
-├── ADDING_PRODUCT.md      # Guide for adding new products
-├── MIGRATION_GUIDE.md     # Migration guide from legacy
-└── adr/                   # Architecture Decision Records
-    ├── 0000-template.md  # ADR template
-    └── *.md               # ADR files
+├── DOCUMENTATION.md           # This standard (REQUIRED)
+├── ADAPTER_MANIFEST_GUIDE.md  # Adapter manifest authoring guide
+├── ADDING_PRODUCT.md          # Guide for adding new products
+├── BUNDLE_OVERVIEW.md         # Bundle system architecture
+├── CLI_README.md              # CLI commands documentation
+├── CONFIG_API.md              # Configuration API reference
+├── PLATFORM_QUICK_REF.md      # Platform facade quick reference
+└── adr/                       # Architecture Decision Records
+    ├── 0000-template.md
+    └── *.md
 ```
 
 ## Required Documentation
@@ -37,16 +38,7 @@ This project requires:
 - [x] `README.md` in root with all required sections
 - [x] `CONTRIBUTING.md` in root with development guidelines
 - [x] `docs/DOCUMENTATION.md` (this file)
-- [ ] `docs/adr/0000-template.md` (ADR template - should be created from main standard)
 - [x] `LICENSE` in root
-
-## Optional Documentation
-
-Consider adding:
-
-- [ ] `docs/glossary.md` - Core-specific terms (Profiles, Bundles, etc.)
-- [ ] `docs/examples.md` - Configuration examples
-- [ ] `docs/faq.md` - Frequently asked questions
 
 ## ADR Requirements
 
@@ -55,29 +47,25 @@ All ADRs must follow the format defined in the [main standard](https://github.co
 - Required metadata: Date, Status, Deciders, Last Reviewed, Tags
 - Minimum 1 tag, maximum 5 tags
 - Tags from approved list
-- See main standard `docs/templates/ADR.template.md` for template
 
 ## Cross-Linking
 
 This project links to:
 
 **Dependencies:**
-- [@kb-labs/shared](https://github.com/KirillBaranov/kb-labs-shared) - Shared types
+- [@kb-labs/shared](https://github.com/KirillBaranov/kb-labs-shared) — Shared utilities and types
+- [@kb-labs/plugin](https://github.com/KirillBaranov/kb-labs-plugin) — Plugin execution infrastructure
 
 **Used By:**
-- [@kb-labs/cli](https://github.com/KirillBaranov/kb-labs-cli) - CLI wrapper
-- [@kb-labs/rest-api](https://github.com/KirillBaranov/kb-labs-rest-api) - REST API layer
-- [@kb-labs/ai-review](https://github.com/KirillBaranov/kb-labs-ai-review) - AI Review
+- [@kb-labs/cli](https://github.com/KirillBaranov/kb-labs-cli) — CLI layer
+- [@kb-labs/rest-api](https://github.com/KirillBaranov/kb-labs-rest-api) — REST API layer
 - All other KB Labs products
 
 **Ecosystem:**
-- [KB Labs](https://github.com/KirillBaranov/kb-labs) - Main ecosystem repository
+- [KB Labs](https://github.com/KirillBaranov/kb-labs) — Main ecosystem repository
 
 ---
 
-**Last Updated:** 2025-11-03  
+**Last Updated:** 2026-02-24  
 **Standard Version:** 1.0 (following KB Labs ecosystem standard)  
 **See Main Standard:** [KB Labs Documentation Standard](https://github.com/KirillBaranov/kb-labs/blob/main/docs/DOCUMENTATION.md)
-
-
-
