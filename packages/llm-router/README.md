@@ -62,6 +62,73 @@ Minimal config in `kb.config.json`:
 }
 ```
 
+### Centralized Cache/Stream Defaults
+
+Platform can manage cache/stream defaults centrally via `adapterOptions.llm.executionDefaults`.
+Plugins then use plain `useLLM()` and get consistent behavior by default.
+
+```json
+{
+  "platform": {
+    "adapterOptions": {
+      "llm": {
+        "defaultTier": "medium",
+        "executionDefaults": {
+          "cache": {
+            "mode": "prefer",
+            "scope": "segments",
+            "ttlSec": 3600
+          },
+          "stream": {
+            "mode": "prefer",
+            "fallbackToComplete": true
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Plugin-level override remains available as an escape hatch:
+
+```typescript
+const llm = useLLM({
+  tier: 'medium',
+  execution: {
+    cache: { mode: 'require', key: 'mind-rag:v2' }
+  }
+});
+```
+
+Merge priority:
+1. platform `executionDefaults`
+2. plugin `useLLM({ execution })`
+3. per-call `llm.complete(..., { execution })`
+
+### How To Verify Cache Is Working
+
+Analytics events include cache outcome and billing breakdown:
+
+- `llm.cache.hit`
+- `llm.cache.miss`
+- `llm.cache.bypass`
+
+Completion/tool events also include:
+
+- `cacheReadTokens`
+- `cacheWriteTokens`
+- `billablePromptTokens`
+- `estimatedUncachedCost`
+- `estimatedCost`
+- `estimatedCacheSavingsUsd`
+
+Practical signal that cache works:
+- `llm.cache.hit` appears regularly;
+- `cacheReadTokens > 0`;
+- `billablePromptTokens < promptTokens`;
+- `estimatedCacheSavingsUsd > 0`.
+
 ## Tier System
 
 ### Tiers are User-Defined Slots

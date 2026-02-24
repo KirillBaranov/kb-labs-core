@@ -19,6 +19,7 @@ import type {
   ILLMRouter,
   ILogger,
   LLMRequestMetadata,
+  LLMProtocolCapabilities,
 } from '@kb-labs/core-platform';
 import { TierResolver, CapabilityResolver } from './resolver.js';
 
@@ -501,6 +502,20 @@ export class LLMRouter implements ILLM, ILLMRouter {
   async *stream(prompt: string, options?: LLMOptions): AsyncIterable<string> {
     const adapter = await this.ensureAdapter();
     yield* adapter.stream(prompt, this.withModelAndMetadata(options));
+  }
+
+  /**
+   * Return protocol capabilities of the currently resolved adapter.
+   */
+  async getProtocolCapabilities(): Promise<LLMProtocolCapabilities> {
+    const adapter = await this.ensureAdapter();
+    if (!adapter.getProtocolCapabilities) {
+      return {
+        cache: { supported: false },
+        stream: { supported: true },
+      };
+    }
+    return adapter.getProtocolCapabilities();
   }
 
   /**
