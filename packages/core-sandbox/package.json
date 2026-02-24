@@ -28,12 +28,12 @@
   "dependencies": {
     "@kb-labs/core-runtime": "workspace:*",
     "@kb-labs/core-sys": "workspace:*",
-    "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/plugin-runtime",
-    "@kb-labs/shared-cli-ui": "link:../../../kb-labs-shared/packages/shared-cli-ui",
+    "@kb-labs/plugin-runtime": "^1.0.0",
+    "@kb-labs/shared-cli-ui": "^1.0.0",
     "execa": "^8.0.0"
   },
   "devDependencies": {
-    "@kb-labs/devkit": "link:../../../kb-labs-devkit",
+    "@kb-labs/devkit": "^1.0.0",
     "@types/node": "^24.3.3",
     "tsup": "^8.5.0",
     "typescript": "^5.6.3",
@@ -44,5 +44,7 @@
     "node": ">=18.18.0",
     "pnpm": ">=9.0.0"
   },
-  "private": true
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -30,23 +30,25 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@kb-labs/core-state-broker": "link:../core-state-broker",
-    "@kb-labs/core-runtime": "link:../core-runtime",
-    "@kb-labs/core-platform": "link:../core-platform",
-    "@kb-labs/plugin-runtime": "link:../../../kb-labs-plugin/packages/plugin-runtime",
-    "@kb-labs/shared-command-kit": "link:../../../kb-labs-shared/packages/shared-command-kit"
+    "@kb-labs/core-state-broker": "^1.0.0",
+    "@kb-labs/core-runtime": "^1.0.0",
+    "@kb-labs/core-platform": "^1.0.0",
+    "@kb-labs/plugin-runtime": "^1.0.0",
+    "@kb-labs/shared-command-kit": "^1.0.0"
   },
   "devDependencies": {
-    "@kb-labs/devkit": "link:../../../kb-labs-devkit",
+    "@kb-labs/devkit": "^1.0.0",
     "@types/node": "^24.3.3",
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",
     "typescript": "^5.6.3",
     "vitest": "^3.2.4"
   },
-  "private": true,
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
