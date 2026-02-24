@@ -147,7 +147,7 @@ describe('InMemoryStateBroker', () => {
 
       const stats = await broker.getStats();
       expect(stats.namespaces['mind']).toBeDefined();
-      expect(stats.namespaces['mind'].entries).toBe(1);
+      expect(stats.namespaces['mind']!.entries).toBe(1);
     });
 
     it('should extract namespace from tenant key', async () => {
@@ -155,7 +155,7 @@ describe('InMemoryStateBroker', () => {
 
       const stats = await broker.getStats();
       expect(stats.namespaces['mind']).toBeDefined();
-      expect(stats.namespaces['mind'].entries).toBe(1);
+      expect(stats.namespaces['mind']!.entries).toBe(1);
     });
 
     it('should use key itself as namespace for plain keys', async () => {
@@ -164,7 +164,7 @@ describe('InMemoryStateBroker', () => {
       const stats = await broker.getStats();
       // Plain key without ':' becomes its own namespace
       expect(stats.namespaces['plain-key']).toBeDefined();
-      expect(stats.namespaces['plain-key'].entries).toBe(1);
+      expect(stats.namespaces['plain-key']!.entries).toBe(1);
     });
 
     it('should track multiple namespaces', async () => {
@@ -174,9 +174,9 @@ describe('InMemoryStateBroker', () => {
       await broker.set('cache:session-1', 'v4', 60_000);
 
       const stats = await broker.getStats();
-      expect(stats.namespaces['mind'].entries).toBe(2);
-      expect(stats.namespaces['workflow'].entries).toBe(1);
-      expect(stats.namespaces['cache'].entries).toBe(1);
+      expect(stats.namespaces['mind']!.entries).toBe(2);
+      expect(stats.namespaces['workflow']!.entries).toBe(1);
+      expect(stats.namespaces['cache']!.entries).toBe(1);
     });
   });
 
@@ -189,8 +189,8 @@ describe('InMemoryStateBroker', () => {
       const stats = await broker.getStats();
 
       expect(stats.byTenant).toBeDefined();
-      expect(stats.byTenant!['acme'].entries).toBe(2);
-      expect(stats.byTenant!['globex'].entries).toBe(1);
+      expect(stats.byTenant!['acme']!.entries).toBe(2);
+      expect(stats.byTenant!['globex']!.entries).toBe(1);
     });
 
     it('should use default tenant for non-tenant keys', async () => {
@@ -200,7 +200,7 @@ describe('InMemoryStateBroker', () => {
       const stats = await broker.getStats();
 
       expect(stats.byTenant).toBeDefined();
-      expect(stats.byTenant!['default'].entries).toBe(2);
+      expect(stats.byTenant!['default']!.entries).toBe(2);
     });
 
     it('should track size per tenant', async () => {
@@ -213,7 +213,7 @@ describe('InMemoryStateBroker', () => {
       const stats = await broker.getStats();
 
       // Acme should have larger size
-      expect(stats.byTenant!['acme'].size).toBeGreaterThan(stats.byTenant!['globex'].size);
+      expect(stats.byTenant!['acme']!.size).toBeGreaterThan(stats.byTenant!['globex']!.size);
     });
   });
 

@@ -26,7 +26,7 @@ describe('StateDaemonServer', () => {
       const res = await fetch(`${baseURL}/health`);
 
       expect(res.status).toBe(200);
-      const health = await res.json();
+      const health = await res.json() as any;
 
       expect(health.status).toBe('ok');
       expect(health.version).toBe('0.1.0');
@@ -38,7 +38,7 @@ describe('StateDaemonServer', () => {
       const res = await fetch(`${baseURL}/stats`);
 
       expect(res.status).toBe(200);
-      const stats = await res.json();
+      const stats = await res.json() as any;
 
       expect(stats.uptime).toBeGreaterThan(0);
       expect(stats.totalEntries).toBeGreaterThanOrEqual(0);
@@ -65,7 +65,7 @@ describe('StateDaemonServer', () => {
       const getRes = await fetch(`${baseURL}/state/${key}`);
       expect(getRes.status).toBe(200);
 
-      const retrieved = await getRes.json();
+      const retrieved = await getRes.json() as any;
       expect(retrieved).toEqual(value);
     });
 
@@ -200,7 +200,7 @@ describe('StateDaemonServer', () => {
       const res = await fetch(`${baseURL}/state/${encodedKey}`);
       expect(res.status).toBe(200);
 
-      const value = await res.json();
+      const value = await res.json() as any;
       expect(value).toBe('special');
     });
 
@@ -216,7 +216,7 @@ describe('StateDaemonServer', () => {
       const res = await fetch(`${baseURL}/state/${encodeURIComponent(key)}`);
       expect(res.status).toBe(200);
 
-      const value = await res.json();
+      const value = await res.json() as any;
       expect(value).toBe('namespaced');
     });
   });
@@ -235,7 +235,7 @@ describe('StateDaemonServer', () => {
       const res = await fetch(`${baseURL}/state/${key}`);
       expect(res.status).toBe(200);
 
-      const retrieved = await res.json();
+      const retrieved = await res.json() as any;
       expect(retrieved.data.length).toBe(100_000);
     });
   });
@@ -260,7 +260,7 @@ describe('StateDaemonServer', () => {
       results.forEach(res => expect(res.status).toBe(204));
 
       // Verify all stored
-      const stats = await fetch(`${baseURL}/stats`).then(r => r.json());
+      const stats = await fetch(`${baseURL}/stats`).then(r => r.json() as any);
       expect(stats.totalEntries).toBeGreaterThanOrEqual(50);
     });
   });
@@ -289,7 +289,7 @@ describe('StateDaemonServer', () => {
       const res = await fetch(`${baseURL}/unknown`);
       expect(res.status).toBe(404);
 
-      const body = await res.json();
+      const body = await res.json() as any;
       expect(body.error).toBe('Not Found');
     });
 
@@ -301,7 +301,7 @@ describe('StateDaemonServer', () => {
       });
 
       expect(res.status).toBe(500);
-      const body = await res.json();
+      const body = await res.json() as any;
       expect(body.error).toBeDefined();
     });
   });
@@ -330,7 +330,7 @@ describe('StateDaemonServer', () => {
         body: JSON.stringify({ value: 'v3', ttl: 60_000 }),
       });
 
-      const stats = await fetch(`${baseURL}/stats`).then(r => r.json());
+      const stats = await fetch(`${baseURL}/stats`).then(r => r.json() as any);
 
       expect(stats.namespaces['ns1']).toBeDefined();
       expect(stats.namespaces['ns1'].entries).toBe(2);
@@ -355,7 +355,7 @@ describe('StateDaemonServer', () => {
       // Miss (doesn't exist)
       await fetch(`${baseURL}/state/miss-test`);
 
-      const stats = await fetch(`${baseURL}/stats`).then(r => r.json());
+      const stats = await fetch(`${baseURL}/stats`).then(r => r.json() as any);
 
       expect(stats.hitRate).toBeGreaterThan(0);
       expect(stats.missRate).toBeGreaterThan(0);
