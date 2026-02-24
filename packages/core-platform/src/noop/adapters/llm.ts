@@ -3,13 +3,25 @@
  * Mock LLM implementation.
  */
 
-import type { ILLM, LLMOptions, LLMResponse } from '../../adapters/llm.js';
+import type {
+  ILLM,
+  LLMOptions,
+  LLMResponse,
+  LLMProtocolCapabilities,
+} from '../../adapters/llm.js';
 
 /**
  * Mock LLM that returns placeholder responses.
  * Useful for testing without API calls.
  */
 export class MockLLM implements ILLM {
+  getProtocolCapabilities(): LLMProtocolCapabilities {
+    return {
+      cache: { supported: false },
+      stream: { supported: true },
+    };
+  }
+
   async complete(prompt: string, options?: LLMOptions): Promise<LLMResponse> {
     const content = `[Mock LLM Response] Received prompt of ${prompt.length} characters.`;
 

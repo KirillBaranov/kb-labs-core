@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import type { IAnalytics, AnalyticsEvent, AnalyticsContext } from '../../adapters/analytics';
+import type { IAnalytics, AnalyticsEvent, AnalyticsContext } from '../adapters/analytics';
 import { ScopedAnalytics } from './scoped-analytics';
 
 // Mock analytics adapter for testing
@@ -101,8 +101,8 @@ describe('ScopedAnalytics', () => {
 
       const events = mockAnalytics.getTrackedEvents();
       expect(events).toHaveLength(1);
-      expect(events[0].type).toBe('test.event');
-      expect(events[0].payload).toEqual({ foo: 'bar' });
+      expect(events[0]!.type).toBe('test.event');
+      expect(events[0]!.payload).toEqual({ foo: 'bar' });
     });
 
     it('should override source.product with scoped value', async () => {
@@ -112,8 +112,8 @@ describe('ScopedAnalytics', () => {
       expect(events).toHaveLength(1);
 
       // Verify source was overridden
-      expect(events[0].source.product).toBe('@kb-labs/mind');
-      expect(events[0].source.version).toBe('0.1.0');
+      expect(events[0]!.source.product).toBe('@kb-labs/mind');
+      expect(events[0]!.source.version).toBe('0.1.0');
     });
   });
 
@@ -124,7 +124,7 @@ describe('ScopedAnalytics', () => {
 
       const events = mockAnalytics.getTrackedEvents();
       expect(events).toHaveLength(1);
-      expect(events[0].type).toBe('user.identify');
+      expect(events[0]!.type).toBe('user.identify');
     });
   });
 
@@ -156,7 +156,7 @@ describe('ScopedAnalytics', () => {
       // setSource() call wins. This is expected behavior - each wrapper
       // modifies the shared underlying adapter.
       // In real usage, each plugin gets its own platform.analytics instance.
-      expect(events[2].source.product).toBe('@kb-labs/commit');
+      expect(events[2]!.source.product).toBe('@kb-labs/commit');
     });
   });
 
@@ -178,8 +178,8 @@ describe('ScopedAnalytics', () => {
 
       const events = mockAnalytics.getTrackedEvents();
       expect(events).toHaveLength(1);
-      expect(events[0].type).toBe('embeddings.embedBatch.started');
-      expect(events[0].payload).toMatchObject({
+      expect(events[0]!.type).toBe('embeddings.embedBatch.started');
+      expect(events[0]!.payload).toMatchObject({
         batchSize: 10,
         totalTextLength: 5000,
       });
@@ -222,10 +222,10 @@ describe('Integration: ScopedAnalytics + handler-executor', () => {
     expect(events).toHaveLength(2);
 
     // Verify source was overridden to plugin source
-    expect(events[0].source.product).toBe('@kb-labs/mind');
-    expect(events[0].source.version).toBe('0.1.0');
-    expect(events[1].source.product).toBe('@kb-labs/mind');
-    expect(events[1].source.version).toBe('0.1.0');
+    expect(events[0]!.source.product).toBe('@kb-labs/mind');
+    expect(events[0]!.source.version).toBe('0.1.0');
+    expect(events[1]!.source.product).toBe('@kb-labs/mind');
+    expect(events[1]!.source.version).toBe('0.1.0');
   });
 
   it('should support getSource/setSource restore pattern', async () => {
@@ -261,8 +261,8 @@ describe('Integration: ScopedAnalytics + handler-executor', () => {
     // Verify events have correct sources
     const events = analytics.getTrackedEvents();
     expect(events).toHaveLength(3);
-    expect(events[0].source.product).toBe('@kb-labs/workflow');
-    expect(events[1].source.product).toBe('@kb-labs/mind');
-    expect(events[2].source.product).toBe('@kb-labs/workflow'); // Restored!
+    expect(events[0]!.source.product).toBe('@kb-labs/workflow');
+    expect(events[1]!.source.product).toBe('@kb-labs/mind');
+    expect(events[2]!.source.product).toBe('@kb-labs/workflow'); // Restored!
   });
 });

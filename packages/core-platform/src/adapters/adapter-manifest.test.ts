@@ -258,7 +258,7 @@ describe("AdapterManifest", () => {
         };
       };
 
-      const logger = factory({ level: "info" }, {});
+      const logger = factory({ level: "info" }, {}) as MockLogger;
       expect(logger.log).toBeDefined();
     });
 

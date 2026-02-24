@@ -36,6 +36,10 @@ function createMockLogger(logs: any[] = [], parentBindings: Record<string, unkno
       }
     },
 
+    fatal(message: string, error?: Error, meta?: Record<string, unknown>) {
+      logs.push({ level: 'fatal', message, ...parentBindings, ...meta });
+    },
+
     child(bindings: Record<string, unknown>): ILogger {
       // Merge parent bindings with new bindings
       return createMockLogger(logs, { ...parentBindings, ...bindings });

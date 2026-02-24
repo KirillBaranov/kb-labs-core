@@ -15,7 +15,7 @@
  * ```
  */
 
-import type { ILLM } from './llm.js';
+import type { ILLM, LLMExecutionPolicy } from './llm.js';
 
 /**
  * Model quality tier - user-defined slots.
@@ -62,6 +62,12 @@ export interface UseLLMOptions {
    * Platform selects model that supports ALL requested capabilities.
    */
   capabilities?: LLMCapability[];
+
+  /**
+   * Optional execution policy applied to this bound LLM instance.
+   * Can be overridden per-call via LLMOptions.execution.
+   */
+  execution?: LLMExecutionPolicy;
 }
 
 /**

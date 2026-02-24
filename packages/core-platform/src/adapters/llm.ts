@@ -14,6 +14,96 @@ export interface LLMRequestMetadata {
   provider?: string;
   /** Resource name in broker (e.g., 'llm:openai') */
   resource?: string;
+  /** Cache/stream decision trace produced by runtime policy orchestrator */
+  cacheDecisionTrace?: LLMCacheDecisionTrace;
+}
+
+/**
+ * Cache policy modes for prompt/context caching.
+ */
+export type LLMCacheMode = "prefer" | "require" | "bypass";
+
+/**
+ * Abstract cache scopes (adapter maps this to vendor-specific API).
+ */
+export type LLMCacheScope = "prefix" | "segments" | "full_request";
+
+/**
+ * Streaming policy modes.
+ */
+export type LLMStreamMode = "prefer" | "require" | "off";
+
+/**
+ * Cache policy requested by caller.
+ */
+export interface LLMCachePolicy {
+  /** prefer (default), require, bypass */
+  mode?: LLMCacheMode;
+  /** Abstract scope selector for adapter mapping */
+  scope?: LLMCacheScope;
+  /** Requested TTL in seconds (best effort) */
+  ttlSec?: number;
+  /** Optional stable key hint for deterministic cache reuse */
+  key?: string;
+}
+
+/**
+ * Streaming policy requested by caller.
+ */
+export interface LLMStreamPolicy {
+  /** prefer (default), require, off */
+  mode?: LLMStreamMode;
+  /**
+   * If streaming is unavailable and mode=prefer,
+   * fallback to complete() and emit a single chunk.
+   */
+  fallbackToComplete?: boolean;
+}
+
+/**
+ * Unified execution policy (vendor-agnostic).
+ */
+export interface LLMExecutionPolicy {
+  cache?: LLMCachePolicy;
+  stream?: LLMStreamPolicy;
+}
+
+/**
+ * Cache capability descriptor for adapter protocol negotiation.
+ */
+export interface LLMCacheCapability {
+  supported: boolean;
+  protocol?: "auto_prefix" | "explicit_breakpoints" | "explicit_handle";
+  scopes?: LLMCacheScope[];
+}
+
+/**
+ * Stream capability descriptor for adapter protocol negotiation.
+ */
+export interface LLMStreamCapability {
+  supported: boolean;
+}
+
+/**
+ * Adapter protocol capabilities.
+ */
+export interface LLMProtocolCapabilities {
+  cache: LLMCacheCapability;
+  stream: LLMStreamCapability;
+}
+
+/**
+ * Runtime trace of cache/stream decision applied before adapter call.
+ */
+export interface LLMCacheDecisionTrace {
+  cacheRequestedMode: LLMCacheMode;
+  cacheSupported: boolean;
+  cacheAppliedMode: LLMCacheMode;
+  streamRequestedMode: LLMStreamMode;
+  streamSupported: boolean;
+  streamAppliedMode: LLMStreamMode;
+  streamFallback?: "complete";
+  reason?: string;
 }
 
 /**
@@ -32,6 +122,8 @@ export interface LLMOptions {
   systemPrompt?: string;
   /** Metadata for analytics and observability (set by LLMRouter) */
   metadata?: LLMRequestMetadata;
+  /** Vendor-agnostic runtime execution policy (cache/stream semantics) */
+  execution?: LLMExecutionPolicy;
 }
 
 /**
@@ -44,6 +136,25 @@ export interface LLMResponse {
   usage: {
     promptTokens: number;
     completionTokens: number;
+    /**
+     * Prompt tokens served from cache (provider-reported, optional).
+     * Example: OpenAI cached prompt tokens, Anthropic cache_read_input_tokens.
+     */
+    cacheReadTokens?: number;
+    /**
+     * Prompt tokens written to cache (provider-reported, optional).
+     * Example: Anthropic cache_creation_input_tokens.
+     */
+    cacheWriteTokens?: number;
+    /**
+     * Provider-reported billable prompt tokens (if available).
+     * If absent, analytics can derive estimates from cacheReadTokens and pricing rules.
+     */
+    billablePromptTokens?: number;
+    /**
+     * Optional vendor-specific usage data for advanced analytics.
+     */
+    providerUsage?: Record<string, unknown>;
   };
   /** Model used for generation */
   model: string;
@@ -135,6 +246,12 @@ export interface ILLM {
    * @param options - Optional generation options
    */
   stream(prompt: string, options?: LLMOptions): AsyncIterable<string>;
+
+  /**
+   * Optional protocol capability handshake.
+   * When omitted, callers should assume: stream=true, cache=false.
+   */
+  getProtocolCapabilities?(): LLMProtocolCapabilities | Promise<LLMProtocolCapabilities>;
 
   /**
    * Chat with native tool calling support (optional).

@@ -10,6 +10,7 @@ import type {
   LLMMessage,
   LLMToolCallOptions,
   LLMToolCallResponse,
+  LLMProtocolCapabilities,
 } from '../adapters/llm.js';
 import type { IAnalytics } from '../adapters/analytics.js';
 
@@ -42,6 +43,16 @@ export class AnalyticsLLM implements ILLM {
     private analytics: IAnalytics
   ) {}
 
+  async getProtocolCapabilities(): Promise<LLMProtocolCapabilities> {
+    if (!this.realLLM.getProtocolCapabilities) {
+      return {
+        cache: { supported: false },
+        stream: { supported: true },
+      };
+    }
+    return this.realLLM.getProtocolCapabilities();
+  }
+
   /**
    * Generate a completion with analytics tracking.
    */
@@ -58,6 +69,11 @@ export class AnalyticsLLM implements ILLM {
       tier: metadata?.tier,
       provider: metadata?.provider,
       model: options?.model,
+      cacheRequestedMode: metadata?.cacheDecisionTrace?.cacheRequestedMode,
+      cacheAppliedMode: metadata?.cacheDecisionTrace?.cacheAppliedMode,
+      streamRequestedMode: metadata?.cacheDecisionTrace?.streamRequestedMode,
+      streamAppliedMode: metadata?.cacheDecisionTrace?.streamAppliedMode,
+      streamFallback: metadata?.cacheDecisionTrace?.streamFallback,
       promptLength: prompt.length,
       maxTokens: options?.maxTokens,
       temperature: options?.temperature,
@@ -66,21 +82,25 @@ export class AnalyticsLLM implements ILLM {
     try {
       // Execute real LLM call
       const response = await this.realLLM.complete(prompt, options);
+      await this.trackCacheOutcome(requestId, metadata, response);
 
       // Calculate duration
       const durationMs = Date.now() - startTime;
 
       // Track completion
+      const usageMetrics = buildUsageAnalytics(response);
       await this.analytics.track('llm.completion.completed', {
         requestId,
         tier: metadata?.tier,
         provider: metadata?.provider,
         model: response.model,
-        promptTokens: response.usage.promptTokens,
-        completionTokens: response.usage.completionTokens,
-        totalTokens: response.usage.promptTokens + response.usage.completionTokens,
+        cacheRequestedMode: metadata?.cacheDecisionTrace?.cacheRequestedMode,
+        cacheAppliedMode: metadata?.cacheDecisionTrace?.cacheAppliedMode,
+        streamRequestedMode: metadata?.cacheDecisionTrace?.streamRequestedMode,
+        streamAppliedMode: metadata?.cacheDecisionTrace?.streamAppliedMode,
+        streamFallback: metadata?.cacheDecisionTrace?.streamFallback,
+        ...usageMetrics,
         durationMs,
-        estimatedCost: estimateCost(response),
       });
 
       return response;
@@ -90,6 +110,11 @@ export class AnalyticsLLM implements ILLM {
         requestId,
         tier: metadata?.tier,
         provider: metadata?.provider,
+        cacheRequestedMode: metadata?.cacheDecisionTrace?.cacheRequestedMode,
+        cacheAppliedMode: metadata?.cacheDecisionTrace?.cacheAppliedMode,
+        streamRequestedMode: metadata?.cacheDecisionTrace?.streamRequestedMode,
+        streamAppliedMode: metadata?.cacheDecisionTrace?.streamAppliedMode,
+        streamFallback: metadata?.cacheDecisionTrace?.streamFallback,
         error: error instanceof Error ? error.message : String(error),
         durationMs: Date.now() - startTime,
       });
@@ -114,6 +139,11 @@ export class AnalyticsLLM implements ILLM {
       tier: metadata?.tier,
       provider: metadata?.provider,
       model: options?.model,
+      cacheRequestedMode: metadata?.cacheDecisionTrace?.cacheRequestedMode,
+      cacheAppliedMode: metadata?.cacheDecisionTrace?.cacheAppliedMode,
+      streamRequestedMode: metadata?.cacheDecisionTrace?.streamRequestedMode,
+      streamAppliedMode: metadata?.cacheDecisionTrace?.streamAppliedMode,
+      streamFallback: metadata?.cacheDecisionTrace?.streamFallback,
       promptLength: prompt.length,
     });
 
@@ -132,6 +162,11 @@ export class AnalyticsLLM implements ILLM {
         tier: metadata?.tier,
         provider: metadata?.provider,
         model: options?.model,
+        cacheRequestedMode: metadata?.cacheDecisionTrace?.cacheRequestedMode,
+        cacheAppliedMode: metadata?.cacheDecisionTrace?.cacheAppliedMode,
+        streamRequestedMode: metadata?.cacheDecisionTrace?.streamRequestedMode,
+        streamAppliedMode: metadata?.cacheDecisionTrace?.streamAppliedMode,
+        streamFallback: metadata?.cacheDecisionTrace?.streamFallback,
         durationMs: Date.now() - startTime,
         totalChunks,
         totalLength,
@@ -141,6 +176,11 @@ export class AnalyticsLLM implements ILLM {
         requestId,
         tier: metadata?.tier,
         provider: metadata?.provider,
+        cacheRequestedMode: metadata?.cacheDecisionTrace?.cacheRequestedMode,
+        cacheAppliedMode: metadata?.cacheDecisionTrace?.cacheAppliedMode,
+        streamRequestedMode: metadata?.cacheDecisionTrace?.streamRequestedMode,
+        streamAppliedMode: metadata?.cacheDecisionTrace?.streamAppliedMode,
+        streamFallback: metadata?.cacheDecisionTrace?.streamFallback,
         error: error instanceof Error ? error.message : String(error),
         durationMs: Date.now() - startTime,
       });
@@ -174,6 +214,11 @@ export class AnalyticsLLM implements ILLM {
       tier: metadata?.tier,
       provider: metadata?.provider,
       model: options?.model,
+      cacheRequestedMode: metadata?.cacheDecisionTrace?.cacheRequestedMode,
+      cacheAppliedMode: metadata?.cacheDecisionTrace?.cacheAppliedMode,
+      streamRequestedMode: metadata?.cacheDecisionTrace?.streamRequestedMode,
+      streamAppliedMode: metadata?.cacheDecisionTrace?.streamAppliedMode,
+      streamFallback: metadata?.cacheDecisionTrace?.streamFallback,
       messageCount: messages.length,
       toolCount: options.tools.length,
       toolChoice: options.toolChoice,
@@ -184,23 +229,27 @@ export class AnalyticsLLM implements ILLM {
     try {
       // Execute real LLM call with tools
       const response = await this.realLLM.chatWithTools(messages, options);
+      await this.trackCacheOutcome(requestId, metadata, response);
 
       // Calculate duration
       const durationMs = Date.now() - startTime;
 
       // Track completion
+      const usageMetrics = buildUsageAnalytics(response);
       await this.analytics.track('llm.chatWithTools.completed', {
         requestId,
         tier: metadata?.tier,
         provider: metadata?.provider,
         model: response.model,
-        promptTokens: response.usage.promptTokens,
-        completionTokens: response.usage.completionTokens,
-        totalTokens: response.usage.promptTokens + response.usage.completionTokens,
+        cacheRequestedMode: metadata?.cacheDecisionTrace?.cacheRequestedMode,
+        cacheAppliedMode: metadata?.cacheDecisionTrace?.cacheAppliedMode,
+        streamRequestedMode: metadata?.cacheDecisionTrace?.streamRequestedMode,
+        streamAppliedMode: metadata?.cacheDecisionTrace?.streamAppliedMode,
+        streamFallback: metadata?.cacheDecisionTrace?.streamFallback,
+        ...usageMetrics,
         toolCallCount: response.toolCalls?.length ?? 0,
         toolNames: response.toolCalls?.map((tc) => tc.name) ?? [],
         durationMs,
-        estimatedCost: estimateCost(response),
       });
 
       return response;
@@ -210,12 +259,62 @@ export class AnalyticsLLM implements ILLM {
         requestId,
         tier: metadata?.tier,
         provider: metadata?.provider,
+        cacheRequestedMode: metadata?.cacheDecisionTrace?.cacheRequestedMode,
+        cacheAppliedMode: metadata?.cacheDecisionTrace?.cacheAppliedMode,
+        streamRequestedMode: metadata?.cacheDecisionTrace?.streamRequestedMode,
+        streamAppliedMode: metadata?.cacheDecisionTrace?.streamAppliedMode,
+        streamFallback: metadata?.cacheDecisionTrace?.streamFallback,
         error: error instanceof Error ? error.message : String(error),
         durationMs: Date.now() - startTime,
       });
 
       throw error;
     }
+  }
+
+  private async trackCacheOutcome(
+    requestId: string,
+    metadata: LLMOptions['metadata'],
+    response: LLMResponse
+  ): Promise<void> {
+    const trace = metadata?.cacheDecisionTrace;
+    if (!trace) {
+      return;
+    }
+
+    const cacheReadTokens = response.usage.cacheReadTokens ?? 0;
+    const cacheWriteTokens = response.usage.cacheWriteTokens ?? 0;
+    const basePayload = {
+      requestId,
+      tier: metadata?.tier,
+      provider: metadata?.provider,
+      cacheRequestedMode: trace.cacheRequestedMode,
+      cacheAppliedMode: trace.cacheAppliedMode,
+      cacheSupported: trace.cacheSupported,
+      cacheReadTokens,
+      cacheWriteTokens,
+      promptTokens: response.usage.promptTokens,
+      completionTokens: response.usage.completionTokens,
+      model: response.model,
+    };
+
+    if (trace.cacheAppliedMode === 'bypass' || trace.cacheRequestedMode === 'bypass') {
+      await this.analytics.track('llm.cache.bypass', {
+        ...basePayload,
+        reason: trace.reason ?? 'CACHE_BYPASSED',
+      });
+      return;
+    }
+
+    if (cacheReadTokens > 0) {
+      await this.analytics.track('llm.cache.hit', basePayload);
+      return;
+    }
+
+    await this.analytics.track('llm.cache.miss', {
+      ...basePayload,
+      reason: trace.reason ?? 'NO_CACHE_READ_TOKENS',
+    });
   }
 }
 
@@ -236,21 +335,64 @@ function generateRequestId(): string {
  *
  * See ADR-0041 for details: docs/adr/0041-llm-cost-calculation-fix.md
  */
-function estimateCost(response: LLMResponse): number {
+function buildUsageAnalytics(response: LLMResponse): Record<string, number> {
   const model = response.model.toLowerCase();
-  const { promptTokens, completionTokens } = response.usage;
+  const promptTokens = response.usage.promptTokens;
+  const completionTokens = response.usage.completionTokens;
+  const cacheReadTokens = response.usage.cacheReadTokens ?? 0;
+  const cacheWriteTokens = response.usage.cacheWriteTokens ?? 0;
+  const billablePromptTokens =
+    response.usage.billablePromptTokens ?? Math.max(promptTokens - cacheReadTokens, 0);
+  const totalTokens = promptTokens + completionTokens;
+  const billableTotalTokens = billablePromptTokens + completionTokens;
 
+  const pricing = getPricing(model);
+
+  const normalInputTokens = Math.max(promptTokens - cacheReadTokens, 0);
+  const cachedInputTokens = cacheReadTokens;
+  const cachedInputRate = pricing.cachedInput ?? pricing.input;
+
+  const inputCost =
+    (normalInputTokens / 1_000_000) * pricing.input +
+    (cachedInputTokens / 1_000_000) * cachedInputRate;
+  const outputCost = (completionTokens / 1_000_000) * pricing.output;
+  const estimatedCost = inputCost + outputCost;
+
+  const uncachedInputCost = (promptTokens / 1_000_000) * pricing.input;
+  const uncachedOutputCost = outputCost;
+  const estimatedUncachedCost = uncachedInputCost + uncachedOutputCost;
+  const estimatedCacheSavingsUsd = Math.max(estimatedUncachedCost - estimatedCost, 0);
+  const estimatedSavedPromptTokens = Math.max(promptTokens - billablePromptTokens, 0);
+
+  return {
+    promptTokens,
+    completionTokens,
+    totalTokens,
+    cacheReadTokens,
+    cacheWriteTokens,
+    billablePromptTokens,
+    billableTotalTokens,
+    estimatedSavedPromptTokens,
+    estimatedCost,
+    estimatedUncachedCost,
+    estimatedCacheSavingsUsd,
+  };
+}
+
+function getPricing(model: string): { input: number; output: number; cachedInput?: number } {
   // Pricing map (input / output per 1M tokens)
-  // Source: OpenAI Pricing (2025-01), Anthropic Pricing (2025-01)
-  const pricing: Record<string, { input: number; output: number }> = {
+  // Source: vendor public pricing pages (approx; keep updated when changing model lineup)
+  const pricing: Record<string, { input: number; output: number; cachedInput?: number }> = {
     // OpenAI models (2025-01 pricing)
-    'gpt-4o-mini': { input: 0.15, output: 0.60 },
-    'gpt-4o': { input: 2.50, output: 10.00 },
+    'gpt-4o-mini': { input: 0.15, output: 0.60, cachedInput: 0.075 },
+    'gpt-4o': { input: 2.50, output: 10.00, cachedInput: 1.25 },
     'gpt-4-turbo': { input: 10.00, output: 30.00 },
     'gpt-4': { input: 30.00, output: 60.00 },
     'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
 
     // Claude models (2025-01 pricing)
+    // Cached input discounts vary by policy (5m/1h), conservative defaults:
+    // if unknown, keep cachedInput equal to input.
     'claude-3-opus': { input: 15.00, output: 75.00 },
     'claude-3-sonnet': { input: 3.00, output: 15.00 },
     'claude-3-haiku': { input: 0.25, output: 1.25 },
@@ -262,7 +404,7 @@ function estimateCost(response: LLMResponse): number {
   const sortedKeys = Object.keys(pricing).sort((a, b) => b.length - a.length);
 
   // Find matching pricing
-  let modelPricing = pricing['gpt-4o-mini']; // Default to cheapest OpenAI model
+  let modelPricing = pricing['gpt-4o-mini']!; // Default to cheapest OpenAI model
   for (const key of sortedKeys) {
     if (model.includes(key)) {
       modelPricing = pricing[key]!;
@@ -270,9 +412,5 @@ function estimateCost(response: LLMResponse): number {
     }
   }
 
-  // Calculate cost (per 1M tokens)
-  const inputCost = (promptTokens / 1_000_000) * (modelPricing?.input ?? 0);
-  const outputCost = (completionTokens / 1_000_000) * (modelPricing?.output ?? 0);
-
-  return inputCost + outputCost;
+  return modelPricing;
 }

@@ -31,7 +31,7 @@ function estimateCost(model: string, promptTokens: number, completionTokens: num
   const sortedKeys = Object.keys(pricing).sort((a, b) => b.length - a.length);
 
   // Find matching pricing
-  let modelPricing = pricing['gpt-4o-mini']; // Default
+  let modelPricing = pricing['gpt-4o-mini']!; // Default
   for (const key of sortedKeys) {
     if (modelLower.includes(key)) {
       modelPricing = pricing[key]!;

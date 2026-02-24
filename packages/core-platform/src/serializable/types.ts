@@ -103,6 +103,7 @@ export type SerializableObject = { [key: string]: SerializableValue };
 export type AdapterType =
   | 'vectorStore'
   | 'cache'
+  | 'config'
   | 'llm'
   | 'embeddings'
   | 'storage'

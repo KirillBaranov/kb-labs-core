@@ -10,6 +10,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
 import type { AnalyticsContext } from '@kb-labs/core-platform/adapters';
+export type { AnalyticsContext };
 
 /**
  * Create AnalyticsContext with auto-detection of source, actor, and runId.

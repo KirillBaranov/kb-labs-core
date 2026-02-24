@@ -25,6 +25,9 @@ export {
   MemoryArtifacts,
 } from './adapters/index.js';
 
+// Platform factory
+export { createNoOpPlatform } from './noop-platform.js';
+
 // Core feature implementations
 export {
   NoOpWorkflowEngine,
