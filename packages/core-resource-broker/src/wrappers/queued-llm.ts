@@ -10,6 +10,7 @@ import type {
   LLMMessage,
   LLMToolCallOptions,
   LLMToolCallResponse,
+  LLMProtocolCapabilities,
 } from '@kb-labs/core-platform';
 import type { IResourceBroker, ResourcePriority } from '../types.js';
 import { estimateTokens } from '../rate-limit/presets.js';
@@ -83,6 +84,16 @@ export class QueuedLLM implements ILLM {
     }
 
     return response.data!;
+  }
+
+  async getProtocolCapabilities(): Promise<LLMProtocolCapabilities> {
+    if (!this.realLLM.getProtocolCapabilities) {
+      return {
+        cache: { supported: false },
+        stream: { supported: true },
+      };
+    }
+    return this.realLLM.getProtocolCapabilities();
   }
 
   /**

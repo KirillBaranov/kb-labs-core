@@ -18,6 +18,7 @@ export interface PolicyRule {
 export interface Policy {
   $schema?: string;
   schemaVersion: "1.0";
+  default?: "allow" | "deny";
   rules: PolicyRule[];
   metadata?: {
     name: string;
