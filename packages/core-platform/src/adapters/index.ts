@@ -119,6 +119,7 @@ export type { ILogRingBuffer, LogRingBufferConfig } from "./log-ring-buffer.js";
 export type {
   ILogPersistence,
   LogPersistenceConfig,
+  LogRetentionPolicy,
 } from "./log-persistence.js";
 
 // Log Reader

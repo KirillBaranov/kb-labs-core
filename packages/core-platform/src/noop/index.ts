@@ -22,7 +22,8 @@ export {
   MemoryEventBus,
   NoOpEventBus,
   NoOpInvoke,
-  MemoryArtifacts,
+  NoOpSQLDatabase,
+  NoOpDocumentDatabase,
 } from './adapters/index.js';
 
 // Platform factory

@@ -14,7 +14,7 @@ import type { IStorage } from './adapters/storage.js';
 import type { ILogger } from './adapters/logger.js';
 import type { IEventBus } from './adapters/event-bus.js';
 import type { IInvoke } from './adapters/invoke.js';
-import type { IArtifacts } from './adapters/artifacts.js';
+import type { ISQLDatabase, IDocumentDatabase } from './adapters/database.js';
 
 /**
  * Platform adapters container interface.
@@ -54,6 +54,9 @@ export interface IPlatformAdapters {
   /** Invoke adapter (cross-plugin invocation) */
   readonly invoke: IInvoke;
 
-  /** Artifacts adapter (build outputs, generated files) */
-  readonly artifacts: IArtifacts;
+  /** SQL database adapter (SQLite, PostgreSQL, etc.) */
+  readonly sqlDatabase: ISQLDatabase;
+
+  /** Document database adapter (MongoDB, etc.) */
+  readonly documentDatabase: IDocumentDatabase;
 }

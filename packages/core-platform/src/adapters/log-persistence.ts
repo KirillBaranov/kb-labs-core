@@ -182,12 +182,65 @@ export interface ILogPersistence {
   }>;
 
   /**
+   * Delete logs matching specific levels older than specified timestamp.
+   * Allows per-level retention policies (e.g., keep errors longer than debug).
+   *
+   * @param levels - Log levels to delete (e.g., ['debug', 'trace'])
+   * @param beforeTimestamp - Delete logs before this timestamp (milliseconds)
+   * @returns Promise with number of deleted logs
+   */
+  deleteByLevelOlderThan?(
+    levels: string[],
+    beforeTimestamp: number,
+  ): Promise<number>;
+
+  /**
    * Close persistence adapter and flush pending writes.
    * Should be called during application shutdown.
    *
    * @returns Promise that resolves when all pending writes are flushed
    */
   close?(): Promise<void>;
+}
+
+/**
+ * Log retention policy configuration.
+ * Controls automatic cleanup of old logs and database size limits.
+ *
+ * Defaults are applied when retention is omitted — logs are never unbounded.
+ */
+export interface LogRetentionPolicy {
+  /**
+   * Max age for warn/error/fatal logs in milliseconds.
+   * @default 604800000 (7 days)
+   */
+  maxAge?: number;
+
+  /**
+   * Max age for debug/trace logs in milliseconds.
+   * Set to 0 to disable debug/trace persistence entirely.
+   * @default 3600000 (1 hour)
+   */
+  maxAgeDebug?: number;
+
+  /**
+   * Max age for info logs in milliseconds.
+   * @default 86400000 (24 hours)
+   */
+  maxAgeInfo?: number;
+
+  /**
+   * Maximum database size in bytes.
+   * When exceeded, oldest logs are deleted until size is under limit.
+   * @default 524288000 (500 MB)
+   */
+  maxSizeBytes?: number;
+
+  /**
+   * How often to run retention cleanup in milliseconds.
+   * @default 300000 (5 minutes)
+   */
+  cleanupIntervalMs?: number;
 }
 
 /**
@@ -219,4 +272,10 @@ export interface LogPersistenceConfig {
    * @default 5000 (5 seconds)
    */
   flushInterval?: number;
+
+  /**
+   * Retention policy for automatic log cleanup.
+   * Defaults are applied to prevent unbounded database growth.
+   */
+  retention?: LogRetentionPolicy;
 }

@@ -94,6 +94,7 @@ export type { ILogger, ILogBuffer, LogRecord, LogQuery, LogLevel } from './adapt
 export type {
   ILogPersistence,
   LogPersistenceConfig,
+  LogRetentionPolicy,
 } from './adapters/log-persistence.js';
 
 // Logging utilities
