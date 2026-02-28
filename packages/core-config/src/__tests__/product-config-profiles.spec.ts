@@ -22,9 +22,7 @@ describe("Product Config with Profiles", () => {
     const profileLayer: ProfileLayerInput = {
       profileId: "test-profile",
       source: "profile:test-profile@1.0.0",
-      products: {
-        aiReview: { maxFiles: 50, debug: false },
-      },
+      products: { maxFiles: 50, debug: false },
     };
 
     const result = await getProductConfig(
@@ -63,9 +61,7 @@ describe("Product Config with Profiles", () => {
     const profileLayerInput: ProfileLayerInput = {
       profileId: "test-profile",
       source: "profile:test-profile@1.2.0",
-      products: {
-        aiReview: { enabled: true },
-      },
+      products: { enabled: true },
     };
 
     const config = await getProductConfig(
@@ -87,11 +83,11 @@ describe("Product Config with Profiles", () => {
     const profileLayerInput: ProfileLayerInput = {
       profileId: "test-profile",
       source: "profile:test-profile@1.0.0",
-      products: { aiReview: { engine: "openai" } },
+      products: { engine: "openai" },
       scope: {
         id: "src",
         source: "profile-scope:src",
-        products: { aiReview: { engine: "anthropic" } },
+        products: { engine: "anthropic" },
       },
     };
 

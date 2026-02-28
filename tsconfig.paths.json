@@ -75,18 +75,6 @@
       "@kb-labs/core-workspace/*": [
         "packages/core-workspace/src/*"
       ],
-      "@kb-labs/knowledge-contracts": [
-        "../kb-labs-knowledge/packages/knowledge-contracts/src/index.ts"
-      ],
-      "@kb-labs/knowledge-contracts/*": [
-        "../kb-labs-knowledge/packages/knowledge-contracts/src/*"
-      ],
-      "@kb-labs/knowledge-core": [
-        "../kb-labs-knowledge/packages/knowledge-core/src/index.ts"
-      ],
-      "@kb-labs/knowledge-core/*": [
-        "../kb-labs-knowledge/packages/knowledge-core/src/*"
-      ],
       "@kb-labs/llm-router": [
         "packages/llm-router/src/index.ts"
       ],

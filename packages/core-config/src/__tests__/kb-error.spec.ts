@@ -249,6 +249,6 @@ describe("ERROR_HINTS", () => {
   it("should be readonly", () => {
     const originalValue = ERROR_HINTS.ERR_CONFIG_NOT_FOUND;
     (ERROR_HINTS as any).ERR_CONFIG_NOT_FOUND = "Modified";
-    expect(originalValue).toBe("Create kb-labs.config.yaml or run: kb init");
+    expect(originalValue).toBe("Create .kb/kb-labs.config.yaml or run: kb init");
   });
 });

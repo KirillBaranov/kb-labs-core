@@ -23,7 +23,8 @@ describe("initPolicy", () => {
 
   it("appends policy scaffold to YAML config", async () => {
     // Create workspace config
-    const configPath = path.join(tmpDir, "kb-labs.config.yaml");
+    const configPath = path.join(tmpDir, ".kb", "kb.config.yaml");
+    await fs.mkdir(path.dirname(configPath), { recursive: true });
     await fs.writeFile(
       configPath,
       'schemaVersion: "1.0"\nprofiles: {}\n',
@@ -46,7 +47,8 @@ describe("initPolicy", () => {
 
   it("skips policy scaffold for JSON config", async () => {
     // Create workspace config in JSON
-    const configPath = path.join(tmpDir, "kb-labs.config.json");
+    const configPath = path.join(tmpDir, ".kb", "kb.config.json");
+    await fs.mkdir(path.dirname(configPath), { recursive: true });
     await fs.writeFile(
       configPath,
       JSON.stringify({ schemaVersion: "1.0", profiles: {} }),
@@ -66,7 +68,8 @@ describe("initPolicy", () => {
   });
 
   it("is idempotent - skips if already exists", async () => {
-    const configPath = path.join(tmpDir, "kb-labs.config.yaml");
+    const configPath = path.join(tmpDir, ".kb", "kb.config.yaml");
+    await fs.mkdir(path.dirname(configPath), { recursive: true });
     await fs.writeFile(
       configPath,
       'schemaVersion: "1.0"\n# policy:\n#   bundle: default\n',
@@ -86,7 +89,8 @@ describe("initPolicy", () => {
   });
 
   it("supports dry-run mode", async () => {
-    const configPath = path.join(tmpDir, "kb-labs.config.yaml");
+    const configPath = path.join(tmpDir, ".kb", "kb.config.yaml");
+    await fs.mkdir(path.dirname(configPath), { recursive: true });
     const originalContent = 'schemaVersion: "1.0"\nprofiles: {}\n';
     await fs.writeFile(configPath, originalContent, "utf-8");
 

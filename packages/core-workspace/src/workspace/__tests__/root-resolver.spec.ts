@@ -55,7 +55,7 @@ afterEach(() => {
 
     // create required directories
     writeFileSync(
-      path.join(configDir, 'kb-labs.config.json'),
+      path.join(configDir, 'kb.config.json'),
       JSON.stringify({ name: 'umbrella' }),
     )
 
@@ -90,7 +90,6 @@ afterEach(() => {
     const result = await resolveWorkspaceRoot({ startDir: lonely })
 
     expect(result.rootDir).toEqual(path.resolve(lonely))
-    expect(result.source).toBe('fallback')
+    expect(result.source).toBe('repo')
   })
 })
-

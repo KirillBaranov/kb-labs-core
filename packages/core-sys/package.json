@@ -29,8 +29,8 @@
     "dev": "tsup --config tsup.config.ts --watch",
     "type-check": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
-    "lint": "eslint . --ignore-pattern 'dist/**' --ignore-pattern 'coverage/**'",
-    "lint:fix": "eslint . --fix --ignore-pattern 'dist/**' --ignore-pattern 'coverage/**'",
+    "lint": "eslint . --ignore-pattern 'dist/**' --ignore-pattern 'coverage/**' --ignore-pattern 'tsup.config.bundled_*.mjs'",
+    "lint:fix": "eslint . --fix --ignore-pattern 'dist/**' --ignore-pattern 'coverage/**' --ignore-pattern 'tsup.config.bundled_*.mjs'",
     "test:watch": "vitest"
   },
   "dependencies": {

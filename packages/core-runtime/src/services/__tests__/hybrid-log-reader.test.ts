@@ -439,8 +439,8 @@ describe('HybridLogReader', () => {
       });
 
       expect(stats.buffer).toEqual({
-        total: 100,
-        bufferSize: 1000,
+        size: 100,
+        maxSize: 1000,
         oldestTimestamp: 4000,
         newestTimestamp: 5000,
       });

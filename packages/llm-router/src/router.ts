@@ -55,7 +55,6 @@ function getProviderFromEntry(entry: TierModelEntry): string {
     return entry.provider;
   }
   // Extract from adapter package name: "@kb-labs/adapters-openai" → "openai"
-  // eslint-disable-next-line deprecation/deprecation
   const adapter = entry.adapter;
   if (adapter) {
     const match = adapter.match(/adapters-(\w+)/);
@@ -178,7 +177,6 @@ export class LLMRouter implements ILLM, ILLMRouter {
     const entry = this.getEntryForTier(effectiveTier);
     if (entry) {
       this.currentModel = entry.model;
-      // eslint-disable-next-line deprecation/deprecation
       this.currentAdapterPackage = entry.adapter;
       this.currentProvider = getProviderFromEntry(entry);
       this.currentResource = `llm:${this.currentProvider}`;
@@ -349,7 +347,6 @@ export class LLMRouter implements ILLM, ILLMRouter {
     // Get entry for the actual tier
     const entry = this.getEntryForTier(actualTier, options?.capabilities);
     const model = entry?.model;
-    // eslint-disable-next-line deprecation/deprecation
     const adapterPackage = entry?.adapter;
     const provider = entry ? getProviderFromEntry(entry) : 'default';
     const resource = `llm:${provider}`;
@@ -439,7 +436,6 @@ export class LLMRouter implements ILLM, ILLMRouter {
 
     const entry = this.getEntryForTier(actualTier, options?.capabilities);
     const model = entry?.model ?? this.currentModel ?? 'default';
-    // eslint-disable-next-line deprecation/deprecation
     const adapterPackage = entry?.adapter;
 
     const adapter = await this.getAdapter(adapterPackage);

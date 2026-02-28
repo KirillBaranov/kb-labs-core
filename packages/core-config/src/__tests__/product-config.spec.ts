@@ -17,6 +17,16 @@ import { KbError } from "../errors/kb-error";
 
 describe("Product Configuration", () => {
   let testDir: string;
+  const workspaceConfigPath = (cwd: string) =>
+    path.join(cwd, ".kb", "kb.config.json");
+
+  const writeWorkspaceConfig = async (cwd: string, config: unknown) => {
+    await fsp.mkdir(path.join(cwd, ".kb"), { recursive: true });
+    await fsp.writeFile(
+      workspaceConfigPath(cwd),
+      JSON.stringify(config, null, 2),
+    );
+  };
 
   beforeEach(async () => {
     testDir = path.join(tmpdir(), `kb-labs-config-test-${Date.now()}`);
@@ -76,10 +86,7 @@ describe("Product Configuration", () => {
           },
         },
       };
-      await fsp.writeFile(
-        path.join(testDir, "kb-labs.config.json"),
-        JSON.stringify(workspaceConfig, null, 2),
-      );
+      await writeWorkspaceConfig(testDir, workspaceConfig);
 
       const result = await getProductConfig(
         {
@@ -160,10 +167,7 @@ describe("Product Configuration", () => {
           },
         },
       };
-      await fsp.writeFile(
-        path.join(testDir, "kb-labs.config.json"),
-        JSON.stringify(workspaceConfig, null, 2),
-      );
+      await writeWorkspaceConfig(testDir, workspaceConfig);
 
       const result = await getProductConfig(
         {
@@ -200,10 +204,8 @@ describe("Product Configuration", () => {
   describe("Error Handling", () => {
     it("should throw KbError for invalid config", async () => {
       // Create invalid JSON config
-      await fsp.writeFile(
-        path.join(testDir, "kb-labs.config.json"),
-        "{ invalid json }",
-      );
+      await fsp.mkdir(path.join(testDir, ".kb"), { recursive: true });
+      await fsp.writeFile(workspaceConfigPath(testDir), "{ invalid json }");
 
       await expect(
         getProductConfig(
@@ -227,10 +229,7 @@ describe("Product Configuration", () => {
           },
         },
       };
-      await fsp.writeFile(
-        path.join(testDir, "kb-labs.config.json"),
-        JSON.stringify(workspaceConfig, null, 2),
-      );
+      await writeWorkspaceConfig(testDir, workspaceConfig);
 
       // The function should handle invalid presets gracefully and fall back to defaults
       const result = await getProductConfig(
@@ -258,10 +257,7 @@ describe("Product Configuration", () => {
           },
         },
       };
-      await fsp.writeFile(
-        path.join(testDir, "kb-labs.config.json"),
-        JSON.stringify(workspaceConfig, null, 2),
-      );
+      await writeWorkspaceConfig(testDir, workspaceConfig);
 
       const localConfigDir = path.join(testDir, ".kb", "ai-review");
       await fsp.mkdir(localConfigDir, { recursive: true });
@@ -302,10 +298,7 @@ describe("Product Configuration", () => {
           },
         },
       };
-      await fsp.writeFile(
-        path.join(testDir, "kb-labs.config.json"),
-        JSON.stringify(workspaceConfig, null, 2),
-      );
+      await writeWorkspaceConfig(testDir, workspaceConfig);
 
       const result = await getProductConfig(
         {
@@ -330,10 +323,7 @@ describe("Product Configuration", () => {
           "ai-review": "invalid-string-instead-of-object",
         },
       };
-      await fsp.writeFile(
-        path.join(testDir, "kb-labs.config.json"),
-        JSON.stringify(workspaceConfig, null, 2),
-      );
+      await writeWorkspaceConfig(testDir, workspaceConfig);
 
       // The function should handle invalid structures gracefully
       const result = await getProductConfig(
@@ -370,10 +360,7 @@ describe("Product Configuration", () => {
           },
         },
       };
-      await fsp.writeFile(
-        path.join(testDir, "kb-labs.config.json"),
-        JSON.stringify(simpleConfig, null, 2),
-      );
+      await writeWorkspaceConfig(testDir, simpleConfig);
 
       // Should handle gracefully
       const result = await getProductConfig(

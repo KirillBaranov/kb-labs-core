@@ -3,8 +3,7 @@
   "files": [],
   "references": [
     { "path": "packages/core-config" },
-    { "path": "packages/sys" },
-    { "path": "apps/demo" }
+    { "path": "packages/core-sys" }
   ],
   "compilerOptions": {
     "composite": false,

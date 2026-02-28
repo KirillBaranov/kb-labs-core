@@ -29,9 +29,9 @@ describe("initWorkspaceConfig", () => {
     });
 
     expect(result.created).toHaveLength(1);
-    expect(result.created[0]).toMatch(/\.kb\/kb-labs\.config\.yaml$/);
+    expect(result.created[0]).toMatch(/\.kb\/kb\.config\.yaml$/);
 
-    const configPath = path.join(tmpDir, ".kb", "kb-labs.config.yaml");
+    const configPath = path.join(tmpDir, ".kb", "kb.config.yaml");
     const content = await fs.readFile(configPath, "utf-8");
     expect(content).toContain('schemaVersion: "1.0"');
     expect(content).toContain("aiReview");
@@ -45,9 +45,9 @@ describe("initWorkspaceConfig", () => {
     });
 
     expect(result.created).toHaveLength(1);
-    expect(result.created[0]).toMatch(/\.kb\/kb-labs\.config\.json$/);
+    expect(result.created[0]).toMatch(/\.kb\/kb\.config\.json$/);
 
-    const configPath = path.join(tmpDir, ".kb", "kb-labs.config.json");
+    const configPath = path.join(tmpDir, ".kb", "kb.config.json");
     const content = await fs.readFile(configPath, "utf-8");
     const parsed = JSON.parse(content);
     expect(parsed.schemaVersion).toBe("1.0");
@@ -76,7 +76,7 @@ describe("initWorkspaceConfig", () => {
 
   it("detects conflicts without --force", async () => {
     // Create initial config
-    const configPath = path.join(tmpDir, ".kb", "kb-labs.config.yaml");
+    const configPath = path.join(tmpDir, ".kb", "kb.config.yaml");
     await fs.mkdir(path.dirname(configPath), { recursive: true });
     await fs.writeFile(
       configPath,
@@ -108,7 +108,7 @@ describe("initWorkspaceConfig", () => {
     expect(result.actions.length).toBeGreaterThan(0);
 
     // File should not actually be created
-    const configPath = path.join(tmpDir, ".kb", "kb-labs.config.yaml");
+    const configPath = path.join(tmpDir, ".kb", "kb.config.yaml");
     await expect(fs.access(configPath)).rejects.toThrow();
   });
 
