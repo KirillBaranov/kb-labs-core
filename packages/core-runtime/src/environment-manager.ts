@@ -35,7 +35,7 @@ export class EnvironmentManager {
     private readonly platform: Pick<PlatformContainer, 'getAdapter' | 'logger'>,
     options: EnvironmentManagerOptions = {}
   ) {
-    const db = this.platform.getAdapter<ISQLDatabase>('db');
+    const db = this.platform.getAdapter<ISQLDatabase>('sqlDatabase');
     if (db) {
       this.store = new EnvironmentLeaseStore(db);
     }

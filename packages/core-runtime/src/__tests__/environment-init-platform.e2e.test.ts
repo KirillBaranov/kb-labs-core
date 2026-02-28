@@ -6,6 +6,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+import type { ISQLDatabase } from '@kb-labs/core-platform/adapters';
 import { initPlatform, resetPlatform } from '../loader.js';
 import { platform } from '../container.js';
 import { startFullCycle } from '../use-cases/start-full-cycle.js';
@@ -37,6 +39,16 @@ function hasDocker(): boolean {
   }
 }
 
+function hasAdapterPackage(moduleName: string): boolean {
+  try {
+    const require = createRequire(import.meta.url);
+    require.resolve(moduleName);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 describe('initPlatform environment orchestration e2e', () => {
   beforeEach(() => {
     resetPlatform();
@@ -54,7 +66,11 @@ describe('initPlatform environment orchestration e2e', () => {
     resetPlatform();
   });
 
-  it.skipIf(!hasDocker())(
+  it.skipIf(
+    !hasDocker() ||
+      !hasAdapterPackage('@kb-labs/adapters-sqlite') ||
+      !hasAdapterPackage('@kb-labs/adapters-environment-docker')
+  )(
     'initializes orchestration services and cleans expired lease via janitor flow',
     async () => {
       const workspaceRoot = path.resolve(process.cwd(), '../../..');
@@ -145,12 +161,12 @@ describe('initPlatform environment orchestration e2e', () => {
       const status = await platform.environmentManager.getEnvironmentStatus(environmentId);
       expect(status.status).toBe('terminated');
 
-      const db = platform.getAdapter<any>('db');
+      const db = platform.getAdapter<ISQLDatabase>('sqlDatabase')!;
       const leaseRows = await db.query(
         'SELECT status FROM environment_leases WHERE environment_id = ?',
         [environmentId]
       );
-      expect(leaseRows.rows?.[0]?.status).toBe('terminated');
+      expect((leaseRows.rows?.[0] as any)?.status).toBe('terminated');
     }
   );
 });

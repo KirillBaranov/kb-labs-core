@@ -14,7 +14,6 @@ import type {
   ILogger,
   IEventBus,
   IInvoke,
-  IArtifacts,
   IWorkflowEngine,
   IJobScheduler,
   ICronManager,
@@ -23,6 +22,7 @@ import type {
   ILogReader,
   ILogPersistence,
 } from '@kb-labs/core-platform';
+import type { ISQLDatabase, IDocumentDatabase } from '@kb-labs/core-platform/adapters';
 
 import type { IResourceBroker } from '@kb-labs/core-resource-broker';
 import type { EnvironmentManager } from './environment-manager.js';
@@ -42,7 +42,8 @@ import {
   ConsoleLogger,
   MemoryEventBus,
   NoOpInvoke,
-  MemoryArtifacts,
+  NoOpSQLDatabase,
+  NoOpDocumentDatabase,
   NoOpWorkflowEngine,
   NoOpJobScheduler,
   NoOpCronManager,
@@ -66,8 +67,25 @@ export interface CoreAdapterTypes {
   logger: ILogger;
   eventBus: IEventBus;
   invoke: IInvoke;
-  artifacts: IArtifacts;
+  sqlDatabase: ISQLDatabase;
+  documentDatabase: IDocumentDatabase;
 }
+
+/**
+ * Names of all core adapters.
+ * Use this type instead of raw strings when referencing adapters —
+ * it stays in sync with CoreAdapterTypes automatically.
+ *
+ * @example
+ * ```typescript
+ * import type { CoreAdapterName } from '@kb-labs/core-runtime';
+ *
+ * function requiresLLM(name: CoreAdapterName) { ... }
+ * requiresLLM('llm');      // ✅
+ * requiresLLM('unknown');  // ❌ compile error
+ * ```
+ */
+export type CoreAdapterName = keyof CoreAdapterTypes;
 
 /**
  * All adapter types (core + extensions).
@@ -307,9 +325,23 @@ export class PlatformContainer {
 
   /**
    * Check if a service is explicitly configured (not using fallback).
-   * @param service - Service name (e.g., 'llm', 'vectorStore', 'workflows')
-   * @returns true if service is configured, false if using NoOp/fallback
+   *
+   * @example
+   * ```typescript
+   * // Core adapter — type-safe, autocomplete works
+   * platform.isConfigured('llm');         // ✅
+   * platform.isConfigured('vectorStore'); // ✅
+   * platform.isConfigured('unknown');     // ❌ compile error
+   *
+   * // Extension adapter — generic string
+   * platform.isConfigured('myCustomAdapter'); // ✅ string overload
+   * ```
+   *
+   * @param service - Adapter/service name
+   * @returns true if explicitly configured, false if using NoOp/fallback
    */
+  isConfigured<K extends CoreAdapterName>(service: K): boolean;
+  isConfigured(service: string): boolean;
   isConfigured(service: string): boolean {
     // Check if it's an adapter
     if (this.adapters.has(service)) {
@@ -419,9 +451,14 @@ export class PlatformContainer {
     return (this.adapters.get('invoke') as IInvoke) ?? new NoOpInvoke();
   }
 
-  /** Artifact storage adapter (fallback: MemoryArtifacts) */
-  get artifacts(): IArtifacts {
-    return (this.adapters.get('artifacts') as IArtifacts) ?? new MemoryArtifacts();
+  /** SQL database adapter (fallback: NoOpSQLDatabase — throws on use) */
+  get sqlDatabase(): ISQLDatabase {
+    return (this.adapters.get('sqlDatabase') as ISQLDatabase) ?? new NoOpSQLDatabase();
+  }
+
+  /** Document database adapter (fallback: NoOpDocumentDatabase — throws on use) */
+  get documentDatabase(): IDocumentDatabase {
+    return (this.adapters.get('documentDatabase') as IDocumentDatabase) ?? new NoOpDocumentDatabase();
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

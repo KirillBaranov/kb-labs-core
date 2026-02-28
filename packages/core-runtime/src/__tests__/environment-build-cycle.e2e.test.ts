@@ -6,6 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { initPlatform, resetPlatform } from '../loader.js';
 import { platform } from '../container.js';
 
@@ -27,6 +28,16 @@ vi.mock('@kb-labs/plugin-execution-factory', () => ({
 function hasDocker(): boolean {
   try {
     execFileSync('docker', ['version'], { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function hasAdapterPackage(moduleName: string): boolean {
+  try {
+    const require = createRequire(import.meta.url);
+    require.resolve(moduleName);
     return true;
   } catch {
     return false;
@@ -56,7 +67,11 @@ describe('environment build cycle e2e', () => {
     resetPlatform();
   });
 
-  it.skipIf(!hasDocker())(
+  it.skipIf(
+    !hasDocker() ||
+      !hasAdapterPackage('@kb-labs/adapters-sqlite') ||
+      !hasAdapterPackage('@kb-labs/adapters-environment-docker')
+  )(
     'provisions environment, runs TypeScript build in container, and tears down cleanly',
     async () => {
       const workspaceRoot = path.resolve(process.cwd(), '../../..');

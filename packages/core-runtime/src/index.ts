@@ -24,6 +24,7 @@
 export { PlatformContainer, platform } from './container.js';
 export type {
   CoreAdapterTypes,
+  CoreAdapterName,
   AdapterTypes,
   PlatformLifecyclePhase,
   PlatformLifecycleContext,
