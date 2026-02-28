@@ -270,11 +270,9 @@ export class UnixSocketServer {
         return this.platform.eventBus;
       case 'invoke':
         return this.platform.invoke;
-      case 'artifacts':
-        return this.platform.artifacts;
       default:
         throw new Error(
-          `Unknown adapter: '${name}'. Valid adapters: vectorStore, cache, config, llm, embeddings, storage, logger, analytics, eventBus, invoke, artifacts`
+          `Unknown adapter: '${name}'. Valid adapters: vectorStore, cache, config, llm, embeddings, storage, logger, analytics, eventBus, invoke`
         );
     }
   }
