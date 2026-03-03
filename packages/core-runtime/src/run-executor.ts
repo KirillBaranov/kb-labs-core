@@ -7,7 +7,7 @@ import type {
   IExecutionBackend,
   ExecutionRequest,
   ExecutionResult,
-} from '@kb-labs/core-platform';
+} from '@kb-labs/core-contracts';
 
 /**
  * Request for run step execution.
@@ -34,24 +34,6 @@ export class RunExecutor {
   async executeStep(request: RunStepExecutionRequest): Promise<ExecutionResult> {
     const { runId, stepId, environmentId, execution } = request;
 
-    const descriptor =
-      execution.descriptor && typeof execution.descriptor === 'object'
-        ? {
-            ...(execution.descriptor as Record<string, unknown>),
-            run: {
-              runId,
-              stepId,
-              environmentId,
-            },
-          }
-        : {
-            run: {
-              runId,
-              stepId,
-              environmentId,
-            },
-          };
-
     this.logger.debug('RunExecutor: executing step', {
       runId,
       stepId,
@@ -63,8 +45,14 @@ export class RunExecutor {
 
     return this.executionBackend.execute({
       ...execution,
-      descriptor,
+      context: {
+        ...execution.context,
+        run: {
+          runId,
+          stepId,
+          environmentId,
+        },
+      },
     });
   }
 }
-

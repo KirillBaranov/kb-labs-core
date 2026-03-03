@@ -141,7 +141,19 @@ describe('initPlatform environment orchestration e2e', () => {
         },
         firstStep: {
           executionId: 'exec-e2e-1',
-          descriptor: { source: 'e2e' },
+          descriptor: {
+            hostType: 'workflow',
+            hostContext: {
+              host: 'workflow',
+              workflowId: 'wf-e2e-1',
+              runId: 'run-e2e-1',
+              stepId: 'step-e2e-1',
+            },
+            permissions: {},
+            pluginId: 'e2e-plugin',
+            pluginVersion: '1.0.0',
+            requestId: 'req-e2e-1',
+          },
           pluginRoot: workspaceRoot,
           handlerRef: 'noop-handler',
           input: { smoke: true },

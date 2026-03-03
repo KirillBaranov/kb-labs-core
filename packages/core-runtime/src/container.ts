@@ -18,10 +18,10 @@ import type {
   IJobScheduler,
   ICronManager,
   IResourceManager,
-  IExecutionBackend,
   ILogReader,
   ILogPersistence,
 } from '@kb-labs/core-platform';
+import type { IExecutionBackend } from '@kb-labs/core-contracts';
 import type { ISQLDatabase, IDocumentDatabase } from '@kb-labs/core-platform/adapters';
 
 import type { IResourceBroker } from '@kb-labs/core-resource-broker';
@@ -813,8 +813,9 @@ export class PlatformContainer {
       }
     }
 
-    // Gracefully close adapters that expose close()/dispose()/shutdown()
-    for (const [adapterId, adapter] of this.adapters.entries()) {
+    // Gracefully close adapters in reverse load order so dependents are closed before dependencies.
+    const adaptersInReverseLoadOrder = Array.from(this.adapters.entries()).reverse();
+    for (const [adapterId, adapter] of adaptersInReverseLoadOrder) {
       if (!adapter || adapter === this._executionBackend) {
         continue;
       }
