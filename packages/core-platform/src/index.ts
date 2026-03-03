@@ -147,13 +147,6 @@ export type {
   ArtifactWriteOptions,
 } from './adapters/artifacts.js';
 
-export type {
-  IExecutionBackend,
-  ExecutionRequest,
-  ExecutionResult,
-  ExecuteOptions,
-} from './adapters/execution.js';
-
 // Environment lifecycle abstraction (long-lived runtime environments)
 export type {
   IEnvironmentProvider,

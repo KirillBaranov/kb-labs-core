@@ -146,14 +146,6 @@ export type {
   ArtifactWriteOptions,
 } from "./artifacts.js";
 
-// Execution Backend (plugin execution layer)
-export type {
-  IExecutionBackend,
-  ExecutionRequest,
-  ExecutionResult,
-  ExecuteOptions,
-} from "./execution.js";
-
 // Environment lifecycle (provisioning/destroy, separate from execution backend)
 export type {
   IEnvironmentProvider,
