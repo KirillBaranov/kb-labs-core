@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/core-contracts",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Contracts for KB Labs Core plugin.",
   "type": "module",
   "main": "./dist/index.js",
@@ -10,8 +10,7 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.js"
-    },
-    "./dist/*": "./dist/*"
+    }
   },
   "files": [
     "dist",
@@ -39,9 +38,7 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },
-  "dependencies": {
-    "@kb-labs/plugin-contracts": "^1.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@kb-labs/devkit": "^1.0.0",
     "@types/node": "^24.3.3",

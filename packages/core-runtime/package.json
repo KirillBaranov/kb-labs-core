@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/core-runtime",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "DI Container + Core Features Implementations for KB Labs Platform",
   "type": "module",
   "main": "./dist/index.cjs",

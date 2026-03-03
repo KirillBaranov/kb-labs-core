@@ -81,12 +81,6 @@
       "@kb-labs/llm-router/*": [
         "packages/llm-router/src/*"
       ],
-      "@kb-labs/plugin-contracts": [
-        "../kb-labs-plugin/packages/plugin-contracts/src/index.ts"
-      ],
-      "@kb-labs/plugin-contracts/*": [
-        "../kb-labs-plugin/packages/plugin-contracts/src/*"
-      ],
       "@kb-labs/plugin-execution-factory": [
         "../kb-labs-plugin/packages/plugin-execution-factory/src/index.ts"
       ],
