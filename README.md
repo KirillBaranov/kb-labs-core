@@ -1,83 +1,306 @@
-# KB Labs Core
+# Standard Configuration Templates
 
-> Core runtime library for all KB Labs products — profiles, configuration, platform abstractions, IPC, LLM routing, and shared infrastructure.
+This directory contains canonical configuration templates for all `@kb-labs` packages.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+## 📋 Available Templates
 
-## Packages
+### Core Configs (All Packages)
 
-| Package | Description |
-|---------|-------------|
-| [@kb-labs/core-bundle](./packages/core-bundle/) | Facade orchestrating config + profiles + policy into a single `loadBundle()` entry point |
-| [@kb-labs/core-config](./packages/core-config/) | 6-layer configuration management with LRU caching and product normalization |
-| [@kb-labs/core-contracts](./packages/core-contracts/) | Shared TypeScript interfaces and type contracts for the core layer |
-| [@kb-labs/core-ipc](./packages/core-ipc/) | Cross-process IPC serialization protocol and transport |
-| [@kb-labs/core-platform](./packages/core-platform/) | Platform facade — unified adapter-based access to FS, env, and runtime services |
-| [@kb-labs/core-policy](./packages/core-policy/) | Fine-grained permission engine for product operations |
-| [@kb-labs/core-resource-broker](./packages/core-resource-broker/) | Resource acquisition, lifecycle, and broker coordination |
-| [@kb-labs/core-runtime](./packages/core-runtime/) | Platform initialization and runtime bootstrap |
-| [@kb-labs/core-sandbox](./packages/core-sandbox/) | Sandboxed plugin execution with output capture |
-| [@kb-labs/core-state-broker](./packages/core-state-broker/) | Distributed state management and pub/sub coordination |
-| [@kb-labs/core-state-daemon](./packages/core-state-daemon/) | Persistent state daemon process |
-| [@kb-labs/core-sys](./packages/core-sys/) | System interfaces — structured logging, filesystem, and Git repository utilities |
-| [@kb-labs/core-tenant](./packages/core-tenant/) | Multi-tenancy primitives, quotas, and rate limiting |
-| [@kb-labs/core-types](./packages/core-types/) | Shared TypeScript types across the core ecosystem |
-| [@kb-labs/core-workspace](./packages/core-workspace/) | Workspace discovery and context resolution |
-| [@kb-labs/llm-router](./packages/llm-router/) | LLM routing with metadata-based adapter selection and immutable bound adapters |
+| File | Purpose | Required | Customizable |
+|------|---------|----------|--------------|
+| **eslint.config.js** | Linting rules | ✅ Yes | ⚠️ Minimal |
+| **tsconfig.json** | TypeScript IDE config | ✅ Yes | ❌ No |
+| **tsconfig.build.json** | TypeScript build config | ✅ Yes | ❌ No |
 
-## Quick Start
+### Tsup Configs (Choose ONE based on package type)
 
+| Template | Package Type | Use Cases |
+|----------|--------------|-----------|
+| **tsup.config.ts** | 📦 **Library** (default) | Most packages, importable libraries |
+| **tsup.config.bin.ts** | 🔧 **Binary** | Standalone executables, CLI bins |
+| **tsup.config.cli.ts** | ⌨️ **CLI** | CLI packages with commands |
+| **tsup.config.dual.ts** | 📦🔧 **Library + Binary** | Packages with both API and bin |
+
+### Package.json Examples
+
+| Template | Purpose |
+|----------|---------|
+| **package.json.lib** | Library package example |
+| **package.json.bin** | Binary package example |
+
+## 🎯 Philosophy
+
+**Convention over Configuration**
+
+All `@kb-labs` packages MUST use these exact templates with minimal customization. This ensures:
+
+- ✅ Consistent build output across all packages
+- ✅ Predictable dependency resolution
+- ✅ Unified linting standards
+- ✅ Easy maintenance and upgrades
+
+## 📦 Usage
+
+### For New Packages
+
+#### Step 1: Choose Package Type
+
+**Library Package** (most common):
 ```bash
-pnpm install
-pnpm build
-pnpm test
+cp kb-labs-devkit/templates/configs/tsup.config.ts your-package/
+cp kb-labs-devkit/templates/configs/eslint.config.js your-package/
+cp kb-labs-devkit/templates/configs/tsconfig*.json your-package/
+cp kb-labs-devkit/templates/configs/package.json.lib your-package/package.json
 ```
 
-### Basic Usage
+**Binary Package** (standalone executables):
+```bash
+cp kb-labs-devkit/templates/configs/tsup.config.bin.ts your-package/tsup.config.ts
+cp kb-labs-devkit/templates/configs/eslint.config.js your-package/
+cp kb-labs-devkit/templates/configs/tsconfig*.json your-package/
+cp kb-labs-devkit/templates/configs/package.json.bin your-package/package.json
+```
+
+**CLI Package** (command handlers):
+```bash
+cp kb-labs-devkit/templates/configs/tsup.config.cli.ts your-package/tsup.config.ts
+cp kb-labs-devkit/templates/configs/eslint.config.js your-package/
+cp kb-labs-devkit/templates/configs/tsconfig*.json your-package/
+cp kb-labs-devkit/templates/configs/package.json.lib your-package/package.json
+```
+
+**Dual Package** (library + binary):
+```bash
+cp kb-labs-devkit/templates/configs/tsup.config.dual.ts your-package/tsup.config.ts
+cp kb-labs-devkit/templates/configs/eslint.config.js your-package/
+cp kb-labs-devkit/templates/configs/tsconfig*.json your-package/
+cp kb-labs-devkit/templates/configs/package.json.lib your-package/package.json
+# Then add "bin" field to package.json
+```
+
+#### Step 2: Customize Package Name
+```bash
+# Edit package.json and update name, description
+```
+
+### For Existing Packages
+
+```bash
+# Check for drift
+npx kb-devkit-check-configs
+
+# Auto-fix drift
+npx kb-devkit-check-configs --fix
+```
+
+## 🔧 Customization Rules
+
+### tsup.config.ts
+
+**Allowed customizations:**
 
 ```typescript
-import { loadBundle } from '@kb-labs/core-bundle';
+export default defineConfig({
+  ...nodePreset,
+  tsconfig: 'tsconfig.build.json', // ✅ Always required
 
-const bundle = await loadBundle({
-  cwd: process.cwd(),
-  product: 'aiReview',
-  profileKey: 'default'
+  // ✅ OK: Multiple entry points
+  entry: ['src/index.ts', 'src/cli.ts'],
+
+  // ✅ OK: Extra external deps (if really needed)
+  external: ['special-native-module'],
+
+  dts: true, // ✅ Always required
+});
+```
+
+**NOT allowed:**
+
+```typescript
+// ❌ WRONG: Don't override preset settings
+export default defineConfig({
+  format: ['esm'],        // Already in preset!
+  target: 'es2022',       // Already in preset!
+  sourcemap: true,        // Already in preset!
+  // ...
 });
 
-// Access merged configuration (6 layers)
-const config = bundle.config as AiReviewConfig;
+// ❌ WRONG: Don't disable types
+dts: false,
 
-// Check permissions
-if (!bundle.policy.permits('aiReview.run')) {
-  throw new Error('Permission denied');
+// ❌ WRONG: Don't duplicate external deps
+external: [
+  '@kb-labs/core',  // Already in preset!
+  '@kb-labs/cli',   // Already in preset!
+],
+```
+
+### eslint.config.js
+
+**Allowed customizations:**
+
+```javascript
+export default [
+  ...nodePreset,
+  {
+    // ✅ OK: Project-specific ignores only
+    ignores: ['**/*.generated.ts']
+  }
+];
+```
+
+**NOT allowed:**
+
+```javascript
+// ❌ WRONG: Don't duplicate preset ignores
+export default [
+  ...nodePreset,
+  {
+    ignores: [
+      '**/dist/**',        // Already in preset!
+      '**/node_modules/**', // Already in preset!
+    ]
+  }
+];
+```
+
+### tsconfig.json & tsconfig.build.json
+
+**NOT customizable!**
+
+These files MUST remain identical to templates. All TypeScript configuration is standardized in DevKit presets.
+
+```json
+// ❌ WRONG: Don't override extends
+{
+  "extends": "./my-custom-base.json"
+}
+
+// ❌ WRONG: Don't add compilerOptions
+{
+  "extends": "@kb-labs/devkit/tsconfig/node.json",
+  "compilerOptions": {
+    "strict": false  // Don't override preset!
+  }
 }
 ```
 
-## Configuration System
+## 🔍 Drift Detection
 
-6-layer merge (later layers override earlier):
+DevKit automatically detects configuration drift:
 
-1. Runtime defaults
-2. Profile defaults
-3. Preset defaults
-4. Workspace config (`kb-labs.config.yaml`)
-5. Local config (`.kb/<product>/<product>.config.json`)
-6. CLI overrides
+```bash
+# Check all packages
+npx kb-devkit-check-configs
 
-## Documentation
+# Check specific package
+npx kb-devkit-check-configs --package=@kb-labs/core
 
-- [Documentation Standard](./docs/DOCUMENTATION.md)
-- [Bundle Overview](./docs/BUNDLE_OVERVIEW.md)
-- [Config API Reference](./docs/CONFIG_API.md)
-- [Adding a Product](./docs/ADDING_PRODUCT.md)
-- [Architecture Decisions](./docs/adr/)
+# Auto-fix (creates backup)
+npx kb-devkit-check-configs --fix
 
-## Related
+# CI mode (fail on drift)
+npx kb-devkit-check-configs --ci
+```
 
-**Dependencies:** [@kb-labs/shared](https://github.com/KirillBaranov/kb-labs-shared), [@kb-labs/plugin](https://github.com/KirillBaranov/kb-labs-plugin)
+### Drift Detection Rules
 
-**Used by:** [@kb-labs/cli](https://github.com/KirillBaranov/kb-labs-cli), [@kb-labs/rest-api](https://github.com/KirillBaranov/kb-labs-rest-api), all KB Labs products
+| Issue | Severity | Auto-fix |
+|-------|----------|----------|
+| Missing `dts: true` | 🔴 Error | ✅ Yes |
+| Using `dts: false` | 🔴 Error | ✅ Yes |
+| Not using `nodePreset` | 🔴 Error | ⚠️ Manual |
+| Duplicate `external` | 🟡 Warning | ✅ Yes |
+| Duplicate `ignores` | 🟡 Warning | ✅ Yes |
+| Missing templates | 🔴 Error | ✅ Yes |
+| Modified templates | 🔴 Error | ⚠️ Manual |
 
-## License
+## 📚 Examples
 
-KB Public License v1.1 © KB Labs
+### ✅ Good Example (Minimal Package)
+
+```typescript
+// tsup.config.ts
+import { defineConfig } from 'tsup';
+import nodePreset from '@kb-labs/devkit/tsup/node.js';
+
+export default defineConfig({
+  ...nodePreset,
+  tsconfig: 'tsconfig.build.json',
+  entry: ['src/index.ts'],
+  dts: true,
+});
+```
+
+### ✅ Good Example (CLI Package with Multiple Entries)
+
+```typescript
+// tsup.config.ts
+import { defineConfig } from 'tsup';
+import nodePreset from '@kb-labs/devkit/tsup/node.js';
+
+export default defineConfig({
+  ...nodePreset,
+  tsconfig: 'tsconfig.build.json',
+  entry: [
+    'src/index.ts',
+    'src/cli/index.ts',
+    'src/cli/commands/build.ts',
+    'src/cli/commands/test.ts',
+  ],
+  dts: true,
+});
+```
+
+### ❌ Bad Example (Over-configured)
+
+```typescript
+// tsup.config.ts
+import { defineConfig } from 'tsup';
+
+// ❌ Not using preset!
+export default defineConfig({
+  format: ['esm'],
+  target: 'es2022',
+  sourcemap: true,
+  clean: true,
+  dts: true,
+  entry: ['src/index.ts'],
+  external: [/^@kb-labs\/.*/],  // Manual external
+});
+```
+
+## 🚀 Migration Guide
+
+### From Custom Config to Standard Template
+
+1. **Backup your current config**
+   ```bash
+   cp tsup.config.ts tsup.config.ts.backup
+   ```
+
+2. **Copy standard template**
+   ```bash
+   cp kb-labs-devkit/templates/configs/tsup.config.ts .
+   ```
+
+3. **Migrate customizations** (only if needed)
+   - Compare your backup with template
+   - Extract only truly necessary customizations
+   - Add them with comments explaining why
+
+4. **Test build**
+   ```bash
+   pnpm run build
+   ```
+
+5. **Verify types**
+   ```bash
+   npx kb-devkit-check-types
+   ```
+
+## 🔗 Related
+
+- [DevKit README](../../README.md)
+- [DevKit Usage Guide](../../USAGE_GUIDE.md)
+- [ADR-0009: Unified Build Convention](../../docs/adr/0009-unified-build-convention.md)
