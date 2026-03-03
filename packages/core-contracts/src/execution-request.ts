@@ -1,53 +1,106 @@
 /**
  * @module @kb-labs/core-contracts
  *
- * Execution request types for the execution layer.
+ * Canonical execution request contracts.
+ * This module must not depend on plugin-layer contracts.
  */
-
-import type {
-  PluginContextDescriptor,
-} from "@kb-labs/plugin-contracts";
 
 /**
- * Execution request - describes a handler invocation.
+ * Core execution descriptor.
+ *
+ * Plugin/runtime specific layers may provide richer descriptor types via
+ * ExecutionRequest<TDescriptor>.
  */
-export interface ExecutionRequest {
-  /** Unique execution ID for correlation */
+export interface ExecutionDescriptorCore {
+  requestId?: string;
+  tenantId?: string;
+  pluginId?: string;
+  pluginVersion?: string;
+  handlerId?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Execution target affinity.
+ */
+export interface ExecutionTarget {
+  environmentId?: string;
+  workspaceId?: string;
+  namespace?: string;
+  workdir?: string;
+}
+
+/**
+ * Workspace configuration.
+ */
+export interface WorkspaceConfig {
+  type?: 'local' | 'ephemeral';
+  cwd?: string;
+  repo?: {
+    url: string;
+    ref: string;
+    commit?: string;
+  };
+  filter?: {
+    include?: string[];
+    exclude?: string[];
+  };
+  snapshotId?: string;
+}
+
+/**
+ * Artifacts collection configuration.
+ */
+export interface ArtifactsConfig {
+  outdir?: string;
+  upload?: boolean;
+  patterns?: string[];
+}
+
+/**
+ * Canonical execution request.
+ *
+ * TDescriptor allows upper layers to provide strongly typed descriptors
+ * while keeping core-contracts plugin-agnostic.
+ */
+export interface ExecutionRequest<TDescriptor = unknown> {
+  /** Unique execution ID for this execution attempt */
   executionId: string;
 
-  /** Plugin identifier */
-  pluginId: string;
+  /** Runtime descriptor required by the execution runtime */
+  descriptor: TDescriptor;
 
-  /** Plugin version */
-  pluginVersion: string;
+  /** Absolute plugin root */
+  pluginRoot: string;
 
-  /** Handler file path (relative to plugin root) */
-  handlerPath: string;
+  /** Handler reference relative to pluginRoot */
+  handlerRef: string;
 
-  /** Export name (default: "default") */
+  /** Optional named export from handler module */
   exportName?: string;
 
-  /** Input data for the handler */
+  /** Input payload for handler */
   input: unknown;
+
+  /** Workspace strategy (default local) */
+  workspace?: WorkspaceConfig;
+
+  /** Artifacts collection settings */
+  artifacts?: ArtifactsConfig;
 
   /** Timeout in milliseconds */
   timeoutMs?: number;
 
-  /** Execution context for correlation and multi-tenancy */
+  /** Optional target affinity */
+  target?: ExecutionTarget;
+
+  /** Additional execution context */
   context?: {
     tenantId?: string;
     traceId?: string;
     sessionId?: string;
+    [key: string]: unknown;
   };
-
-  /** Workspace identifier */
-  workspace: string;
-
-  /** Plugin root directory */
-  pluginRoot: string;
-
-  /** Plugin context descriptor (for creating runtime context) */
-  descriptor: PluginContextDescriptor;
 }
 
 /**
@@ -57,8 +110,8 @@ export interface ExecutionRequest {
  *
  * ExecutionRequest → RequestContext:
  *   executionId     → ctx.executionId   (required, correlation ID)
- *   context.tenantId → ctx.tenantId     (optional, multi-tenancy)
- *   context.traceId  → ctx.traceId      (optional, distributed tracing)
+ *   context.tenantId  → ctx.tenantId    (optional, multi-tenancy)
+ *   context.traceId   → ctx.traceId     (optional, distributed tracing)
  *   [auth token]     → ctx.authToken    (from KB_PLATFORM_SOCKET_TOKEN)
  *
  * Example flow:

@@ -6,7 +6,7 @@
 
 import type { ExecutionRequest } from "./execution-request.js";
 import type {
-  ExecutionResponse,
+  ExecutionResult,
   ExecuteOptions,
 } from "./execution-response.js";
 
@@ -53,7 +53,7 @@ export interface ExecutionStats {
  * Implemented by backends in @kb-labs/plugin-execution.
  * Used by @kb-labs/core-runtime and CLI/REST hosts.
  */
-export interface IExecutionBackend {
+export interface IExecutionBackend<TDescriptor = unknown> {
   /**
    * Execute a plugin handler.
    *
@@ -61,9 +61,9 @@ export interface IExecutionBackend {
    * Never throws - all errors are caught and returned as ExecutionError.
    */
   execute(
-    request: ExecutionRequest,
+    request: ExecutionRequest<TDescriptor>,
     options?: ExecuteOptions,
-  ): Promise<ExecutionResponse>;
+  ): Promise<ExecutionResult>;
 
   /**
    * Get backend health status.

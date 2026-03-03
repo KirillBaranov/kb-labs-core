@@ -4,24 +4,18 @@
  * Subprocess runner interface - contract for running handlers in subprocesses.
  */
 
-import type {
-  RunResult,
-  PluginContextDescriptor,
-} from "@kb-labs/plugin-contracts";
+import type { ExecutionDescriptorCore } from './execution-request.js';
+import type { RunResult } from './execution-response.js';
 
 // Re-export for convenience
-export type {
-  RunResult,
-  ExecutionMeta,
-  PluginContextDescriptor,
-} from "@kb-labs/plugin-contracts";
+export type { RunResult } from './execution-response.js';
 
 /**
  * Options for subprocess execution.
  */
 export interface SubprocessRunOptions {
   /** Plugin context descriptor */
-  descriptor: PluginContextDescriptor;
+  descriptor: ExecutionDescriptorCore | unknown;
 
   /** Platform socket path (Unix socket) */
   platformSocketPath: string;
