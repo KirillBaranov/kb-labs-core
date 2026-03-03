@@ -25,13 +25,15 @@ import * as net from 'net';
 import * as fs from 'fs';
 import * as os from 'os';
 import type { IPlatformAdapters } from '@kb-labs/core-platform';
-import type { AdapterCall, AdapterResponse } from '@kb-labs/core-platform/serializable';
+import type { AdapterCall, AdapterResponse, SerializableError } from '@kb-labs/core-platform/serializable';
 import { serialize, deserialize, IPC_PROTOCOL_VERSION } from '@kb-labs/core-platform/serializable';
 import { BulkTransferHelper } from '../transport/bulk-transfer';
 
 export interface UnixSocketServerConfig {
   /** Path to Unix socket file (default: /tmp/kb-ipc.sock) */
   socketPath?: string;
+  /** Optional auth token; when set, every adapter call must include matching context.authToken */
+  authToken?: string;
 }
 
 /**
@@ -48,6 +50,7 @@ export class UnixSocketServer {
   private server: net.Server | null = null;
   private clients = new Set<net.Socket>();
   private socketPath: string;
+  private authToken?: string;
   private started = false;
 
   /**
@@ -61,6 +64,7 @@ export class UnixSocketServer {
     config: UnixSocketServerConfig = {}
   ) {
     this.socketPath = config.socketPath ?? '/tmp/kb-ipc.sock';
+    this.authToken = config.authToken;
   }
 
   /**
@@ -143,6 +147,17 @@ export class UnixSocketServer {
    * Handle adapter call from client.
    */
   private async handleCall(socket: net.Socket, call: AdapterCall): Promise<void> {
+    const callAuthToken = (call.context as { authToken?: string } | undefined)?.authToken;
+    if (this.authToken && callAuthToken !== this.authToken) {
+      const response: AdapterResponse = {
+        type: 'adapter:response',
+        requestId: call.requestId,
+        error: toSerializableError(new Error('Unauthorized IPC call: invalid auth token')),
+      };
+      socket.write(JSON.stringify(response) + '\n', 'utf8');
+      return;
+    }
+
     // Check protocol version compatibility
     if (call.version !== IPC_PROTOCOL_VERSION) {
       console.error('[UnixSocketServer] Protocol version mismatch:', {
@@ -172,7 +187,11 @@ export class UnixSocketServer {
       const adapter = this.getAdapter(call.adapter);
 
       // Get the method on the adapter
-      const method = (adapter as any)[call.method];
+      if (adapter === null || (typeof adapter !== 'object' && typeof adapter !== 'function')) {
+        throw new Error(`Adapter '${call.adapter}' is not callable`);
+      }
+
+      const method = Reflect.get(adapter, call.method);
 
       if (typeof method !== 'function') {
         throw new Error(
@@ -227,7 +246,7 @@ export class UnixSocketServer {
       const response: AdapterResponse = {
         type: 'adapter:response',
         requestId: call.requestId,
-        error: serialize(error) as any,
+        error: toSerializableError(error),
       };
 
       const message = JSON.stringify(response) + '\n';
@@ -316,6 +335,26 @@ export class UnixSocketServer {
   isStarted(): boolean {
     return this.started;
   }
+}
+
+function toSerializableError(error: unknown): SerializableError {
+  const serialized = serialize(error);
+  if (
+    serialized &&
+    typeof serialized === 'object' &&
+    '__type' in serialized &&
+    serialized.__type === 'Error'
+  ) {
+    return serialized as SerializableError;
+  }
+
+  const fallback = error instanceof Error ? error : new Error(String(error));
+  return {
+    __type: 'Error',
+    name: fallback.name,
+    message: fallback.message,
+    stack: fallback.stack,
+  };
 }
 
 /**
