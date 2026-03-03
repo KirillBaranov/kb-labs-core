@@ -141,6 +141,8 @@ export interface AdapterCallContext {
     /** Allowed network hosts (e.g., ['api.openai.com']) */
     networkHosts?: string[];
   };
+  /** Socket auth token for parent-side IPC authorization */
+  authToken?: string;
 }
 
 /**
