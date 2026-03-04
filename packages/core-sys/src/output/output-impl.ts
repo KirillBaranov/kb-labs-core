@@ -15,7 +15,7 @@ import type {
     ProgressDetails,
     UIUtilities,
     Spinner,
-} from "./types";
+} from "./types.js";
 import {
     box,
     keyValue,

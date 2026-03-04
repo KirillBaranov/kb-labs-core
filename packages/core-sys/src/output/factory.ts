@@ -3,8 +3,8 @@
  * Output factory with auto-detection
  */
 
-import type { Output, OutputMode, VerbosityLevel, DebugFormat, OutputLogSink, OutputLogger } from "./types";
-import { OutputImpl } from "./output-impl";
+import type { Output, OutputMode, VerbosityLevel, DebugFormat, OutputLogSink, OutputLogger } from "./types.js";
+import { OutputImpl } from "./output-impl.js";
 
 type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "silent";
 

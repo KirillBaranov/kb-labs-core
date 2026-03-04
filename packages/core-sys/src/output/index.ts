@@ -3,8 +3,7 @@
  * Unified Output system for KB Labs platform
  */
 
-export * from "./types";
-export { createOutput } from "./factory";
-export type { OutputConfig } from "./factory";
-
+export * from "./types.js";
+export { createOutput } from "./factory.js";
+export type { OutputConfig } from "./factory.js";
 
