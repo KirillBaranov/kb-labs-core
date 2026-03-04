@@ -34,6 +34,10 @@ export type {
 // Loader
 export { initPlatform, resetPlatform } from './loader.js';
 
+// Service bootstrap (shared initialisation utility for service processes)
+export { createServiceBootstrap, resetServiceBootstrap } from './service-bootstrap.js';
+export type { ServiceBootstrapOptions } from './service-bootstrap.js';
+
 // Adapter discovery (for testing/debugging)
 export { discoverAdapters, resolveAdapter } from './discover-adapters.js';
 export type { DiscoveredAdapter } from './discover-adapters.js';
