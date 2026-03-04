@@ -1,33 +1,33 @@
 // Core exports
-export * from './types/index'
-export * from './runtime'
-export * from './utils'
-export * from './utils/paths'
+export * from './types/index.js';
+export * from './runtime/index.js';
+export * from './utils/index.js';
+export * from './utils/paths.js';
 
 // Enhanced config system exports
-export * from './errors/kb-error'
-export * from './cache/fs-cache'
-export * from './hash/config-hash'
-export * from './api/read-config'
-export * from './api/read-kb-config'
-export * from './merge/layered-merge'
-export * from './api/product-config'
-export * from './preset/resolve-preset'
-export * from './lockfile/lockfile'
-export * from './types/preset'
-export * from './profiles/types'
-export * from './profiles/loader'
-export * from './profiles/scope-selector'
-export * from './profiles/resolver'
+export * from './errors/kb-error.js';
+export * from './cache/fs-cache.js';
+export * from './hash/config-hash.js';
+export * from './api/read-config.js';
+export * from './api/read-kb-config.js';
+export * from './merge/layered-merge.js';
+export * from './api/product-config.js';
+export * from './preset/resolve-preset.js';
+export * from './lockfile/lockfile.js';
+export * from './types/preset.js';
+export * from './profiles/types.js';
+export * from './profiles/loader.js';
+export * from './profiles/scope-selector.js';
+export * from './profiles/resolver.js';
 
 // Init system exports
-export * from './types/init'
-export * from './api/init-workspace'
-export * from './api/upsert-lockfile'
-export * from './utils/fs-atomic'
+export * from './types/init.js';
+export * from './api/init-workspace.js';
+export * from './api/upsert-lockfile.js';
+export * from './utils/fs-atomic.js';
 
 // Re-export clearCaches for convenience
-export { clearCaches } from './cache/fs-cache'
+export { clearCaches } from './cache/fs-cache.js';
 
 // Validation API
-export { validateProductConfig } from './validation/validate-config'
+export { validateProductConfig } from './validation/validate-config.js';

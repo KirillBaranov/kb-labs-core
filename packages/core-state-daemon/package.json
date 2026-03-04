@@ -30,14 +30,14 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@kb-labs/core-state-broker": "^1.2.0",
-    "@kb-labs/core-runtime": "^1.2.0",
-    "@kb-labs/core-platform": "^1.2.0",
-    "@kb-labs/plugin-runtime": "^1.0.0",
-    "@kb-labs/shared-command-kit": "^1.0.0"
+    "@kb-labs/core-state-broker": "workspace:*",
+    "@kb-labs/core-runtime": "workspace:*",
+    "@kb-labs/core-platform": "workspace:*",
+    "@kb-labs/plugin-runtime": "workspace:*",
+    "@kb-labs/shared-command-kit": "workspace:*"
   },
   "devDependencies": {
-    "@kb-labs/devkit": "^1.0.0",
+    "@kb-labs/devkit": "workspace:*",
     "@types/node": "^24.3.3",
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",

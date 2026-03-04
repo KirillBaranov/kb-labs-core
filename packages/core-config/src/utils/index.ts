@@ -1,2 +1,2 @@
-export * from './env'
-export * from './product-normalize'
+export * from './env.js';
+export * from './product-normalize.js';
