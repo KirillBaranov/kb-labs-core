@@ -6,6 +6,7 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { promises as fs } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import type { AdapterTypes, PlatformContainer } from './container.js';
 import type { PlatformConfig, CoreFeaturesConfig, ResourceBrokerConfig, LLMAdapterOptions, AdapterValue } from './config.js';
 import { platform } from './container.js';
@@ -33,6 +34,8 @@ import {
   AnalyticsCache,
   AnalyticsStorage,
 } from '@kb-labs/core-platform';
+import type { IEnvironmentProvider, IWorkspaceProvider } from '@kb-labs/core-platform';
+import type { ExecutionRequest } from '@kb-labs/core-contracts';
 
 import {
   ResourceBroker,
@@ -665,39 +668,146 @@ export async function initPlatform(
     // CRITICAL: ExecutionBackend is REQUIRED - all execution goes through it
     // ══════════════════════════════════════════════════════════════════════
     try {
-      // Use dynamic import from plugin-execution-factory to eliminate circular dependency
-      // plugin-execution-factory has no dependency on core-runtime
-      const { createExecutionBackend } = await import('@kb-labs/plugin-execution-factory');
+      if (execution.mode === 'container' && execution.container) {
+        // ── Container mode: RoutingBackend with remote dispatch via Gateway ──
+        // Dynamic imports — pyramid rule: core-runtime (L4) cannot depend on gateway-* (L7) at compile-time.
+        const { createIsolatedExecutionBackend } = await import('@kb-labs/plugin-execution-factory');
+        const { GatewayDispatchTransport } = await import('@kb-labs/gateway-core');
+        const containerCfg = execution.container;
 
-      // Map config types to backend options (explicit mapping, no type casts)
-      const executionBackend = createExecutionBackend({
-        platform: platform, // PlatformServices interface (adapters only)
-        mode: execution.mode ?? 'auto',
-        uiProvider, // Pass UI provider from caller (CLI, REST API, etc.)
-        workerPool: execution.workerPool ? {
-          min: execution.workerPool.min,
-          max: execution.workerPool.max,
-          maxRequestsPerWorker: execution.workerPool.maxRequestsPerWorker,
-          maxUptimeMsPerWorker: execution.workerPool.maxUptimeMsPerWorker,
-          maxConcurrentPerPlugin: execution.workerPool.maxConcurrentPerPlugin,
-          warmup: execution.workerPool.warmup ? {
-            mode: execution.workerPool.warmup.mode ?? 'none',
-            topN: execution.workerPool.warmup.topN,
-            maxHandlers: execution.workerPool.warmup.maxHandlers,
+        const strictIsolation = {
+          buildTransport(ctx: { runtimeHostId: string; namespaceId: string }) {
+            return new GatewayDispatchTransport({
+              dispatchEndpoint: containerCfg.gatewayDispatchUrl,
+              internalSecret: containerCfg.gatewayInternalSecret,
+              runtimeHostId: ctx.runtimeHostId,
+              namespaceId: ctx.namespaceId,
+              retryOn503: { maxAttempts: 30, delayMs: 1000 },
+            });
+          },
+          workspaceRootOnHost: cwd,
+
+          async provisionEnvironment(request: ExecutionRequest) {
+            const namespace = request.target?.namespace
+              ?? (request.context?.tenantId ? `tenant/${request.context.tenantId}` : 'default');
+            const provisioningRunId = `exec-${randomUUID().slice(0, 12)}`;
+
+            let createdWorkspaceId: string | undefined;
+            let workspaceRootPath: string | undefined;
+
+            const workspaceProvider = platform.getAdapter<IWorkspaceProvider>('workspace');
+            if (workspaceProvider) {
+              const workspace = await workspaceProvider.materialize({
+                namespace,
+                sourceRef: cwd,
+                basePath: cwd,
+                metadata: {
+                  source: 'auto-provision',
+                  executionId: request.executionId,
+                  provisioningRunId,
+                },
+              });
+              createdWorkspaceId = workspace.workspaceId;
+              workspaceRootPath = workspace.rootPath;
+            }
+
+            const environmentProvider = platform.getAdapter<IEnvironmentProvider>('environment');
+            if (!environmentProvider?.reserve || !environmentProvider?.start) {
+              throw new Error(
+                'mode=container requires an environment adapter with reserve()/start() support ' +
+                '(e.g. @kb-labs/adapters-environment-docker).'
+              );
+            }
+
+            const reservation = await environmentProvider.reserve({
+              namespace,
+              runId: provisioningRunId,
+              metadata: {
+                source: 'auto-provision',
+                executionId: request.executionId,
+              },
+            });
+
+            await environmentProvider.start(reservation.environmentId, {
+              workspacePath: workspaceRootPath ?? cwd,
+              metadata: {
+                source: 'auto-provision',
+                executionId: request.executionId,
+                namespaceId: namespace,
+              },
+            });
+
+            if (createdWorkspaceId && workspaceProvider?.attach) {
+              await workspaceProvider.attach({
+                workspaceId: createdWorkspaceId,
+                environmentId: reservation.environmentId,
+              });
+            }
+
+            platform.logger.debug('Auto-provisioned execution environment', {
+              environmentId: reservation.environmentId,
+              namespace,
+              workspaceId: createdWorkspaceId,
+              executionId: request.executionId,
+            });
+
+            return {
+              environmentId: reservation.environmentId,
+              namespace,
+              cleanup: async () => {
+                if (createdWorkspaceId && workspaceProvider) {
+                  try {
+                    await workspaceProvider.release(createdWorkspaceId, reservation.environmentId);
+                  } catch { /* best-effort */ }
+                }
+                try {
+                  await environmentProvider.destroy(reservation.environmentId, 'auto-provision.done');
+                } catch { /* best-effort */ }
+              },
+            };
+          },
+        };
+
+        const backend = createIsolatedExecutionBackend({
+          localBackend: { platform, uiProvider },
+          strictIsolation,
+        });
+
+        platform.initExecutionBackend(backend);
+
+        platform.logger.info('ExecutionBackend initialized: container mode via Gateway', {
+          dispatchUrl: containerCfg.gatewayDispatchUrl,
+        });
+      } else {
+        // ── Standard mode: in-process | worker-pool ──
+        const { createExecutionBackend } = await import('@kb-labs/plugin-execution-factory');
+
+        const factoryMode = (execution.mode ?? 'auto') as 'auto' | 'in-process' | 'subprocess' | 'worker-pool';
+        const executionBackend = createExecutionBackend({
+          platform: platform,
+          mode: factoryMode,
+          uiProvider,
+          workerPool: execution.workerPool ? {
+            min: execution.workerPool.min,
+            max: execution.workerPool.max,
+            maxRequestsPerWorker: execution.workerPool.maxRequestsPerWorker,
+            maxUptimeMsPerWorker: execution.workerPool.maxUptimeMsPerWorker,
+            maxConcurrentPerPlugin: execution.workerPool.maxConcurrentPerPlugin,
+            warmup: execution.workerPool.warmup ? {
+              mode: execution.workerPool.warmup.mode ?? 'none',
+              topN: execution.workerPool.warmup.topN,
+              maxHandlers: execution.workerPool.warmup.maxHandlers,
+            } : undefined,
           } : undefined,
-        } : undefined,
-        remote: execution.remote ? {
-          endpoint: execution.remote.endpoint ?? '',
-          } : undefined,
-      });
+        });
 
-      platform.initExecutionBackend(executionBackend);
+        platform.initExecutionBackend(executionBackend);
 
-      platform.logger.debug('initPlatform initialized ExecutionBackend', {
-        mode: execution.mode ?? 'auto',
-        hasWorkerPool: !!execution.workerPool,
-        configPath: 'platform.execution',
-      });
+        platform.logger.debug('initPlatform initialized ExecutionBackend', {
+          mode: factoryMode,
+          hasWorkerPool: !!execution.workerPool,
+        });
+      }
     } catch (error) {
       // In test environment, @kb-labs/plugin-execution may not be available
       // Only warn if in test environment (NODE_ENV=test or vitest detected)
@@ -889,6 +999,27 @@ export async function initPlatform(
         platform.logger.debug('LLMRouter not available, using QueuedLLM directly', {
           error: error instanceof Error ? error.message : String(error),
         });
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════
+    // Wrap LLM with PII Redaction (outermost wrapper)
+    // Chain: PIIRedactionLLM → LLMRouter → QueuedLLM → AnalyticsLLM → RawAdapter
+    // Must be outermost so ALL LLM calls go through PII stripping.
+    // ══════════════════════════════════════════════════════════════════════
+    if (platform.hasAdapter('llm')) {
+      const privacyConfig = core.privacy;
+      // Enabled by default unless explicitly disabled
+      if (privacyConfig?.enabled !== false) {
+        const { createPIIRedactionLLM } = await import('@kb-labs/core-platform');
+        const currentLLM = platform.llm;
+        const piiLLM = createPIIRedactionLLM(currentLLM, privacyConfig ?? { enabled: true });
+        if (piiLLM !== currentLLM) {
+          platform.setAdapter('llm', piiLLM);
+          platform.logger.debug('initPlatform wrapped LLM with PIIRedaction', {
+            mode: privacyConfig?.mode ?? 'reversible',
+          });
+        }
       }
     }
 

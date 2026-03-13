@@ -8,6 +8,7 @@ import type {
   LLMTier,
   LLMCapability,
   LLMExecutionPolicy,
+  PIIRedactionConfig,
 } from '@kb-labs/core-platform';
 import type { RateLimitConfig, RateLimitPreset } from '@kb-labs/core-resource-broker';
 
@@ -151,7 +152,18 @@ export interface ExecutionConfig {
    * - 'remote': Remote executor service (Phase 3, distributed fleet)
    * @default 'auto'
    */
-  mode?: 'auto' | 'in-process' | 'worker-pool' | 'remote';
+  mode?: 'auto' | 'in-process' | 'worker-pool' | 'remote' | 'container';
+
+  /**
+   * Container execution options (used when mode=container).
+   * RoutingBackend dispatches via Gateway to isolated containers.
+   */
+  container?: {
+    /** URL for the Gateway's internal dispatch endpoint */
+    gatewayDispatchUrl: string;
+    /** Internal secret for the dispatch endpoint */
+    gatewayInternalSecret: string;
+  };
 
   /**
    * Worker pool options (used when mode=worker-pool or auto-detected).
@@ -254,6 +266,12 @@ export interface CoreFeaturesConfig {
   workflows?: WorkflowsConfig;
   /** Resource broker configuration */
   resourceBroker?: ResourceBrokerConfig;
+  /**
+   * Privacy / PII redaction configuration.
+   * When enabled, PII is stripped from LLM inputs and restored in outputs.
+   * @default { enabled: true, mode: 'reversible' }
+   */
+  privacy?: PIIRedactionConfig;
 }
 
 /**

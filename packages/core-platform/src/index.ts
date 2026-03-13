@@ -81,6 +81,12 @@ export { AnalyticsCache } from './wrappers/analytics-cache.js';
 export { AnalyticsStorage } from './wrappers/analytics-storage.js';
 export { ScopedAnalytics, createScopedAnalytics, isScopedAnalytics, unwrapScopedAnalytics } from './wrappers/scoped-analytics.js';
 
+// PII redaction wrappers
+export { RegexPIIDetector } from './wrappers/pii-detector.js';
+export type { IPIIDetector, PIIDetectorConfig, PIIMatch, PIIRedactionResult, PIIPatternCategory, PIIPatternDef } from './wrappers/pii-detector.js';
+export { PIIRedactionLLM, createPIIRedactionLLM } from './wrappers/pii-redaction-llm.js';
+export type { PIIRedactionConfig, PIIRedactionMode } from './wrappers/pii-redaction-llm.js';
+
 export type { IEmbeddings } from './adapters/embeddings.js';
 
 export type { ICache } from './adapters/cache.js';
@@ -158,6 +164,9 @@ export type {
   EnvironmentDescriptor,
   EnvironmentStatusResult,
   EnvironmentProviderCapabilities,
+  ReserveEnvironmentRequest,
+  ReservedEnvironment,
+  StartEnvironmentRequest,
 } from './environment/environment-provider.js';
 
 // Workspace lifecycle abstraction
