@@ -31,7 +31,11 @@
     "@kb-labs/core-resource-broker": "workspace:*",
     "@kb-labs/llm-router": "workspace:*",
     "@kb-labs/plugin-execution-factory": "workspace:*",
-    "glob": "^11.0.0"
+    "glob": "^11.0.0",
+    "zod": "^4.1.5"
+  },
+  "optionalDependencies": {
+    "@kb-labs/gateway-core": "workspace:*"
   },
   "devDependencies": {
     "@kb-labs/devkit": "workspace:*",

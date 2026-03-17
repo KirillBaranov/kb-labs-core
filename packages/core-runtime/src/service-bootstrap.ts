@@ -181,3 +181,13 @@ export function resetServiceBootstrap(): void {
   _registeredHooks.clear();
   resetPlatform();
 }
+
+/**
+ * Load .env file from the given directory into process.env.
+ * Does not overwrite already-set variables.
+ * Useful for services that need env vars available before platform init
+ * (e.g., before loadRestApiConfig() reads KB_REST_* overrides).
+ */
+export function loadEnvFromRoot(repoRoot: string): void {
+  _loadEnvFile(repoRoot);
+}

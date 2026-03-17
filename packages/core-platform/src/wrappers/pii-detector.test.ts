@@ -4,7 +4,6 @@
 
 import { describe, it, expect } from 'vitest';
 import { RegexPIIDetector } from './pii-detector.js';
-import type { PIIDetectorConfig } from './pii-detector.js';
 
 describe('RegexPIIDetector', () => {
   const detector = new RegexPIIDetector();
@@ -15,22 +14,22 @@ describe('RegexPIIDetector', () => {
     it('should detect email addresses', () => {
       const matches = detector.detect('Contact john@example.com for info');
       expect(matches).toHaveLength(1);
-      expect(matches[0].name).toBe('email');
-      expect(matches[0].value).toBe('john@example.com');
+      expect(matches[0]!.name).toBe('email');
+      expect(matches[0]!.value).toBe('john@example.com');
     });
 
     it('should detect multiple emails', () => {
       const matches = detector.detect('From alice@test.org to bob@company.io');
       expect(matches).toHaveLength(2);
-      expect(matches[0].value).toBe('alice@test.org');
-      expect(matches[1].value).toBe('bob@company.io');
+      expect(matches[0]!.value).toBe('alice@test.org');
+      expect(matches[1]!.value).toBe('bob@company.io');
     });
 
     it('should detect IPv4 addresses', () => {
       const matches = detector.detect('Server at 192.168.1.100 is down');
       expect(matches).toHaveLength(1);
-      expect(matches[0].name).toBe('ipv4');
-      expect(matches[0].value).toBe('192.168.1.100');
+      expect(matches[0]!.name).toBe('ipv4');
+      expect(matches[0]!.value).toBe('192.168.1.100');
     });
 
     it('should detect OpenAI API keys', () => {
@@ -156,7 +155,7 @@ describe('RegexPIIDetector', () => {
       const text = 'Email john@test.com IP 192.168.1.1';
       const matches = d.detect(text);
       expect(matches).toHaveLength(1);
-      expect(matches[0].name).toBe('email');
+      expect(matches[0]!.name).toBe('email');
     });
   });
 

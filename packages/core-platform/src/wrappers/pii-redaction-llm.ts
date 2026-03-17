@@ -21,6 +21,13 @@ import type {
   LLMToolCallResponse,
   LLMProtocolCapabilities,
 } from '../adapters/llm.js';
+import type {
+  ILLMRouter,
+  LLMResolution,
+  LLMAdapterBinding,
+  UseLLMOptions,
+  LLMCapability,
+} from '../adapters/llm-types.js';
 import type { IPIIDetector, PIIDetectorConfig } from './pii-detector.js';
 import { RegexPIIDetector } from './pii-detector.js';
 
@@ -144,6 +151,48 @@ export class PIIRedactionLLM implements ILLM {
     const response = await this.realLLM.chatWithTools(redactedMessages, redactedOptions);
 
     return this.restoreToolResponse(response, sharedMap);
+  }
+
+  // ── ILLMRouter proxy (preserves tier routing through wrapper chain) ────
+
+  getConfiguredTier(): string {
+    const router = this.realLLM as unknown as ILLMRouter;
+    if (typeof router.getConfiguredTier === 'function') {
+      return router.getConfiguredTier();
+    }
+    return 'small';
+  }
+
+  resolve(options?: UseLLMOptions): LLMResolution {
+    const router = this.realLLM as unknown as ILLMRouter;
+    if (typeof router.resolve === 'function') {
+      return router.resolve(options);
+    }
+    throw new Error('Underlying LLM does not support resolve()');
+  }
+
+  async resolveAdapter(options?: UseLLMOptions): Promise<LLMAdapterBinding> {
+    const router = this.realLLM as unknown as ILLMRouter;
+    if (typeof router.resolveAdapter === 'function') {
+      return router.resolveAdapter(options);
+    }
+    throw new Error('Underlying LLM does not support resolveAdapter()');
+  }
+
+  hasCapability(capability: LLMCapability): boolean {
+    const router = this.realLLM as unknown as ILLMRouter;
+    if (typeof router.hasCapability === 'function') {
+      return router.hasCapability(capability);
+    }
+    return false;
+  }
+
+  getCapabilities(): LLMCapability[] {
+    const router = this.realLLM as unknown as ILLMRouter;
+    if (typeof router.getCapabilities === 'function') {
+      return router.getCapabilities();
+    }
+    return [];
   }
 
   // ── Private helpers ────────────────────────────────────────────────────

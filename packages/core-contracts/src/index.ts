@@ -23,3 +23,15 @@ export * from "./platform-gateway.js";
 
 // Subprocess runner interface
 export * from "./subprocess-runner.js";
+
+// Execution transport interface
+export * from "./execution-transport.js";
+
+// Cancellation
+export * from "./cancellation.js";
+
+// Execution events
+export * from "./execution-events.js";
+
+// Retry
+export * from "./retry.js";

@@ -226,6 +226,14 @@ export interface LLMToolCallOptions extends LLMOptions {
 export interface LLMToolCallResponse extends LLMResponse {
   /** Tool calls requested by LLM (if any) */
   toolCalls?: LLMToolCall[];
+  /**
+   * Normalized stop reason from the LLM provider.
+   * - 'end_turn': model finished naturally
+   * - 'tool_use': model requested tool calls
+   * - 'max_tokens': hit token limit
+   * Provider-specific values may also appear as-is.
+   */
+  stopReason?: string;
 }
 
 /**

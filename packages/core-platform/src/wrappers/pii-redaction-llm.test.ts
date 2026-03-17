@@ -32,7 +32,7 @@ describe('PIIRedactionLLM', () => {
 
       await wrapper.complete('Send email to john@example.com');
 
-      const calledPrompt = (mockLLM.complete as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const calledPrompt = (mockLLM.complete as ReturnType<typeof vi.fn>).mock.calls[0]![0];
       expect(calledPrompt).not.toContain('john@example.com');
       expect(calledPrompt).toContain('[PII_001]');
     });
@@ -57,7 +57,7 @@ describe('PIIRedactionLLM', () => {
 
       await wrapper.complete('Hello world');
 
-      const calledPrompt = (mockLLM.complete as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const calledPrompt = (mockLLM.complete as ReturnType<typeof vi.fn>).mock.calls[0]![0];
       expect(calledPrompt).toBe('Hello world');
     });
 
@@ -102,13 +102,13 @@ describe('PIIRedactionLLM', () => {
       });
 
       // Messages sent to LLM should be redacted
-      const sentMessages = (mockLLM.chatWithTools as ReturnType<typeof vi.fn>).mock.calls[0][0];
-      expect(sentMessages[0].content).not.toContain('john@example.com');
-      expect(sentMessages[0].content).toContain('[PII_001]');
+      const sentMessages = (mockLLM.chatWithTools as ReturnType<typeof vi.fn>).mock.calls[0]![0] as LLMMessage[];
+      expect(sentMessages[0]!.content).not.toContain('john@example.com');
+      expect(sentMessages[0]!.content).toContain('[PII_001]');
 
       // Response should have PII restored
       expect(response.content).toBe('I found john@example.com in the database');
-      expect((response.toolCalls![0].input as any).query).toBe('john@example.com');
+      expect((response.toolCalls![0]!.input as any).query).toBe('john@example.com');
     });
 
     it('should use consistent placeholders across messages', async () => {
@@ -131,12 +131,12 @@ describe('PIIRedactionLLM', () => {
         tools: [{ name: 't', description: 'd', inputSchema: {} }],
       });
 
-      const sent = (mockLLM.chatWithTools as ReturnType<typeof vi.fn>).mock.calls[0][0] as LLMMessage[];
+      const sent = (mockLLM.chatWithTools as ReturnType<typeof vi.fn>).mock.calls[0]![0] as LLMMessage[];
       // All three messages should use the same placeholder for the same email
       const placeholder = '[PII_001]';
-      expect(sent[0].content).toContain(placeholder);
-      expect(sent[1].content).toContain(placeholder);
-      expect(sent[2].content).toContain(placeholder);
+      expect(sent[0]!.content).toContain(placeholder);
+      expect(sent[1]!.content).toContain(placeholder);
+      expect(sent[2]!.content).toContain(placeholder);
     });
 
     it('should throw if underlying LLM does not support chatWithTools', async () => {
@@ -173,7 +173,7 @@ describe('PIIRedactionLLM', () => {
       expect(full).toContain('john@example.com');
 
       // Verify prompt was redacted
-      const calledPrompt = (mockLLM.stream as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const calledPrompt = (mockLLM.stream as ReturnType<typeof vi.fn>).mock.calls[0]![0];
       expect(calledPrompt).not.toContain('john@example.com');
     });
 
@@ -224,7 +224,7 @@ describe('PIIRedactionLLM', () => {
         systemPrompt: 'User email is admin@corp.com',
       });
 
-      const calledOptions = (mockLLM.complete as ReturnType<typeof vi.fn>).mock.calls[0][1];
+      const calledOptions = (mockLLM.complete as ReturnType<typeof vi.fn>).mock.calls[0]![1];
       expect(calledOptions.systemPrompt).not.toContain('admin@corp.com');
       expect(calledOptions.systemPrompt).toContain('[PII_001]');
     });

@@ -50,6 +50,33 @@ export interface EnvironmentEndpoint {
 }
 
 /**
+ * Request to reserve an environment slot (phase 1 of two-phase provisioning).
+ */
+export interface ReserveEnvironmentRequest {
+  namespace?: string;
+  runId?: string;
+  ttlMs?: number;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Result of a successful reservation (phase 1).
+ */
+export interface ReservedEnvironment {
+  environmentId: string;
+}
+
+/**
+ * Request to start a reserved environment (phase 2 of two-phase provisioning).
+ */
+export interface StartEnvironmentRequest {
+  image?: string;
+  workspacePath?: string;
+  env?: Record<string, string>;
+  metadata?: Record<string, unknown>;
+}
+
+/**
  * Environment creation request.
  */
 export interface CreateEnvironmentRequest {
@@ -128,6 +155,18 @@ export interface IEnvironmentProvider {
    * Must be idempotent.
    */
   destroy(environmentId: string, reason?: string): Promise<void>;
+
+  /**
+   * Reserve an environment slot before starting (two-phase provisioning).
+   * Optional — only providers that support explicit reservation need to implement this.
+   */
+  reserve?(request: ReserveEnvironmentRequest): Promise<ReservedEnvironment>;
+
+  /**
+   * Start a reserved environment (second phase of two-phase provisioning).
+   * Optional — only providers that support explicit reservation need to implement this.
+   */
+  start?(environmentId: string, request: StartEnvironmentRequest): Promise<EnvironmentDescriptor>;
 
   /**
    * Renew environment lease (if provider supports it).

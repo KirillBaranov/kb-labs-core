@@ -43,6 +43,9 @@ export interface SubprocessRunOptions {
 
   /** Output directory (optional, defaults to ${cwd}/.kb/output) */
   outdir?: string;
+
+  /** Callback for real-time log streaming */
+  onLog?: (entry: { level: string; message: string; stream: 'stdout' | 'stderr'; lineNo: number; timestamp: string; meta?: Record<string, unknown> }) => void;
 }
 
 /**

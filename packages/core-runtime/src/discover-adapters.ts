@@ -53,6 +53,39 @@ function isAdapterPackage(pkg: any): boolean {
 }
 
 /**
+ * Find the kb-labs-adapters/packages directory in the workspace.
+ * Reads .gitmodules to handle nested layout (infra/kb-labs-adapters)
+ * without hardcoding category directory names.
+ */
+async function _findAdaptersBase(cwd: string): Promise<string | null> {
+  // 1. Try .gitmodules — most reliable for nested monorepos
+  const gitmodulesPath = path.join(cwd, '.gitmodules');
+  try {
+    const content = await fs.readFile(gitmodulesPath, 'utf-8');
+    for (const match of content.matchAll(/^\s*path\s*=\s*(.+)$/gm)) {
+      const relPath = (match[1] ?? '').trim();
+      if (!relPath.endsWith('kb-labs-adapters')) continue;
+      const candidate = path.join(cwd, relPath, 'packages');
+      try {
+        await fs.access(candidate);
+        return candidate;
+      } catch { /* not built yet, but path is correct */ }
+      // Return even if packages/ doesn't exist yet — glob will just return empty
+      return candidate;
+    }
+  } catch { /* no .gitmodules */ }
+
+  // 2. Fallback: flat layout
+  const flat = path.join(cwd, 'kb-labs-adapters', 'packages');
+  try {
+    await fs.access(flat);
+    return flat;
+  } catch { /* not found */ }
+
+  return null;
+}
+
+/**
  * Discover adapters from workspace packages.
  * Scans kb-labs-adapters/packages/* and loads built adapters.
  *
@@ -71,14 +104,11 @@ function isAdapterPackage(pkg: any): boolean {
 export async function discoverAdapters(cwd: string): Promise<Map<string, DiscoveredAdapter>> {
   const discovered = new Map<string, DiscoveredAdapter>();
 
-  // Scan kb-labs-adapters/packages/*
-  const adaptersBase = path.join(cwd, 'kb-labs-adapters', 'packages');
-
-  try {
-    // Check if kb-labs-adapters exists
-    await fs.access(adaptersBase);
-  } catch {
-    // kb-labs-adapters not found, return empty map
+  // Locate kb-labs-adapters — supports both flat (kb-labs-adapters/) and
+  // nested (infra/kb-labs-adapters/, platform/kb-labs-adapters/, etc.) layouts.
+  // Read .gitmodules to find the actual path without hardcoding category dirs.
+  const adaptersBase = await _findAdaptersBase(cwd);
+  if (!adaptersBase) {
     return discovered;
   }
 
