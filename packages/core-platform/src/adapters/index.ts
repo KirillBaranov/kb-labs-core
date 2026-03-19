@@ -166,6 +166,7 @@ export type {
   WorkspaceMount,
   MaterializeWorkspaceRequest,
   WorkspaceDescriptor,
+  WorkspaceProgressEvent,
   AttachWorkspaceRequest,
   WorkspaceAttachment,
   WorkspaceStatusResult,

@@ -21,6 +21,19 @@ export interface WorkspaceMount {
   readOnly?: boolean;
 }
 
+/**
+ * Progress event emitted during workspace materialization.
+ * Any adapter can report lifecycle stages so hosts (workflow daemon, UI) can display progress.
+ */
+export interface WorkspaceProgressEvent {
+  /** Lifecycle stage identifier (e.g. 'worktree', 'submodules', 'dependencies') */
+  stage: string;
+  /** Human-readable message */
+  message: string;
+  /** Optional progress percentage 0-100 */
+  progress?: number;
+}
+
 export interface MaterializeWorkspaceRequest {
   workspaceId?: string;
   tenantId?: string;
@@ -28,6 +41,8 @@ export interface MaterializeWorkspaceRequest {
   sourceRef?: string;
   basePath?: string;
   metadata?: Record<string, unknown>;
+  /** Optional callback for lifecycle progress updates */
+  onProgress?: (event: WorkspaceProgressEvent) => void;
 }
 
 export interface WorkspaceDescriptor {
