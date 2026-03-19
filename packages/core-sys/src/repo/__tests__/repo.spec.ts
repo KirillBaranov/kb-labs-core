@@ -3,7 +3,7 @@ import { promises as fsp } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
-import { findRepoRoot } from '../repo'
+import { findRepoRoot, discoverSubRepos } from '../repo'
 
 async function mkd(prefix = 'kb-core-sys-repo-') {
   return fsp.mkdtemp(path.join(os.tmpdir(), prefix))
@@ -29,3 +29,37 @@ describe('findRepoRoot', () => {
 })
 
 
+describe('discoverSubRepos', () => {
+  it('parses .gitmodules and returns SubRepo objects', async () => {
+    const root = await mkd()
+    await fsp.writeFile(
+      path.join(root, '.gitmodules'),
+      '[submodule "my-plugin"]\n\tpath = plugins/my-plugin\n\turl = git@example.com\n',
+    )
+    await fsp.mkdir(path.join(root, 'plugins/my-plugin'), { recursive: true })
+
+    const repos = discoverSubRepos(root)
+    expect(repos).toHaveLength(1)
+    expect(repos[0]).toMatchObject({
+      path: 'plugins/my-plugin',
+      category: 'plugins',
+      name: 'my-plugin',
+    })
+    expect(repos[0]!.absolutePath).toBe(path.join(root, 'plugins/my-plugin'))
+  })
+
+  it('falls back to flat layout scan when .gitmodules is absent', async () => {
+    const root = await mkd()
+    await fsp.mkdir(path.join(root, 'my-sub/.git'), { recursive: true })
+
+    const repos = discoverSubRepos(root)
+    expect(repos).toHaveLength(1)
+    expect(repos[0]).toMatchObject({ path: 'my-sub', category: '', name: 'my-sub' })
+    expect(repos[0]!.absolutePath).toBe(path.join(root, 'my-sub'))
+  })
+
+  it('returns empty array when no sub-repos exist', async () => {
+    const root = await mkd()
+    expect(discoverSubRepos(root)).toEqual([])
+  })
+})

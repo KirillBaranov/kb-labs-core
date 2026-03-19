@@ -60,7 +60,7 @@ pnpm add @kb-labs/core-sys
 ```typescript
 import { createOutput } from '@kb-labs/core-sys/output';
 import { toAbsolute } from '@kb-labs/core-sys/fs';
-import { findRepoRoot } from '@kb-labs/core-sys/repo';
+import { findRepoRoot, discoverSubRepos } from '@kb-labs/core-sys/repo';
 
 // Output
 const out = createOutput({ verbosity: 'normal' });
@@ -71,6 +71,7 @@ const absPath = toAbsolute('/base', './relative');
 
 // Repository
 const repoRoot = await findRepoRoot();
+const subRepos = discoverSubRepos(repoRoot); // [{ path, category, name, absolutePath }]
 ```
 
 ## ✨ Features
@@ -89,6 +90,7 @@ const repoRoot = await findRepoRoot();
 ### Repository
 
 - **Repository Detection**: Find Git repository root
+- **Sub-repository Discovery**: Find all sub-repos with structured `path`, `category`, `name`, and `absolutePath` metadata
 
 ## 🔧 Configuration
 
