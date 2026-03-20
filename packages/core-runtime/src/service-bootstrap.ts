@@ -19,12 +19,17 @@ import path from 'node:path';
 import { findNearestConfig, readJsonWithDiagnostics } from '@kb-labs/core-config';
 import { initPlatform, resetPlatform } from './loader.js';
 import { platform, type PlatformLifecycleHooks, type PlatformLifecycleContext, type PlatformLifecyclePhase } from './container.js';
+import { isDisposable } from '@kb-labs/core-platform/adapters';
 import type { PlatformConfig } from './config.js';
+
 
 // ─── Module state ────────────────────────────────────────────────────────────
 
 let _initialized = false;
 const _registeredHooks = new Set<string>();
+/** Prevents duplicate SIGTERM/SIGINT handler registration across multiple createServiceBootstrap() calls. */
+let _signalHandlersRegistered = false;
+
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
@@ -51,6 +56,50 @@ function _resolvePlatformRoot(configPath: string): string {
   return path.basename(configDir) === '.kb' ? path.dirname(configDir) : configDir;
 }
 
+/**
+ * Register SIGTERM and SIGINT handlers that trigger platform.shutdown() exactly once.
+ *
+ * Uses process.once() so that a second signal received while shutdown is already
+ * in progress does not start a second shutdown sequence concurrently.
+ *
+ * The _signalHandlersRegistered module-level flag prevents duplicate registration
+ * across multiple createServiceBootstrap() calls (idempotent; reset by resetServiceBootstrap()).
+ *
+ * Shutdown sequence triggered here:
+ *   1. platform.shutdown() → emits 'beforeShutdown' lifecycle phase
+ *      (onBeforeShutdown hook logs which IDisposable adapters are about to be disposed)
+ *   2. platform.shutdown() → disposes all adapters in reverse load order
+ *      (container.ts lines 816–843: checks close() → dispose() → shutdown())
+ *   3. platform.shutdown() → emits 'shutdown' lifecycle phase
+ *      (onShutdown hook logs "Platform lifecycle shutdown")
+ *   4. process.exit(0)
+ */
+function _ensureSignalHandlers(appId: string): void {
+  if (_signalHandlersRegistered) { return; }
+  _signalHandlersRegistered = true;
+
+  const gracefulShutdown = async (signal: string): Promise<void> => {
+    process.stderr.write(`[${appId}:platform] Received ${signal}, shutting down gracefully...\n`);
+    try {
+      // platform.shutdown() handles the full disposal sequence internally:
+      // beforeShutdown hooks → adapter close/dispose → shutdown hooks.
+      await platform.shutdown();
+    } catch (err) {
+      process.stderr.write(
+        `[${appId}:platform] Shutdown error: ${err instanceof Error ? err.message : String(err)}\n`,
+      );
+    } finally {
+      process.exit(0);
+    }
+  };
+
+  // process.once() — NOT process.on() — so a second signal during an in-flight
+  // shutdown does not spawn a concurrent shutdown sequence.
+  process.once('SIGTERM', () => { void gracefulShutdown('SIGTERM'); });
+  process.once('SIGINT',  () => { void gracefulShutdown('SIGINT'); });
+}
+
+
 function _ensureHooksRegistered(appId: string): void {
   if (_registeredHooks.has(appId)) { return; }
 
@@ -61,7 +110,21 @@ function _ensureHooksRegistered(appId: string): void {
     onReady: (ctx: PlatformLifecycleContext) => {
       platform.logger.info('Platform lifecycle ready', { app: appId, durationMs: ctx.metadata?.durationMs });
     },
+    onBeforeShutdown: () => {
+      // This hook fires BEFORE adapters are disposed (container.ts line 767).
+      // Identify which adapters implement IDisposable so we can log them now,
+      // while they are still alive. The actual disposal happens in container.shutdown()
+      // between lines 816–843 — after all onBeforeShutdown hooks complete.
+      const disposableAdapters = platform.listAdapters().filter(
+        (key) => isDisposable(platform.getAdapter(key)),
+      );
+      platform.logger.info('Platform lifecycle beforeShutdown', {
+        app: appId,
+        disposableAdapters,
+      });
+    },
     onShutdown: () => {
+      // This hook fires AFTER all adapters have been disposed (container.ts line 846).
       platform.logger.info('Platform lifecycle shutdown', { app: appId });
     },
     onError: (error: unknown, phase: PlatformLifecyclePhase) => {
@@ -72,6 +135,7 @@ function _ensureHooksRegistered(appId: string): void {
   platform.registerLifecycleHooks(appId, hooks);
   _registeredHooks.add(appId);
 }
+
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
@@ -109,6 +173,11 @@ export async function createServiceBootstrap(
   const { appId, repoRoot, storeRawConfig = true, loadEnv = true } = options;
 
   _ensureHooksRegistered(appId);
+  // Register SIGTERM/SIGINT → platform.shutdown() once per process lifetime.
+  // Must be called after _ensureHooksRegistered so the onBeforeShutdown hook
+  // is already registered before the first signal can arrive.
+  _ensureSignalHandlers(appId);
+
 
   if (_initialized) {
     return platform;
@@ -179,8 +248,12 @@ export async function createServiceBootstrap(
 export function resetServiceBootstrap(): void {
   _initialized = false;
   _registeredHooks.clear();
+  // Reset signal handler flag so test suites calling resetServiceBootstrap()
+  // get a clean slate and can re-register handlers in subsequent bootstrap calls.
+  _signalHandlersRegistered = false;
   resetPlatform();
 }
+
 
 /**
  * Load .env file from the given directory into process.env.

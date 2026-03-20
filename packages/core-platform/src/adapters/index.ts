@@ -186,3 +186,11 @@ export type {
   SnapshotGarbageCollectResult,
   SnapshotProviderCapabilities,
 } from "../snapshot/snapshot-provider.js";
+
+// Disposable (graceful shutdown lifecycle)
+
+// Disposable (graceful shutdown lifecycle)
+// IDisposable: interface for adapters that must release OS resources on shutdown.
+// isDisposable: runtime type guard — plain export (not export type) so it survives to JS.
+export type { IDisposable } from "./disposable.js";
+export { isDisposable } from "./disposable.js";

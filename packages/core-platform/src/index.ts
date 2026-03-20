@@ -244,3 +244,16 @@ export type {
   TenantQuotas,
 } from './core/resources.js';
 export type { IPlatformAdapters } from './platform-adapters.js';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DISPOSABLE (graceful shutdown lifecycle)
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DISPOSABLE (graceful shutdown lifecycle)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// IDisposable is exported as `export type` (interface — type-only).
+// isDisposable is exported as a plain `export` (runtime function — must survive to JS),
+// following the same pattern as TIER_ORDER and TERMINAL_RUN_STATUSES above.
+export type { IDisposable } from './adapters/disposable.js';
+export { isDisposable } from './adapters/disposable.js';
