@@ -673,37 +673,25 @@ export class PlatformContainer {
 
   /**
    * Environment manager service.
+   * Returns undefined when not initialized (e.g., proxy/minimal platforms).
    */
-  get environmentManager(): EnvironmentManager {
-    if (!this._environmentManager) {
-      throw new Error(
-        'EnvironmentManager not initialized. Call initPlatform() first.'
-      );
-    }
+  get environmentManager(): EnvironmentManager | undefined {
     return this._environmentManager;
   }
 
   /**
    * Workspace manager service.
+   * Returns undefined when not initialized (e.g., proxy/minimal platforms).
    */
-  get workspaceManager(): WorkspaceManager {
-    if (!this._workspaceManager) {
-      throw new Error(
-        'WorkspaceManager not initialized. Call initPlatform() first.'
-      );
-    }
+  get workspaceManager(): WorkspaceManager | undefined {
     return this._workspaceManager;
   }
 
   /**
    * Snapshot manager service.
+   * Returns undefined when not initialized (e.g., proxy/minimal platforms).
    */
-  get snapshotManager(): SnapshotManager {
-    if (!this._snapshotManager) {
-      throw new Error(
-        'SnapshotManager not initialized. Call initPlatform() first.'
-      );
-    }
+  get snapshotManager(): SnapshotManager | undefined {
     return this._snapshotManager;
   }
 
