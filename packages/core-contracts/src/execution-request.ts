@@ -21,13 +21,49 @@ export interface ExecutionDescriptorCore {
 }
 
 /**
+ * Execution target type.
+ *
+ * - `platform` — execute on the platform (in-process or worker pool)
+ * - `workspace-agent` — execute on a connected Workspace Agent (near the code)
+ * - `environment` — execute in a specific provisioned environment (container)
+ *
+ * When `type` is omitted, RoutingBackend uses deployment-level routing config.
+ */
+export type ExecutionTargetType = 'platform' | 'workspace-agent' | 'environment';
+
+/**
+ * Host selection strategy for workspace-agent target.
+ *
+ * - `pinned` — specific hostId required, error if offline
+ * - `any-matching` — any host with matching capability + workspace
+ * - `prefer-local` — prefer hostType='local', fallback to cloud
+ * - `prefer-cloud` — prefer hostType='cloud', fallback to local
+ */
+export type HostSelectionStrategy = 'pinned' | 'any-matching' | 'prefer-local' | 'prefer-cloud';
+
+/**
  * Execution target affinity.
+ *
+ * Extended to support Workspace Agent routing (ADR-0052, ADR-0054).
+ * Backwards compatible: existing code using only `environmentId` continues to work.
  */
 export interface ExecutionTarget {
+  /** Target type. When omitted, resolved from routing config. */
+  type?: ExecutionTargetType;
+  /** Specific environment/container ID */
   environmentId?: string;
+  /** Logical workspace for routing to correct Workspace Agent */
   workspaceId?: string;
+  /** Namespace for multi-tenancy */
   namespace?: string;
+  /** Working directory override */
   workdir?: string;
+  /** Pin to specific host */
+  hostId?: string;
+  /** Host selection strategy (default: 'any-matching') */
+  hostSelection?: HostSelectionStrategy;
+  /** Repo fingerprint for affinity routing */
+  repoFingerprint?: string;
 }
 
 /**

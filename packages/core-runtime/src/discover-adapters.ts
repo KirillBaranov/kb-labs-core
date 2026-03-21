@@ -64,7 +64,7 @@ async function _findAdaptersBase(cwd: string): Promise<string | null> {
     const content = await fs.readFile(gitmodulesPath, 'utf-8');
     for (const match of content.matchAll(/^\s*path\s*=\s*(.+)$/gm)) {
       const relPath = (match[1] ?? '').trim();
-      if (!relPath.endsWith('kb-labs-adapters')) continue;
+      if (!relPath.endsWith('kb-labs-adapters')) { continue; }
       const candidate = path.join(cwd, relPath, 'packages');
       try {
         await fs.access(candidate);
