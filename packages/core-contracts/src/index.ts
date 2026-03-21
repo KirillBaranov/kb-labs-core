@@ -35,3 +35,6 @@ export * from "./execution-events.js";
 
 // Retry
 export * from "./retry.js";
+
+// Host resolution
+export * from "./host-resolver.js";

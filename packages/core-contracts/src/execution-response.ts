@@ -45,7 +45,8 @@ export type ExecutionErrorCode =
   | 'QUEUE_FULL'
   | 'ACQUIRE_TIMEOUT'
   | 'WORKER_CRASHED'
-  | 'WORKER_UNHEALTHY';
+  | 'WORKER_UNHEALTHY'
+  | 'NO_HOST_AVAILABLE';
 
 export interface ExecutionError {
   message: string;
