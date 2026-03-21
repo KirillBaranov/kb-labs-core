@@ -20,11 +20,11 @@ describe('findRepoRoot', () => {
     expect(found).toBe(root)
   })
 
-  it('falls back to FS root if no marker is found up the tree', async () => {
+  it('falls back to start directory if no marker is found up the tree', async () => {
     const start = await mkd()
     const found = await findRepoRoot(start)
-    // Implementation returns FS root when no markers are found
-    expect(found).toBe(path.parse(start).root)
+    // Implementation returns the start directory as fallback
+    expect(found).toBe(path.resolve(start))
   })
 })
 
