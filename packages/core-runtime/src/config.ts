@@ -166,6 +166,22 @@ export interface ExecutionConfig {
   };
 
   /**
+   * Workspace Agent routing options.
+   * When enabled, requests with target.type === 'workspace-agent' are dispatched
+   * to connected Workspace Agents via Gateway.
+   */
+  workspaceAgent?: {
+    /** Enable workspace-agent routing (default: false) */
+    enabled: boolean;
+    /** Gateway base URL (e.g., http://localhost:4000) */
+    gatewayUrl: string;
+    /** Internal secret for Gateway endpoints */
+    internalSecret: string;
+    /** Fallback when no agent available: 'local' (default) or 'error' */
+    fallback?: 'local' | 'error';
+  };
+
+  /**
    * Worker pool options (used when mode=worker-pool or auto-detected).
    */
   workerPool?: {

@@ -778,6 +778,62 @@ export async function initPlatform(
         platform.logger.info('ExecutionBackend initialized: container mode via Gateway', {
           dispatchUrl: containerCfg.gatewayDispatchUrl,
         });
+      } else if (execution.workspaceAgent?.enabled && execution.workspaceAgent.gatewayUrl) {
+        // ── Standard mode + Workspace Agent routing ──
+        // Local backend (in-process/worker-pool) with workspace-agent dispatch via Gateway.
+        const { createIsolatedExecutionBackend } = await import('@kb-labs/plugin-execution-factory');
+        const { GatewayHostResolver, GatewayDispatchTransport } = await import('@kb-labs/gateway-core');
+
+        const agentCfg = execution.workspaceAgent;
+        const hostResolver = new GatewayHostResolver({
+          gatewayUrl: agentCfg.gatewayUrl,
+          internalSecret: agentCfg.internalSecret,
+        });
+
+        const strictIsolation = {
+          // Container transport (unused here, but required by interface)
+          buildTransport(ctx: { runtimeHostId: string; namespaceId: string }) {
+            return new GatewayDispatchTransport({
+              dispatchEndpoint: `${agentCfg.gatewayUrl}/internal/dispatch`,
+              internalSecret: agentCfg.internalSecret,
+              runtimeHostId: ctx.runtimeHostId,
+              namespaceId: ctx.namespaceId,
+            });
+          },
+          hostResolver,
+          buildTransportForHost(hostId: string, namespaceId: string) {
+            return new GatewayDispatchTransport({
+              dispatchEndpoint: `${agentCfg.gatewayUrl}/internal/dispatch`,
+              internalSecret: agentCfg.internalSecret,
+              runtimeHostId: hostId,
+              namespaceId,
+            });
+          },
+          fallbackPolicy: agentCfg.fallback ?? 'local' as const,
+        };
+
+        const backend = createIsolatedExecutionBackend({
+          localBackend: {
+            platform,
+            mode: (execution.mode ?? 'auto') as 'auto' | 'in-process' | 'subprocess' | 'worker-pool',
+            uiProvider,
+            workerPool: execution.workerPool ? {
+              min: execution.workerPool.min,
+              max: execution.workerPool.max,
+              maxRequestsPerWorker: execution.workerPool.maxRequestsPerWorker,
+              maxUptimeMsPerWorker: execution.workerPool.maxUptimeMsPerWorker,
+              maxConcurrentPerPlugin: execution.workerPool.maxConcurrentPerPlugin,
+            } : undefined,
+          },
+          strictIsolation,
+        });
+
+        platform.initExecutionBackend(backend);
+
+        platform.logger.info('ExecutionBackend initialized: workspace-agent routing via Gateway', {
+          gatewayUrl: agentCfg.gatewayUrl,
+          fallback: agentCfg.fallback ?? 'local',
+        });
       } else {
         // ── Standard mode: in-process | worker-pool ──
         const { createExecutionBackend } = await import('@kb-labs/plugin-execution-factory');
