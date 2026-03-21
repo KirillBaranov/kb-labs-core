@@ -165,12 +165,12 @@ describe('initPlatform environment orchestration e2e', () => {
       expect(executeMock).toHaveBeenCalledTimes(1);
 
       const environmentId = run.environmentId!;
-      const cleaned = await platform.environmentManager.cleanupExpiredLeases(
+      const cleaned = await platform.environmentManager!.cleanupExpiredLeases(
         new Date(Date.now() + 5_000)
       );
       expect(cleaned).toBeGreaterThanOrEqual(1);
 
-      const status = await platform.environmentManager.getEnvironmentStatus(environmentId);
+      const status = await platform.environmentManager!.getEnvironmentStatus(environmentId);
       expect(status.status).toBe('terminated');
 
       const db = platform.getAdapter<ISQLDatabase>('sqlDatabase')!;

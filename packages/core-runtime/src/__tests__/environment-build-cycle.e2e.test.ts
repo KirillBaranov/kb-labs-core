@@ -141,7 +141,7 @@ describe('environment build cycle e2e', () => {
         ].join(' && '),
       ];
 
-      const env = await platform.environmentManager.createEnvironment({
+      const env = await platform.environmentManager!.createEnvironment({
         runId: 'run-env-build-e2e',
         templateId: 'env-build-demo',
         workspacePath: workspaceRoot,
@@ -149,12 +149,12 @@ describe('environment build cycle e2e', () => {
       });
 
       const environmentId = env.environmentId;
-      let status = await platform.environmentManager.getEnvironmentStatus(environmentId);
+      let status = await platform.environmentManager!.getEnvironmentStatus(environmentId);
       const deadline = Date.now() + 3 * 60 * 1000;
 
       while (status.status !== 'terminated' && status.status !== 'failed' && Date.now() < deadline) {
         await sleep(750);
-        status = await platform.environmentManager.getEnvironmentStatus(environmentId);
+        status = await platform.environmentManager!.getEnvironmentStatus(environmentId);
       }
 
       const inspectExitCode = execFileSync(
@@ -171,8 +171,8 @@ describe('environment build cycle e2e', () => {
       expect(Number(inspectExitCode)).toBe(0);
       expect(logs).toContain('kb env build demo 42');
 
-      await platform.environmentManager.destroyEnvironment(environmentId, 'e2e.complete');
-      const afterDestroy = await platform.environmentManager.getEnvironmentStatus(environmentId);
+      await platform.environmentManager!.destroyEnvironment(environmentId, 'e2e.complete');
+      const afterDestroy = await platform.environmentManager!.getEnvironmentStatus(environmentId);
       expect(afterDestroy.status).toBe('terminated');
     }
   );
