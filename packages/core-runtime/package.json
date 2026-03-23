@@ -30,7 +30,7 @@
     "@kb-labs/core-platform": "workspace:*",
     "@kb-labs/core-resource-broker": "workspace:*",
     "@kb-labs/llm-router": "workspace:*",
-    "@kb-labs/plugin-execution-factory": "workspace:*",
+    "@kb-labs/plugin-execution-factory": "link:../../../../infra/kb-labs-plugin/packages/plugin-execution-factory",
     "glob": "^11.0.0",
     "zod": "^4.1.5"
   },
@@ -38,7 +38,7 @@
     "@kb-labs/gateway-core": "workspace:*"
   },
   "devDependencies": {
-    "@kb-labs/devkit": "workspace:*",
+    "@kb-labs/devkit": "link:../../../../infra/kb-labs-devkit",
     "@types/node": "^24.3.3",
     "tsup": "^8.5.0",
     "typescript": "^5.6.3",

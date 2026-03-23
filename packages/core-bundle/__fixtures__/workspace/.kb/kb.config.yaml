@@ -1,0 +1,46 @@
+schemaVersion: "1.0"
+profiles:
+  - id: "default"
+    label: "Default Profile"
+    scopes:
+      - id: "root"
+        include: ["**/*"]
+        default: true
+    products:
+      ai-review:
+        maxFiles: 25
+        debug: true
+        rules:
+          - "custom-rules.yml"
+  - id: "production"
+    label: "Production Profile"
+    scopes:
+      - id: "root"
+        include: ["**/*"]
+        default: true
+    products:
+      ai-review:
+        maxFiles: 100
+        debug: false
+  - id: "testing"
+    label: "Testing Profile"
+    scopes:
+      - id: "root"
+        include: ["**/*"]
+        default: true
+products:
+  ai-review:
+    maxFiles: 50
+    debug: true
+  release:
+    version: "1.0.0"
+    prerelease: false
+policy:
+  overrides:
+    roles:
+      developer:
+        - "aiReview.run"
+        - "devkit.sync"
+      maintainer:
+        - "release.publish"
+        - "profiles.materialize"

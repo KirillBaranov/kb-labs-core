@@ -1,4 +1,9 @@
 packages:
-  - 'packages/*'
-  - 'apps/*'
-  - '../kb-labs-devkit'
+  - packages/*
+  - apps/*
+  - ../../infra/kb-labs-devkit
+  - ../../infra/kb-labs-plugin/../kb-labs-devkit
+  - ../../infra/kb-labs-plugin/packages/*
+  - ../../infra/kb-labs-plugin/packages/plugin-adapters/*
+  - ../kb-labs-shared/apps/*
+  - ../kb-labs-shared/packages/*

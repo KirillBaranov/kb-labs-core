@@ -81,17 +81,23 @@
       "@kb-labs/llm-router/*": [
         "packages/llm-router/src/*"
       ],
+      "@kb-labs/plugin-contracts": [
+        "../../infra/kb-labs-plugin/packages/plugin-contracts/src/index.ts"
+      ],
+      "@kb-labs/plugin-contracts/*": [
+        "../../infra/kb-labs-plugin/packages/plugin-contracts/src/*"
+      ],
       "@kb-labs/plugin-execution-factory": [
-        "../kb-labs-plugin/packages/plugin-execution-factory/src/index.ts"
+        "../../infra/kb-labs-plugin/packages/plugin-execution-factory/src/index.ts"
       ],
       "@kb-labs/plugin-execution-factory/*": [
-        "../kb-labs-plugin/packages/plugin-execution-factory/src/*"
+        "../../infra/kb-labs-plugin/packages/plugin-execution-factory/src/*"
       ],
       "@kb-labs/plugin-runtime": [
-        "../kb-labs-plugin/packages/plugin-runtime/src/index.ts"
+        "../../infra/kb-labs-plugin/packages/plugin-runtime/src/index.ts"
       ],
       "@kb-labs/plugin-runtime/*": [
-        "../kb-labs-plugin/packages/plugin-runtime/src/*"
+        "../../infra/kb-labs-plugin/packages/plugin-runtime/src/*"
       ],
       "@kb-labs/shared-cli-ui": [
         "../kb-labs-shared/packages/shared-cli-ui/src/index.ts"
