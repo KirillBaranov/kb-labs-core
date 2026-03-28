@@ -345,6 +345,19 @@ export class AdapterLoader {
     return adapters;
   }
 
+  private validateExtensionConnection(
+    target: unknown,
+    targetName: string,
+    hook: string,
+    method: string,
+    instance: unknown
+  ): string | null {
+    if (!target) { return `target adapter "${targetName}" not found`; }
+    if (typeof (target as any)[hook] !== 'function') { return `target "${targetName}" has no method "${hook}"`; }
+    if (typeof (instance as any)[method] !== 'function') { return `extension has no method "${method}"`; }
+    return null;
+  }
+
   /**
    * Connect extensions to core adapters.
    * Called after all adapters are loaded.
@@ -391,44 +404,25 @@ export class AdapterLoader {
     // Connect each extension
     for (const ext of extensions) {
       const { adapter: targetName, hook, method } = ext.manifest.extends!;
-
       const target = adapters.get(targetName);
-      if (!target) {
-        console.warn(
-          `[AdapterLoader] Extension "${ext.name}" cannot connect: target adapter "${targetName}" not found`
-        );
+
+      const problem = this.validateExtensionConnection(target, targetName, hook, method, ext.instance);
+      if (problem) {
+        console.warn(`[AdapterLoader] Extension "${ext.name}" cannot connect: ${problem}`);
         continue;
       }
 
-      // Check if target has hook method
-      if (typeof (target as any)[hook] !== 'function') {
-        console.warn(
-          `[AdapterLoader] Extension "${ext.name}" cannot connect: target "${targetName}" has no method "${hook}"`
-        );
-        continue;
-      }
-
-      // Check if extension has method
-      if (typeof (ext.instance as any)[method] !== 'function') {
-        console.warn(
-          `[AdapterLoader] Extension "${ext.name}" cannot connect: extension has no method "${method}"`
-        );
-        continue;
-      }
-
-      // Connect: target.hook(extension.method)
       try {
         const extensionMethod = (ext.instance as any)[method].bind(ext.instance);
         (target as any)[hook](extensionMethod);
 
-        console.log(
-          `[AdapterLoader] Connected extension "${ext.name}" to "${targetName}.${hook}" (priority: ${ext.priority})`
-        );
+        if (process.env.DEBUG || process.env.KB_LOG_LEVEL === 'debug') {
+          process.stderr.write(
+            `[AdapterLoader] Connected extension "${ext.name}" to "${targetName}.${hook}" (priority: ${ext.priority})\n`
+          );
+        }
       } catch (error) {
-        console.error(
-          `[AdapterLoader] Failed to connect extension "${ext.name}":`,
-          error
-        );
+        console.error(`[AdapterLoader] Failed to connect extension "${ext.name}":`, error);
       }
     }
   }

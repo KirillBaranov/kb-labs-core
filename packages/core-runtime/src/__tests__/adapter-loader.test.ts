@@ -487,4 +487,183 @@ describe('AdapterLoader', () => {
     // Should be called 3 times in priority order: ext1 (10), ext2 (5), ext3 (0)
     expect(mockLogger.onLog).toHaveBeenCalledTimes(3);
   });
+
+  describe('validateExtensionConnection (warning paths)', () => {
+    it('should warn and skip when target adapter is not in adapters map', () => {
+      const loader = new AdapterLoader();
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const graph = new DependencyGraph();
+      graph.addNode({
+        name: 'ext1',
+        manifest: {
+          manifestVersion: '1.0.0',
+          id: 'ext1',
+          name: 'Extension 1',
+          version: '1.0.0',
+          type: 'extension',
+          implements: 'IExt',
+          extends: { adapter: 'missing-adapter', hook: 'onLog', method: 'handle' },
+        },
+        module: {} as LoadedAdapterModule,
+        config: {},
+        requiredDeps: [],
+        optionalDeps: [],
+        inDegree: 0,
+      });
+
+      const ext = { handle: vi.fn() };
+      const adapters = new Map<string, unknown>();
+      adapters.set('ext1', ext);
+      // 'missing-adapter' intentionally absent
+
+      loader.connectExtensions(adapters, graph);
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('target adapter "missing-adapter" not found')
+      );
+      expect(ext.handle).not.toHaveBeenCalled();
+
+      warnSpy.mockRestore();
+    });
+
+    it('should warn and skip when target adapter has no hook method', () => {
+      const loader = new AdapterLoader();
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const graph = new DependencyGraph();
+      graph.addNode({
+        name: 'ext1',
+        manifest: {
+          manifestVersion: '1.0.0',
+          id: 'ext1',
+          name: 'Extension 1',
+          version: '1.0.0',
+          type: 'extension',
+          implements: 'IExt',
+          extends: { adapter: 'logger', hook: 'nonExistentHook', method: 'handle' },
+        },
+        module: {} as LoadedAdapterModule,
+        config: {},
+        requiredDeps: [],
+        optionalDeps: [],
+        inDegree: 0,
+      });
+
+      const logger = { onLog: vi.fn() }; // has onLog, but NOT nonExistentHook
+      const ext = { handle: vi.fn() };
+      const adapters = new Map<string, unknown>();
+      adapters.set('logger', logger);
+      adapters.set('ext1', ext);
+
+      loader.connectExtensions(adapters, graph);
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('target "logger" has no method "nonExistentHook"')
+      );
+      expect(ext.handle).not.toHaveBeenCalled();
+
+      warnSpy.mockRestore();
+    });
+
+    it('should warn and skip when extension instance has no method', () => {
+      const loader = new AdapterLoader();
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const graph = new DependencyGraph();
+      graph.addNode({
+        name: 'ext1',
+        manifest: {
+          manifestVersion: '1.0.0',
+          id: 'ext1',
+          name: 'Extension 1',
+          version: '1.0.0',
+          type: 'extension',
+          implements: 'IExt',
+          extends: { adapter: 'logger', hook: 'onLog', method: 'nonExistentMethod' },
+        },
+        module: {} as LoadedAdapterModule,
+        config: {},
+        requiredDeps: [],
+        optionalDeps: [],
+        inDegree: 0,
+      });
+
+      const logger = { onLog: vi.fn() };
+      const ext = { handle: vi.fn() }; // has handle, but NOT nonExistentMethod
+      const adapters = new Map<string, unknown>();
+      adapters.set('logger', logger);
+      adapters.set('ext1', ext);
+
+      loader.connectExtensions(adapters, graph);
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('extension has no method "nonExistentMethod"')
+      );
+      expect(logger.onLog).not.toHaveBeenCalled();
+
+      warnSpy.mockRestore();
+    });
+
+    it('should warn for invalid extension but still connect valid ones', () => {
+      const loader = new AdapterLoader();
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const graph = new DependencyGraph();
+
+      // Invalid: target missing
+      graph.addNode({
+        name: 'bad-ext',
+        manifest: {
+          manifestVersion: '1.0.0',
+          id: 'bad-ext',
+          name: 'Bad Extension',
+          version: '1.0.0',
+          type: 'extension',
+          implements: 'IExt',
+          extends: { adapter: 'missing', hook: 'onLog', method: 'handle' },
+        },
+        module: {} as LoadedAdapterModule,
+        config: {},
+        requiredDeps: [],
+        optionalDeps: [],
+        inDegree: 0,
+      });
+
+      // Valid extension
+      graph.addNode({
+        name: 'good-ext',
+        manifest: {
+          manifestVersion: '1.0.0',
+          id: 'good-ext',
+          name: 'Good Extension',
+          version: '1.0.0',
+          type: 'extension',
+          implements: 'IExt',
+          extends: { adapter: 'logger', hook: 'onLog', method: 'handle' },
+        },
+        module: {} as LoadedAdapterModule,
+        config: {},
+        requiredDeps: [],
+        optionalDeps: [],
+        inDegree: 0,
+      });
+
+      const logger = { onLog: vi.fn() };
+      const goodExt = { handle: vi.fn() };
+      const badExt = { handle: vi.fn() };
+      const adapters = new Map<string, unknown>();
+      adapters.set('logger', logger);
+      adapters.set('good-ext', goodExt);
+      adapters.set('bad-ext', badExt);
+
+      loader.connectExtensions(adapters, graph);
+
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"bad-ext"'));
+      expect(logger.onLog).toHaveBeenCalledTimes(1); // good-ext connected
+      expect(badExt.handle).not.toHaveBeenCalled();
+
+      warnSpy.mockRestore();
+    });
+  });
 });
