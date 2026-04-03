@@ -21,6 +21,12 @@
       "@kb-labs/core-contracts/*": [
         "packages/core-contracts/src/*"
       ],
+      "@kb-labs/core-discovery": [
+        "packages/core-discovery/src/index.ts"
+      ],
+      "@kb-labs/core-discovery/*": [
+        "packages/core-discovery/src/*"
+      ],
       "@kb-labs/core-ipc": [
         "packages/core-ipc/src/index.ts"
       ],
@@ -105,11 +111,11 @@
       "@kb-labs/shared-cli-ui/*": [
         "../kb-labs-shared/packages/shared-cli-ui/src/*"
       ],
-      "@kb-labs/shared-command-kit": [
-        "../kb-labs-shared/packages/shared-command-kit/src/index.ts"
+      "@kb-labs/shared-http": [
+        "../kb-labs-shared/packages/shared-http/src/index.ts"
       ],
-      "@kb-labs/shared-command-kit/*": [
-        "../kb-labs-shared/packages/shared-command-kit/src/*"
+      "@kb-labs/shared-http/*": [
+        "../kb-labs-shared/packages/shared-http/src/*"
       ]
     }
   }

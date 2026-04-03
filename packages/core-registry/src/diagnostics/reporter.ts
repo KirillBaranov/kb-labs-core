@@ -16,11 +16,11 @@ export function buildDiagnosticReport(
   let warnings = 0;
 
   for (const event of events) {
-    if (event.severity === 'error') errors++;
-    if (event.severity === 'warning') warnings++;
+    if (event.severity === 'error') {errors++;}
+    if (event.severity === 'warning') {warnings++;}
 
     const key = event.context?.pluginId ?? '__global__';
-    if (!byPlugin[key]) byPlugin[key] = [];
+    if (!byPlugin[key]) {byPlugin[key] = [];}
     byPlugin[key]!.push(event);
   }
 
@@ -37,6 +37,14 @@ export function buildDiagnosticReport(
   };
 }
 
+function formatEventLines(events: DiagnosticEvent[], lines: string[]): void {
+  for (const evt of events) {
+    const prefix = evt.severity === 'error' ? 'ERR' : evt.severity === 'warning' ? 'WRN' : evt.severity.toUpperCase().slice(0, 3);
+    lines.push(`  ${prefix} ${evt.code}: ${evt.message}`);
+    if (evt.remediation) {lines.push(`      Fix: ${evt.remediation}`);}
+  }
+}
+
 /**
  * Format a diagnostic report as a human-readable string.
  */
@@ -45,18 +53,14 @@ export function formatDiagnosticReport(report: DiagnosticReport): string {
   const { summary } = report;
 
   lines.push(`Registry Diagnostics: ${summary.loadedPlugins}/${summary.totalPlugins} plugins loaded`);
-  if (summary.errors > 0) lines.push(`  ${summary.errors} error(s)`);
-  if (summary.warnings > 0) lines.push(`  ${summary.warnings} warning(s)`);
+  if (summary.errors > 0) {lines.push(`  ${summary.errors} error(s)`);}
+  if (summary.warnings > 0) {lines.push(`  ${summary.warnings} warning(s)`);}
   lines.push('');
 
   for (const [pluginId, events] of Object.entries(report.byPlugin)) {
     const label = pluginId === '__global__' ? 'Global' : pluginId;
     lines.push(`[${label}]`);
-    for (const evt of events) {
-      const prefix = evt.severity === 'error' ? 'ERR' : evt.severity === 'warning' ? 'WRN' : evt.severity.toUpperCase().slice(0, 3);
-      lines.push(`  ${prefix} ${evt.code}: ${evt.message}`);
-      if (evt.remediation) lines.push(`      Fix: ${evt.remediation}`);
-    }
+    formatEventLines(events, lines);
     lines.push('');
   }
 

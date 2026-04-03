@@ -1,12 +1,17 @@
 /**
  * @module @kb-labs/core-registry/state/plugin-state
- * Plugin state management — .kb/plugins.json.
+ * Plugin state management backed by .kb/marketplace.lock.
+ * The `enabled` flag lives in marketplace.lock — single source of truth.
  * Moved from @kb-labs/cli-commands/registry/plugins-state.
  */
 
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import { createHash } from 'node:crypto';
+import {
+  enablePlugin as enableInLock,
+  disablePlugin as disableInLock,
+} from '@kb-labs/core-discovery';
 
 export interface PluginState {
   enabled: string[];
@@ -63,23 +68,31 @@ export async function savePluginsState(root: string, state: PluginState): Promis
 }
 
 export function isPluginEnabled(state: PluginState, packageName: string, defaultEnabled = false): boolean {
-  if (state.disabled.includes(packageName)) return false;
-  if (state.enabled.includes(packageName)) return true;
+  if (state.disabled.includes(packageName)) {return false;}
+  if (state.enabled.includes(packageName)) {return true;}
   return defaultEnabled;
 }
 
+/**
+ * Enable a plugin — sets `enabled: true` in marketplace.lock.
+ * Throws if the plugin is not registered in the lock.
+ */
 export async function enablePlugin(root: string, packageName: string): Promise<void> {
-  const state = await loadPluginsState(root);
-  if (!state.enabled.includes(packageName)) state.enabled.push(packageName);
-  state.disabled = state.disabled.filter(p => p !== packageName);
-  await savePluginsState(root, state);
+  const ok = await enableInLock(root, packageName);
+  if (!ok) {
+    throw new Error(`Plugin "${packageName}" is not registered in marketplace.lock — run "kb marketplace install ${packageName}" first`);
+  }
 }
 
+/**
+ * Disable a plugin — sets `enabled: false` in marketplace.lock.
+ * Throws if the plugin is not registered in the lock.
+ */
 export async function disablePlugin(root: string, packageName: string): Promise<void> {
-  const state = await loadPluginsState(root);
-  if (!state.disabled.includes(packageName)) state.disabled.push(packageName);
-  state.enabled = state.enabled.filter(p => p !== packageName);
-  await savePluginsState(root, state);
+  const ok = await disableInLock(root, packageName);
+  if (!ok) {
+    throw new Error(`Plugin "${packageName}" is not registered in marketplace.lock — run "kb marketplace install ${packageName}" first`);
+  }
 }
 
 export async function recordCrash(root: string, packageName: string): Promise<void> {

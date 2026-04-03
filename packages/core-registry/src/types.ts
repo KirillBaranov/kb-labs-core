@@ -8,7 +8,6 @@ import type { ICache } from '@kb-labs/core-platform/adapters';
 import type {
   EntityKind,
   EntitySignature,
-  DiscoveredPlugin,
   DiagnosticEvent,
 } from '@kb-labs/core-discovery';
 

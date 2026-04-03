@@ -6,7 +6,7 @@
  * replaced with platform ICache abstraction.
  */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { promises as fsPromises } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -19,6 +19,7 @@ const SNAPSHOT_DIR = ['.kb', 'cache'] as const;
 const SNAPSHOT_FILE = 'registry.json';
 const SNAPSHOT_BACKUP = 'registry.prev.json';
 const DEFAULT_TTL_MS = 60_000;
+const MARKETPLACE_LOCK_PATH = ['.kb', 'marketplace.lock'] as const;
 
 export interface SnapshotManagerOptions {
   root: string;
@@ -143,7 +144,7 @@ export class SnapshotManager {
   // -------------------------------------------------------------------------
 
   private readDisk(path: string): RegistrySnapshot | null {
-    if (!existsSync(path)) return null;
+    if (!existsSync(path)) {return null;}
     try {
       const raw = readFileSync(path, 'utf8');
       return this.normalize(JSON.parse(raw));
@@ -154,8 +155,21 @@ export class SnapshotManager {
 
   private markStaleness(snapshot: RegistrySnapshot): RegistrySnapshot {
     const expired = snapshot.expiresAt ? Date.now() > Date.parse(snapshot.expiresAt) : false;
-    if (snapshot.stale === expired) return snapshot;
-    return { ...snapshot, stale: expired, partial: snapshot.partial || expired };
+    const lockChanged = this.isLockNewerThanSnapshot(snapshot);
+    const stale = expired || lockChanged;
+    if (snapshot.stale === stale) {return snapshot;}
+    return { ...snapshot, stale, partial: snapshot.partial || stale };
+  }
+
+  private isLockNewerThanSnapshot(snapshot: RegistrySnapshot): boolean {
+    try {
+      const lockPath = join(this.root, ...MARKETPLACE_LOCK_PATH);
+      const lockMtime = statSync(lockPath).mtimeMs;
+      const snapshotTs = snapshot.ts ?? Date.parse(snapshot.generatedAt);
+      return lockMtime > snapshotTs;
+    } catch {
+      return false;
+    }
   }
 
   private normalize(raw: Partial<RegistrySnapshot>): RegistrySnapshot {
@@ -200,7 +214,7 @@ export class SnapshotManager {
   }
 
   private ensureIntegrity(snapshot: RegistrySnapshot): RegistrySnapshot {
-    const { checksum, checksumAlgorithm, previousChecksum, corrupted, ...rest } = snapshot;
+    const { checksum, checksumAlgorithm, previousChecksum: _previousChecksum, corrupted, ...rest } = snapshot;
     const computed = computeSnapshotChecksum(rest as SnapshotWithoutIntegrity);
     const matches = typeof checksum === 'string' && checksum.length > 0
       && (checksumAlgorithm ?? SNAPSHOT_CHECKSUM_ALGORITHM) === SNAPSHOT_CHECKSUM_ALGORITHM

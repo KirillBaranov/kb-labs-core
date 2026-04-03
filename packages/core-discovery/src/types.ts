@@ -48,7 +48,7 @@ export type EntityKind =
 // ---------------------------------------------------------------------------
 
 export interface MarketplaceLock {
-  schema: 'kb.marketplace/1';
+  schema: 'kb.marketplace/2';
   installed: Record<string, MarketplaceEntry>;
 }
 
@@ -65,8 +65,12 @@ export interface MarketplaceEntry {
   source: 'marketplace' | 'local';
   /** Platform-issued signature (optional, for verified packages) */
   signature?: EntitySignature;
-  /** Entity kinds this package provides (extracted from manifest) */
+  /** Primary entity kind — discriminator for filtering (e.g., 'plugin', 'adapter') */
+  primaryKind: EntityKind;
+  /** All entity kinds this package provides (extracted from manifest) */
   provides: EntityKind[];
+  /** Whether the entity is active (default: true) */
+  enabled?: boolean;
 }
 
 // ---------------------------------------------------------------------------

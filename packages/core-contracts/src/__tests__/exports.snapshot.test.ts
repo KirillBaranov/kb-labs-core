@@ -4,6 +4,7 @@ describe('core-contracts export surface snapshot', () => {
   it('matches entrypoint export keys', () => {
     const expectedSurface = [
       'ArtifactsConfig',
+      'CANONICAL_OBSERVABILITY_METRICS',
       'ExecuteOptions',
       'ExecutionDescriptorCore',
       'ExecutionError',
@@ -19,6 +20,9 @@ describe('core-contracts export surface snapshot', () => {
       'IExecutionBackend',
       'IPlatformGateway',
       'ISubprocessRunner',
+      'OBSERVABILITY_CAPABILITIES',
+      'OBSERVABILITY_CONTRACT_VERSION',
+      'OBSERVABILITY_SCHEMA',
       'RunResult',
       'WorkspaceConfig',
     ].sort();
@@ -26,6 +30,7 @@ describe('core-contracts export surface snapshot', () => {
     expect(expectedSurface).toMatchInlineSnapshot(`
       [
         "ArtifactsConfig",
+        "CANONICAL_OBSERVABILITY_METRICS",
         "ExecuteOptions",
         "ExecutionDescriptorCore",
         "ExecutionError",
@@ -41,6 +46,9 @@ describe('core-contracts export surface snapshot', () => {
         "IExecutionBackend",
         "IPlatformGateway",
         "ISubprocessRunner",
+        "OBSERVABILITY_CAPABILITIES",
+        "OBSERVABILITY_CONTRACT_VERSION",
+        "OBSERVABILITY_SCHEMA",
         "RunResult",
         "WorkspaceConfig",
       ]

@@ -10,7 +10,7 @@ import type { MarketplaceLock, MarketplaceEntry, EntityKind, EntitySignature } f
 import { DiagnosticCollector } from './diagnostics.js';
 
 const LOCK_FILE = '.kb/marketplace.lock';
-const SCHEMA_VERSION = 'kb.marketplace/1' as const;
+const SCHEMA_VERSION = 'kb.marketplace/2' as const;
 
 // ---------------------------------------------------------------------------
 // Read
@@ -139,6 +139,7 @@ export function createMarketplaceEntry(opts: {
   integrity: string;
   resolvedPath: string;
   source: 'marketplace' | 'local';
+  primaryKind: EntityKind;
   provides: EntityKind[];
   signature?: EntitySignature;
 }): MarketplaceEntry {
@@ -148,9 +149,50 @@ export function createMarketplaceEntry(opts: {
     resolvedPath: opts.resolvedPath,
     installedAt: new Date().toISOString(),
     source: opts.source,
+    primaryKind: opts.primaryKind,
     provides: opts.provides,
+    enabled: true,
     signature: opts.signature,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Enable / Disable
+// ---------------------------------------------------------------------------
+
+/**
+ * Set `enabled` on an entry in the marketplace lock.
+ * Returns false if the package is not found in the lock.
+ */
+async function setPluginEnabled(
+  root: string,
+  packageId: string,
+  enabled: boolean,
+): Promise<boolean> {
+  const diag = new DiagnosticCollector();
+  const existing = await readMarketplaceLock(root, diag);
+  if (!existing || !(packageId in existing.installed)) {
+    return false;
+  }
+  existing.installed[packageId]!.enabled = enabled;
+  await writeMarketplaceLock(root, existing);
+  return true;
+}
+
+/**
+ * Mark a plugin as enabled in the marketplace lock.
+ * Returns false if the package is not installed.
+ */
+export async function enablePlugin(root: string, packageId: string): Promise<boolean> {
+  return setPluginEnabled(root, packageId, true);
+}
+
+/**
+ * Mark a plugin as disabled in the marketplace lock.
+ * Returns false if the package is not installed.
+ */
+export async function disablePlugin(root: string, packageId: string): Promise<boolean> {
+  return setPluginEnabled(root, packageId, false);
 }
 
 // ---------------------------------------------------------------------------
@@ -158,7 +200,7 @@ export function createMarketplaceEntry(opts: {
 // ---------------------------------------------------------------------------
 
 function isValidLock(value: unknown): value is MarketplaceLock {
-  if (typeof value !== 'object' || value === null) return false;
+  if (typeof value !== 'object' || value === null) {return false;}
   const obj = value as Record<string, unknown>;
   return (
     obj.schema === SCHEMA_VERSION &&

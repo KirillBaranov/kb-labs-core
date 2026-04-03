@@ -70,7 +70,7 @@ describe('mergeOpenAPISpecs', () => {
 
   it('adds x-kb-plugin-id to each operation', () => {
     const spec = generateOpenAPISpec(makeManifest('@kb-labs/tagged', 1));
-    const merged = mergeOpenAPISpecs([spec]);
+    mergeOpenAPISpecs([spec]);
     // Single spec returns as-is, so test with 2
     const spec2 = generateOpenAPISpec(makeManifest('@kb-labs/other', 1));
     const merged2 = mergeOpenAPISpecs([spec, spec2]);

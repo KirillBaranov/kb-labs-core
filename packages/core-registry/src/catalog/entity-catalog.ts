@@ -36,7 +36,7 @@ export class EntityCatalog {
 
     for (const plugin of plugins) {
       const manifest = manifests.get(plugin.id);
-      if (!manifest) continue;
+      if (!manifest) {continue;}
 
       const entities = extractEntities(plugin, manifest, this.customExtractors);
 

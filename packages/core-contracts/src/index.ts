@@ -38,3 +38,11 @@ export * from "./retry.js";
 
 // Host resolution
 export * from "./host-resolver.js";
+
+// Observability
+export * from "./observability.js";
+export {
+  CANONICAL_SERVICE_LOG_FIELDS,
+  type CanonicalServiceLogField,
+  type ServiceLogCorrelationContext,
+} from "./observability.js";

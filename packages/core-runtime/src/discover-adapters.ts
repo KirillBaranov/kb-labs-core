@@ -1,15 +1,18 @@
 /**
  * @module @kb-labs/core-runtime/discover-adapters
- * Auto-discovery of adapters from workspace packages.
+ * Lock-based adapter discovery — reads from .kb/marketplace.lock.
  *
- * Similar to CLI plugin discovery, this scans kb-labs-adapters/packages/*
- * and loads adapters by file path (not package name).
+ * All adapters must be registered via `kb marketplace link` or `kb marketplace install`.
+ * No filesystem scanning.
  */
 
 import { promises as fs } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
-import { glob } from 'glob';
+import {
+  readMarketplaceLock,
+  DiagnosticCollector,
+} from '@kb-labs/core-discovery';
 
 /**
  * Discovered adapter info
@@ -26,18 +29,6 @@ export interface DiscoveredAdapter {
 }
 
 /**
- * Read package.json at given path
- */
-async function readPackageJson(pkgPath: string): Promise<any> {
-  try {
-    const content = await fs.readFile(pkgPath, 'utf8');
-    return JSON.parse(content);
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Load adapter module by file path (ESM import)
  */
 async function loadAdapterModule(distPath: string): Promise<any> {
@@ -46,113 +37,53 @@ async function loadAdapterModule(distPath: string): Promise<any> {
 }
 
 /**
- * Check if package is an adapter (has @kb-labs/adapters-* name)
- */
-function isAdapterPackage(pkg: any): boolean {
-  return pkg?.name?.startsWith('@kb-labs/adapters-');
-}
-
-/**
- * Find the kb-labs-adapters/packages directory in the workspace.
- * Reads .gitmodules to handle nested layout (infra/kb-labs-adapters)
- * without hardcoding category directory names.
- */
-async function _findAdaptersBase(cwd: string): Promise<string | null> {
-  // 1. Try .gitmodules — most reliable for nested monorepos
-  const gitmodulesPath = path.join(cwd, '.gitmodules');
-  try {
-    const content = await fs.readFile(gitmodulesPath, 'utf-8');
-    for (const match of content.matchAll(/^\s*path\s*=\s*(.+)$/gm)) {
-      const relPath = (match[1] ?? '').trim();
-      if (!relPath.endsWith('kb-labs-adapters')) { continue; }
-      const candidate = path.join(cwd, relPath, 'packages');
-      try {
-        await fs.access(candidate);
-        return candidate;
-      } catch { /* not built yet, but path is correct */ }
-      // Return even if packages/ doesn't exist yet — glob will just return empty
-      return candidate;
-    }
-  } catch { /* no .gitmodules */ }
-
-  // 2. Fallback: flat layout
-  const flat = path.join(cwd, 'kb-labs-adapters', 'packages');
-  try {
-    await fs.access(flat);
-    return flat;
-  } catch { /* not found */ }
-
-  return null;
-}
-
-/**
- * Discover adapters from workspace packages.
- * Scans kb-labs-adapters/packages/* and loads built adapters.
+ * Discover adapters from marketplace.lock.
+ * Reads entries with `primaryKind === 'adapter'` and loads their modules.
  *
  * @param cwd - Workspace root directory
  * @returns Map of package names to adapter info
- *
- * @example
- * ```typescript
- * const adapters = await discoverAdapters('/Users/kb-labs');
- * const openai = adapters.get('@kb-labs/adapters-openai');
- * if (openai) {
- *   const llm = openai.createAdapter({ model: 'gpt-4' });
- * }
- * ```
  */
 export async function discoverAdapters(cwd: string): Promise<Map<string, DiscoveredAdapter>> {
   const discovered = new Map<string, DiscoveredAdapter>();
+  const diag = new DiagnosticCollector();
+  const lock = await readMarketplaceLock(cwd, diag);
 
-  // Locate kb-labs-adapters — supports both flat (kb-labs-adapters/) and
-  // nested (infra/kb-labs-adapters/, platform/kb-labs-adapters/, etc.) layouts.
-  // Read .gitmodules to find the actual path without hardcoding category dirs.
-  const adaptersBase = await _findAdaptersBase(cwd);
-  if (!adaptersBase) {
+  if (!lock) {
     return discovered;
   }
 
-  // Find all package.json files
-  const pkgPattern = path.join(adaptersBase, '*/package.json');
-  const pkgFiles = await glob(pkgPattern, {
-    cwd: adaptersBase,
-    absolute: false,
-  });
+  for (const [pkgId, entry] of Object.entries(lock.installed)) {
+    if (entry.primaryKind !== 'adapter') {continue;}
+    if (entry.enabled === false) {continue;}
 
-  // Load each adapter package
-  for (const pkgFile of pkgFiles) {
-    const pkgPath = path.join(adaptersBase, pkgFile);
-    const pkgRoot = path.dirname(pkgPath);
-    const pkg = await readPackageJson(pkgPath);
+    const pkgRoot = path.resolve(cwd, entry.resolvedPath);
 
-    if (!pkg || !isAdapterPackage(pkg)) {
-      continue;
-    }
+    // Read main export path from package.json
+    let mainPath = 'dist/index.js';
+    try {
+      const pkgContent = await fs.readFile(path.join(pkgRoot, 'package.json'), 'utf-8');
+      const pkg = JSON.parse(pkgContent);
+      mainPath = pkg.main || mainPath;
+    } catch { /* use default */ }
 
-    // Find main export (dist/index.js)
-    const distPath = path.join(pkgRoot, pkg.main || 'dist/index.js');
+    const distPath = path.join(pkgRoot, mainPath);
 
     try {
-      // Check if dist exists (package must be built)
       await fs.access(distPath);
-
-      // Load module
       const module = await loadAdapterModule(distPath);
 
-      // Check for createAdapter export
       if (typeof module.createAdapter !== 'function') {
-        // Skip adapters without createAdapter export (e.g., pino-http is a helper, not an adapter)
         continue;
       }
 
-      discovered.set(pkg.name, {
-        packageName: pkg.name,
+      discovered.set(pkgId, {
+        packageName: pkgId,
         pkgRoot,
         createAdapter: module.createAdapter,
         module,
       });
     } catch {
-      // Silently skip adapters that fail to load (likely not built yet)
+      // Skip adapters that fail to load (not built yet)
     }
   }
 
@@ -160,64 +91,38 @@ export async function discoverAdapters(cwd: string): Promise<Map<string, Discove
 }
 
 /**
- * Resolve adapter path - tries discovery first, falls back to package name import.
+ * Resolve adapter path — reads from marketplace.lock, supports subpath exports.
  *
- * @param adapterPath - Package name or file path
+ * @param adapterPath - Package name or subpath (e.g., "@kb-labs/adapters-openai/embeddings")
  * @param cwd - Workspace root directory
  * @returns Adapter factory function
- *
- * @example
- * ```typescript
- * // Try to discover first (workspace)
- * const adapter = await resolveAdapter('@kb-labs/adapters-openai', cwd);
- *
- * // Falls back to dynamic import if not found in workspace
- * const adapter = await resolveAdapter('@kb-labs/adapters-openai', cwd);
- * ```
  */
 export async function resolveAdapter(
   adapterPath: string,
-  cwd: string
+  cwd: string,
 ): Promise<((config?: any) => any) | null> {
-  // Try workspace discovery first
   const discovered = await discoverAdapters(cwd);
 
   // Check for subpath exports (e.g., "@kb-labs/adapters-openai/embeddings")
-  const basePkgName = adapterPath.split('/').slice(0, 2).join('/'); // "@kb-labs/adapters-openai"
-  const subpath = adapterPath.includes('/') ? adapterPath.split('/').slice(2).join('/') : null; // "embeddings"
+  const basePkgName = adapterPath.split('/').slice(0, 2).join('/');
+  const subpath = adapterPath.includes('/')
+    ? adapterPath.split('/').slice(2).join('/')
+    : null;
 
   const adapter = discovered.get(basePkgName);
 
   if (adapter && subpath) {
-    // Load subpath export from workspace adapter
     const subpathFile = path.join(adapter.pkgRoot, 'dist', `${subpath}.js`);
     try {
       await fs.access(subpathFile);
       const module = await loadAdapterModule(subpathFile);
-      if (typeof module.createAdapter === 'function') {
-        return module.createAdapter;
-      }
-      if (typeof module.default === 'function') {
-        return module.default;
-      }
-    } catch {
-      // Silently skip subpath that fails to load
-    }
+      if (typeof module.createAdapter === 'function') {return module.createAdapter;}
+      if (typeof module.default === 'function') {return module.default;}
+    } catch { /* subpath not found */ }
   } else if (adapter) {
     return adapter.createAdapter;
   }
 
-  // Fallback: try dynamic import (for npm-installed adapters)
-  try {
-    const module = await import(adapterPath);
-    if (typeof module.createAdapter === 'function') {
-      return module.createAdapter;
-    }
-    if (typeof module.default === 'function') {
-      return module.default;
-    }
-    return null;
-  } catch {
-    return null;
-  }
+  // No fallback — all adapters must be registered in marketplace.lock
+  return null;
 }

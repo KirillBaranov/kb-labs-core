@@ -4,7 +4,7 @@
  */
 
 import { isManifestV3, type ManifestV3 } from '@kb-labs/plugin-contracts';
-import { DiagnosticCollector } from './diagnostics.js';
+import type { DiagnosticCollector } from './diagnostics.js';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 
@@ -37,11 +37,10 @@ async function safeImport<T = unknown>(
   });
 
   try {
-    const result = await Promise.race([
+    return await Promise.race([
       import(modulePath) as Promise<T>,
       timeoutPromise,
     ]);
-    return result;
   } finally {
     clearTimeout(timer!);
   }

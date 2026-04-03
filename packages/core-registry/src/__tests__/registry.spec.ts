@@ -83,7 +83,8 @@ describe('EntityRegistry', () => {
     lock.installed['@kb-labs/test'] = createMarketplaceEntry({
       version: '1.0.0', integrity,
       resolvedPath: './plugins/test',
-      source: 'local', provides: ['plugin', 'cli-command'],
+      source: 'local', primaryKind: 'plugin',
+      provides: ['plugin', 'cli-command'],
     });
     await writeMarketplaceLock(tmpDir, lock);
 
@@ -111,7 +112,8 @@ describe('EntityRegistry', () => {
     lock.installed['@kb-labs/multi'] = createMarketplaceEntry({
       version: '1.0.0', integrity,
       resolvedPath: './plugins/multi',
-      source: 'local', provides: ['plugin'],
+      source: 'local', primaryKind: 'plugin',
+      provides: ['plugin'],
     });
     await writeMarketplaceLock(tmpDir, lock);
 
@@ -134,7 +136,8 @@ describe('EntityRegistry', () => {
     lock.installed['@kb-labs/exact'] = createMarketplaceEntry({
       version: '1.0.0', integrity,
       resolvedPath: './plugins/exact',
-      source: 'local', provides: ['plugin'],
+      source: 'local', primaryKind: 'plugin',
+      provides: ['plugin'],
     });
     await writeMarketplaceLock(tmpDir, lock);
 
@@ -162,7 +165,8 @@ describe('EntityRegistry', () => {
     lock.installed['@kb-labs/snap'] = createMarketplaceEntry({
       version: '1.0.0', integrity,
       resolvedPath: './plugins/snap',
-      source: 'local', provides: ['plugin'],
+      source: 'local', primaryKind: 'plugin',
+      provides: ['plugin'],
     });
     await writeMarketplaceLock(tmpDir, lock);
 
@@ -189,7 +193,8 @@ describe('EntityRegistry', () => {
     lock.installed['@kb-labs/api'] = createMarketplaceEntry({
       version: '1.0.0', integrity,
       resolvedPath: './plugins/api',
-      source: 'local', provides: ['plugin'],
+      source: 'local', primaryKind: 'plugin',
+      provides: ['plugin'],
     });
     await writeMarketplaceLock(tmpDir, lock);
 
@@ -216,7 +221,7 @@ describe('EntityRegistry', () => {
       lock.installed[id] = createMarketplaceEntry({
         version: '1.0.0', integrity,
         resolvedPath: `./plugins/${id.replace('@kb-labs/', '')}`,
-        source: 'local', provides: ['plugin'],
+        source: 'local', primaryKind: 'plugin', provides: ['plugin'],
       });
     }
     await writeMarketplaceLock(tmpDir, lock);
@@ -237,7 +242,8 @@ describe('EntityRegistry', () => {
     lock.installed['@kb-labs/missing'] = createMarketplaceEntry({
       version: '1.0.0', integrity: 'sha256-x',
       resolvedPath: './nonexistent',
-      source: 'marketplace', provides: ['plugin'],
+      source: 'marketplace', primaryKind: 'plugin',
+      provides: ['plugin'],
     });
     await writeMarketplaceLock(tmpDir, lock);
 
@@ -266,7 +272,8 @@ describe('EntityRegistry', () => {
     lock.installed['@kb-labs/new'] = createMarketplaceEntry({
       version: '1.0.0', integrity,
       resolvedPath: './plugins/new',
-      source: 'local', provides: ['plugin'],
+      source: 'local', primaryKind: 'plugin',
+      provides: ['plugin'],
     });
     await writeMarketplaceLock(tmpDir, lock);
 

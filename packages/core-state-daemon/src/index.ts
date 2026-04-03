@@ -1,9 +1,8 @@
 /**
  * @module @kb-labs/core-state-daemon
- * State daemon server for persistent cross-invocation state and background jobs
+ * State daemon server for persistent cross-invocation state.
  */
 
 export { StateDaemonServer } from './server';
 export type { StateDaemonConfig } from './server';
-// export { JobsManager } from './jobs-manager'; // DISABLED: missing dependencies
-// export type { JobsManagerConfig } from './jobs-manager';
+export { bootstrap } from './bootstrap.js';

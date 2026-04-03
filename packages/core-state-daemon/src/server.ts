@@ -1,244 +1,319 @@
-/**
- * State daemon HTTP server
- */
-
-import { createServer, type Server, type IncomingMessage, type ServerResponse } from 'node:http';
+import Fastify, { type FastifyInstance } from 'fastify';
 import { InMemoryStateBroker } from '@kb-labs/core-state-broker';
-// import { JobsManager } from './jobs-manager'; // DISABLED: missing dependencies
+import type { ILogger } from '@kb-labs/core-platform';
+import {
+  createCorrelatedLogger,
+  HttpObservabilityCollector,
+  createServiceReadyResponse,
+  metricLine,
+  registerOpenAPI,
+} from '@kb-labs/shared-http';
+import type { ObservabilityCheck, ServiceHealthStatus } from '@kb-labs/core-contracts';
+import { randomUUID } from 'node:crypto';
 
 export interface StateDaemonConfig {
   port?: number;
   host?: string;
-  enableJobs?: boolean;
+  logger?: ILogger;
+}
+
+function createFallbackLogger(): ILogger {
+  const bindings: Record<string, unknown> = {};
+
+  const formatMeta = (meta?: Record<string, unknown>) => {
+    const combined = { ...bindings, ...(meta ?? {}) };
+    return Object.keys(combined).length > 0 ? ` ${JSON.stringify(combined)}` : '';
+  };
+
+  return {
+    info(message: string, meta?: Record<string, unknown>) {
+      console.log(`[INFO] ${message}${formatMeta(meta)}`);
+    },
+    warn(message: string, meta?: Record<string, unknown>) {
+      console.warn(`[WARN] ${message}${formatMeta(meta)}`);
+    },
+    error(message: string, error?: Error, meta?: Record<string, unknown>) {
+      const merged = error
+        ? { ...(meta ?? {}), error: { message: error.message, stack: error.stack } }
+        : meta;
+      console.error(`[ERROR] ${message}${formatMeta(merged)}`);
+    },
+    fatal(message: string, error?: Error, meta?: Record<string, unknown>) {
+      const merged = error
+        ? { ...(meta ?? {}), error: { message: error.message, stack: error.stack } }
+        : meta;
+      console.error(`[FATAL] ${message}${formatMeta(merged)}`);
+    },
+    debug(message: string, meta?: Record<string, unknown>) {
+      console.debug(`[DEBUG] ${message}${formatMeta(meta)}`);
+    },
+    trace(message: string, meta?: Record<string, unknown>) {
+      console.debug(`[TRACE] ${message}${formatMeta(meta)}`);
+    },
+    child(childBindings: Record<string, unknown>) {
+      const childLogger = createFallbackLogger();
+      return {
+        ...childLogger,
+        info(message: string, meta?: Record<string, unknown>) {
+          console.log(`[INFO] ${message}${formatMeta({ ...childBindings, ...(meta ?? {}) })}`);
+        },
+        warn(message: string, meta?: Record<string, unknown>) {
+          console.warn(`[WARN] ${message}${formatMeta({ ...childBindings, ...(meta ?? {}) })}`);
+        },
+        error(message: string, error?: Error, meta?: Record<string, unknown>) {
+          const merged = error
+            ? { ...childBindings, ...(meta ?? {}), error: { message: error.message, stack: error.stack } }
+            : { ...childBindings, ...(meta ?? {}) };
+          console.error(`[ERROR] ${message}${formatMeta(merged)}`);
+        },
+        fatal(message: string, error?: Error, meta?: Record<string, unknown>) {
+          const merged = error
+            ? { ...childBindings, ...(meta ?? {}), error: { message: error.message, stack: error.stack } }
+            : { ...childBindings, ...(meta ?? {}) };
+          console.error(`[FATAL] ${message}${formatMeta(merged)}`);
+        },
+        debug(message: string, meta?: Record<string, unknown>) {
+          console.debug(`[DEBUG] ${message}${formatMeta({ ...childBindings, ...(meta ?? {}) })}`);
+        },
+        trace(message: string, meta?: Record<string, unknown>) {
+          console.debug(`[TRACE] ${message}${formatMeta({ ...childBindings, ...(meta ?? {}) })}`);
+        },
+      };
+    },
+  };
 }
 
 export class StateDaemonServer {
-  private broker: InMemoryStateBroker;
-  private jobsManager: any | null = null; // DISABLED: JobsManager has missing dependencies
-  private server: Server | null = null;
+  private readonly broker = new InMemoryStateBroker();
+  private readonly observability = new HttpObservabilityCollector({
+    serviceId: 'state-daemon',
+    serviceType: 'state-daemon',
+    version: '1.2.0',
+    logsSource: 'state-daemon',
+  });
+  private readonly logger: ILogger;
+  private server: FastifyInstance | null = null;
   private isShuttingDown = false;
 
-  constructor(private config: StateDaemonConfig = {}) {
-    this.broker = new InMemoryStateBroker();
-
-    // Initialize jobs manager if enabled
-    // DISABLED: JobsManager has missing dependencies
-    // if (this.config.enableJobs !== false) {
-    //   const createLogger = (prefix: string = '[jobs]'): import('@kb-labs/core-platform').ILogger => ({
-    //     trace: (msg: string, meta?: Record<string, unknown>) => console.debug(prefix, '[trace]', msg, meta),
-    //     debug: (msg: string, meta?: Record<string, unknown>) => console.debug(prefix, msg, meta),
-    //     info: (msg: string, meta?: Record<string, unknown>) => console.log(prefix, msg, meta),
-    //     warn: (msg: string, meta?: Record<string, unknown>) => console.warn(prefix, msg, meta),
-    //     error: (msg: string, error?: Error, meta?: Record<string, unknown>) => console.error(prefix, msg, error, meta),
-    //     child: (bindings: Record<string, unknown>) => createLogger(`${prefix}:${JSON.stringify(bindings)}`),
-    //   });
-
-    //   this.jobsManager = new JobsManager({
-    //     logger: createLogger('[jobs]'),
-    //   });
-    // }
+  constructor(private readonly config: StateDaemonConfig = {}) {
+    this.logger = config.logger ?? createFallbackLogger();
   }
 
   async start(): Promise<void> {
     const port = this.config.port ?? 7777;
     const host = this.config.host ?? 'localhost';
 
-    // Initialize jobs manager if enabled
-    if (this.jobsManager) {
-      await this.jobsManager.initialize();
-    }
-
-    this.server = createServer((req, res) => this.handleRequest(req, res));
-
-    // Handle shutdown signals
-    process.on('SIGTERM', () => this.shutdown());
-    process.on('SIGINT', () => this.shutdown());
-
-    return new Promise((resolve, reject) => {
-      this.server!.listen(port, host, () => {
-        console.log(`State daemon listening on ${host}:${port}`);
-        if (this.jobsManager) {
-          console.log('Jobs manager enabled - HTTP endpoints available at /jobs');
-        }
-        resolve();
-      });
-
-      this.server!.on('error', reject);
+    const server = Fastify({
+      logger: false,
+      bodyLimit: 1048576,
     });
+
+    server.addHook('onRequest', async (request, reply) => {
+      const requestId = (request.headers['x-request-id'] as string | undefined) || randomUUID();
+      const traceId = (request.headers['x-trace-id'] as string | undefined) || randomUUID();
+
+      request.id = requestId;
+      reply.header('X-Request-Id', requestId);
+      reply.header('X-Trace-Id', traceId);
+
+      (request as any).kbLogger = createCorrelatedLogger(this.logger, {
+        serviceId: 'state-daemon',
+        logsSource: 'state-daemon',
+        layer: 'state-daemon',
+        service: 'request',
+        requestId,
+        traceId,
+        method: request.method,
+        url: request.url,
+        operation: 'http.request',
+      });
+      (request as any).kbLogger.info(`→ ${request.method.toUpperCase()} ${request.url}`);
+
+      if (request.method === 'OPTIONS') {
+        reply.code(204).send();
+      }
+    });
+    server.addHook('onResponse', async (request, reply) => {
+      const logger = (request as any).kbLogger as { info: (message: string, meta?: Record<string, unknown>) => void } | undefined;
+      if (!logger) {
+        return;
+      }
+
+      logger.info(`✓ ${request.method.toUpperCase()} ${request.url} ${reply.statusCode}`, {
+        statusCode: reply.statusCode,
+      });
+    });
+    server.addHook('onSend', async (_request, reply, payload) => {
+      reply.header('Access-Control-Allow-Origin', '*');
+      reply.header('Access-Control-Allow-Methods', 'GET, PUT, DELETE, POST, OPTIONS');
+      reply.header('Access-Control-Allow-Headers', 'Content-Type');
+      return payload;
+    });
+
+    await registerOpenAPI(server, {
+      title: 'KB Labs State Daemon',
+      description: 'State broker service for persistent cross-invocation state',
+      version: '1.2.0',
+      servers: [{ url: `http://${host}:${port}`, description: 'Local dev' }],
+      ui: false,
+    });
+
+    this.observability.register(server);
+    this.registerRoutes(server);
+    this.observability.recordOperation('state.bootstrap', 0, 'ok');
+    this.server = server;
+
+    process.on('SIGTERM', () => void this.shutdown());
+    process.on('SIGINT', () => void this.shutdown());
+
+    await server.listen({ port, host });
   }
 
   async stop(): Promise<void> {
-    // Dispose jobs manager
-    if (this.jobsManager) {
-      await this.jobsManager.dispose();
-    }
-
     await this.broker.stop();
-
     if (this.server) {
-      return new Promise((resolve) => {
-        this.server!.close(() => resolve());
-      });
+      await this.server.close();
+      this.server = null;
     }
   }
 
   private async shutdown(): Promise<void> {
+    if (this.isShuttingDown) {
+      return;
+    }
     this.isShuttingDown = true;
-    console.log('Shutting down state daemon...');
+    this.logger.info('Shutting down state daemon...');
     await this.stop();
     process.exit(0);
   }
 
-  private async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, DELETE, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-    // Handle OPTIONS (preflight)
-    if (req.method === 'OPTIONS') {
-      res.writeHead(204);
-      res.end();
-      return;
-    }
-
-    const url = new URL(req.url!, `http://${req.headers.host}`);
-
-    try {
-      // GET /health
-      if (req.method === 'GET' && url.pathname === '/health') {
-        const health = await this.broker.getHealth();
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(health));
-        return;
-      }
-
-      // GET /stats
-      if (req.method === 'GET' && url.pathname === '/stats') {
-        const stats = await this.broker.getStats();
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(stats));
-        return;
-      }
-
-      // GET /state/:key
-      if (req.method === 'GET' && url.pathname.startsWith('/state/')) {
-        const key = decodeURIComponent(url.pathname.slice(7));
-        const value = await this.broker.get(key);
-
-        if (value === null) {
-          res.writeHead(404);
-          res.end();
-          return;
-        }
-
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(value));
-        return;
-      }
-
-      // PUT /state/:key
-      if (req.method === 'PUT' && url.pathname.startsWith('/state/')) {
-        const key = decodeURIComponent(url.pathname.slice(7));
-        const body = await this.readBody(req);
-        const { value, ttl } = JSON.parse(body);
-
-        await this.broker.set(key, value, ttl);
-
-        res.writeHead(204);
-        res.end();
-        return;
-      }
-
-      // DELETE /state/:key
-      if (req.method === 'DELETE' && url.pathname.startsWith('/state/')) {
-        const key = decodeURIComponent(url.pathname.slice(7));
-        await this.broker.delete(key);
-
-        res.writeHead(204);
-        res.end();
-        return;
-      }
-
-      // POST /state/clear
-      if (req.method === 'POST' && url.pathname === '/state/clear') {
-        const pattern = url.searchParams.get('pattern') || undefined;
-        await this.broker.clear(pattern);
-
-        res.writeHead(204);
-        res.end();
-        return;
-      }
-
-      // GET /jobs - List all registered jobs
-      if (req.method === 'GET' && url.pathname === '/jobs') {
-        if (!this.jobsManager) {
-          res.writeHead(503, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Jobs manager not enabled' }));
-          return;
-        }
-
-        const jobs = this.jobsManager.listJobs();
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ jobs }));
-        return;
-      }
-
-      // POST /jobs/:id/trigger - Manually trigger a job
-      if (req.method === 'POST' && url.pathname.startsWith('/jobs/') && url.pathname.endsWith('/trigger')) {
-        if (!this.jobsManager) {
-          res.writeHead(503, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Jobs manager not enabled' }));
-          return;
-        }
-
-        const id = decodeURIComponent(url.pathname.slice(6, -8)); // Remove "/jobs/" and "/trigger"
-
-        try {
-          await this.jobsManager.triggerJob(id);
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ ok: true, message: `Job ${id} triggered successfully` }));
-        } catch (error) {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({
-            error: error instanceof Error ? error.message : 'Job not found'
-          }));
-        }
-        return;
-      }
-
-      // GET /jobs/stats - Get jobs statistics
-      if (req.method === 'GET' && url.pathname === '/jobs/stats') {
-        if (!this.jobsManager) {
-          res.writeHead(503, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Jobs manager not enabled' }));
-          return;
-        }
-
-        const stats = this.jobsManager.getStats();
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(stats));
-        return;
-      }
-
-      // 404 Not Found
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Not Found' }));
-    } catch (error) {
-      console.error('Request error:', error);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
-        error: error instanceof Error ? error.message : 'Internal Server Error',
-      }));
-    }
+  private getBrokerHealth() {
+    return this.observability.observeOperation('state.health', () => this.broker.getHealth());
   }
 
-  private async readBody(req: IncomingMessage): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const chunks: Buffer[] = [];
-      req.on('data', (chunk) => chunks.push(chunk));
-      req.on('end', () => resolve(Buffer.concat(chunks).toString()));
-      req.on('error', reject);
+  private getBrokerStats() {
+    return this.observability.observeOperation('state.stats', () => this.broker.getStats());
+  }
+
+  private registerRoutes(server: FastifyInstance): void {
+    server.get('/health', async () => this.getBrokerHealth());
+
+    server.get('/ready', async () => {
+      const health = await this.getBrokerHealth();
+      const degraded = health.status !== 'ok';
+      return createServiceReadyResponse({
+        ready: health.status === 'ok',
+        status: degraded ? 'degraded' : 'ready',
+        reason: degraded ? `state_broker_${health.status}` : 'ready',
+        components: {
+          stateBroker: {
+            ready: health.status === 'ok',
+            status: health.status,
+          },
+        },
+      });
+    });
+
+    server.get('/stats', async () => this.getBrokerStats());
+
+    server.get('/metrics', async (_request, reply) => {
+      const health = await this.getBrokerHealth();
+      const stats = await this.getBrokerStats();
+      reply.header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+      return this.observability.renderPrometheusMetrics(
+        mapBrokerHealthStatus(health.status),
+        buildBrokerMetricLines(stats),
+      );
+    });
+
+    server.get('/observability/describe', async () => this.observability.buildDescribe());
+
+    server.get('/observability/health', async () => {
+      const health = await this.getBrokerHealth();
+      const stats = await this.getBrokerStats();
+
+      return this.observability.buildHealth({
+        status: mapBrokerHealthStatus(health.status),
+        checks: buildBrokerChecks(health),
+        meta: {
+          serviceHealthEndpoint: '/health',
+          statsEndpoint: '/stats',
+          totalEntries: stats.totalEntries,
+          totalSize: stats.totalSize,
+          hitRate: stats.hitRate,
+          missRate: stats.missRate,
+          evictions: stats.evictions,
+        },
+      });
+    });
+
+    server.get('/state/:key', async (request, reply) => {
+      const { key } = request.params as { key: string };
+      const value = await this.observability.observeOperation('state.get', () => this.broker.get(key));
+
+      if (value === null) {
+        reply.code(404);
+        return null;
+      }
+
+      reply.type('application/json');
+      return JSON.stringify(value);
+    });
+
+    server.put('/state/:key', async (request, reply) => {
+      const { key } = request.params as { key: string };
+      const { value, ttl } = request.body as { value: unknown; ttl?: number };
+      await this.observability.observeOperation('state.set', () => this.broker.set(key, value, ttl));
+      reply.code(204);
+      return null;
+    });
+
+    server.delete('/state/:key', async (request, reply) => {
+      const { key } = request.params as { key: string };
+      await this.observability.observeOperation('state.delete', () => this.broker.delete(key));
+      reply.code(204);
+      return null;
+    });
+
+    server.post('/state/clear', async (request, reply) => {
+      const pattern = (request.query as { pattern?: string }).pattern;
+      await this.observability.observeOperation('state.clear', () => this.broker.clear(pattern));
+      reply.code(204);
+      return null;
     });
   }
+}
+
+function mapBrokerHealthStatus(status: 'ok' | 'degraded' | 'shutting_down'): ServiceHealthStatus {
+  if (status === 'ok') {
+    return 'healthy';
+  }
+  if (status === 'degraded') {
+    return 'degraded';
+  }
+  return 'unhealthy';
+}
+
+function buildBrokerChecks(health: Awaited<ReturnType<InMemoryStateBroker['getHealth']>>): ObservabilityCheck[] {
+  return [
+    {
+      id: 'state-broker',
+      status: health.status === 'ok' ? 'ok' : health.status === 'degraded' ? 'warn' : 'error',
+      message: `Broker status is ${health.status}`,
+    },
+  ];
+}
+
+function buildBrokerMetricLines(stats: Awaited<ReturnType<InMemoryStateBroker['getStats']>>): string[] {
+  return [
+    '# HELP state_broker_entries_total Total entries stored by the state broker',
+    '# TYPE state_broker_entries_total gauge',
+    metricLine('state_broker_entries_total', stats.totalEntries),
+    '# HELP state_broker_size_bytes Estimated total size of state broker entries',
+    '# TYPE state_broker_size_bytes gauge',
+    metricLine('state_broker_size_bytes', stats.totalSize),
+    '# HELP state_broker_evictions_total Number of evicted state broker entries',
+    '# TYPE state_broker_evictions_total gauge',
+    metricLine('state_broker_evictions_total', stats.evictions),
+  ];
 }

@@ -100,7 +100,7 @@ const extractCrons: EntityExtractor = (plugin, manifest) =>
   }));
 
 const extractStudioWidgets: EntityExtractor = (plugin, manifest) =>
-  (manifest.studio?.widgets ?? []).map((w, i) => ({
+  (manifest.studio?.pages ?? []).map((w, i) => ({
     ref: { pluginId: plugin.id, kind: 'studio-widget' as const, entityId: (w as { id?: string }).id ?? `widget-${i}` },
     declaration: w,
     ...base(plugin),
@@ -113,12 +113,7 @@ const extractStudioMenus: EntityExtractor = (plugin, manifest) =>
     ...base(plugin),
   }));
 
-const extractStudioLayouts: EntityExtractor = (plugin, manifest) =>
-  (manifest.studio?.layouts ?? []).map((l, i) => ({
-    ref: { pluginId: plugin.id, kind: 'studio-layout' as const, entityId: (l as { id?: string }).id ?? `layout-${i}` },
-    declaration: l,
-    ...base(plugin),
-  }));
+const extractStudioLayouts: EntityExtractor = (_plugin, _manifest) => [];
 
 const BUILTIN_EXTRACTORS: EntityExtractor[] = [
   extractPlugin,

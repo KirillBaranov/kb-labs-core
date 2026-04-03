@@ -19,7 +19,6 @@ import {
 
 import {
   createRegistry,
-  type IEntityRegistry,
 } from '../index.js';
 
 // ---------------------------------------------------------------------------
@@ -96,7 +95,8 @@ async function registerPlugin(
     integrity,
     resolvedPath: path.relative(root, pluginDir),
     source,
-    provides,
+    primaryKind: (provides[0] ?? 'plugin') as any,
+    provides: provides as any,
   });
   await addToMarketplaceLock(root, id, entry);
 }
@@ -245,6 +245,7 @@ describe('Registry Integration', () => {
       integrity: 'sha256-fake',
       resolvedPath: './nonexistent',
       source: 'marketplace',
+      primaryKind: 'plugin',
       provides: ['plugin'],
     });
     // Merge with existing lock

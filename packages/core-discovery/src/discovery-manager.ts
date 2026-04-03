@@ -6,16 +6,15 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 import * as crypto from 'node:crypto';
-import { isManifestV3, type ManifestV3 } from '@kb-labs/plugin-contracts';
+import { type ManifestV3 } from '@kb-labs/plugin-contracts';
 import type {
   DiscoveryResult,
   DiscoveredPlugin,
-  MarketplaceLock,
   MarketplaceEntry,
   EntityKind,
 } from './types.js';
 import { DiagnosticCollector } from './diagnostics.js';
-import { readMarketplaceLock } from './marketplace-lock.js';
+import { readMarketplaceLock, writeMarketplaceLock } from './marketplace-lock.js';
 import { loadManifest } from './manifest-loader.js';
 
 // ---------------------------------------------------------------------------
@@ -90,6 +89,14 @@ export class DiscoveryManager {
     manifests: Map<string, ManifestV3>,
     diag: DiagnosticCollector,
   ): Promise<void> {
+    // Skip disabled entries
+    if (entry.enabled === false) {
+      diag.info('PLUGIN_DISABLED', `Plugin "${packageId}" is disabled — skipping`, {
+        pluginId: packageId,
+      });
+      return;
+    }
+
     // Resolve the package root (relative to workspace root)
     const packageRoot = path.resolve(this.root, entry.resolvedPath);
 
@@ -105,15 +112,21 @@ export class DiscoveryManager {
       return;
     }
 
-    // Verify integrity if enabled
+    // Verify integrity if enabled.
+    // For local-linked packages (source: 'local'), package.json changes frequently
+    // (devlink switches, version bumps) — auto-refresh the lock instead of blocking.
     if (this.verifyIntegrity && entry.integrity) {
-      const ok = await this.checkIntegrity(packageRoot, entry.integrity, packageId, diag);
-      if (!ok) return;
+      if (entry.source === 'local') {
+        await this.refreshLocalIntegrity(packageRoot, packageId, entry, diag);
+      } else {
+        const ok = await this.checkIntegrity(packageRoot, entry.integrity, packageId, diag);
+        if (!ok) {return;}
+      }
     }
 
     // Load manifest
     const manifest = await loadManifest(packageRoot, diag, this.importTimeoutMs);
-    if (!manifest) return;
+    if (!manifest) {return;}
 
     // Validate manifest ID matches expected package ID
     if (manifest.id !== packageId) {
@@ -163,6 +176,39 @@ export class DiscoveryManager {
   }
 
   /**
+   * For local-linked packages, silently refresh the integrity hash in the lock
+   * if it has changed. Local packages change frequently (devlink, version bumps)
+   * so blocking on mismatch would be a constant friction with no security benefit.
+   */
+  private async refreshLocalIntegrity(
+    packageRoot: string,
+    packageId: string,
+    entry: MarketplaceEntry,
+    diag: DiagnosticCollector,
+  ): Promise<void> {
+    try {
+      const pkgJsonPath = path.join(packageRoot, 'package.json');
+      const content = await fs.readFile(pkgJsonPath);
+      const computed = `sha256-${crypto.createHash('sha256').update(content).digest('base64')}`;
+
+      if (computed !== entry.integrity) {
+        // Update the lock in place
+        const lock = await readMarketplaceLock(this.root, diag);
+        if (lock?.installed[packageId]) {
+          lock.installed[packageId].integrity = computed;
+          await writeMarketplaceLock(this.root, lock);
+          diag.info('INTEGRITY_REFRESHED',
+            `Local package "${packageId}" integrity refreshed in lock`, {
+            pluginId: packageId,
+          });
+        }
+      }
+    } catch {
+      // Non-blocking — if we can't refresh, proceed anyway
+    }
+  }
+
+  /**
    * Verify the SRI integrity hash of a package by hashing its package.json.
    */
   private async checkIntegrity(
@@ -209,16 +255,15 @@ export class DiscoveryManager {
 export function extractEntityKinds(manifest: ManifestV3): EntityKind[] {
   const kinds: EntityKind[] = ['plugin']; // Every manifest is at least a plugin
 
-  if (manifest.cli?.commands?.length)               kinds.push('cli-command');
-  if (manifest.rest?.routes?.length)                 kinds.push('rest-route');
-  if (manifest.ws?.channels?.length)                 kinds.push('ws-channel');
-  if (manifest.workflows?.handlers?.length)          kinds.push('workflow');
-  if (manifest.webhooks?.handlers?.length)           kinds.push('webhook');
-  if (manifest.jobs?.handlers?.length)               kinds.push('job');
-  if (manifest.cron?.schedules?.length)              kinds.push('cron');
-  if (manifest.studio?.widgets?.length)              kinds.push('studio-widget');
-  if (manifest.studio?.menus?.length)                kinds.push('studio-menu');
-  if (manifest.studio?.layouts?.length)              kinds.push('studio-layout');
+  if (manifest.cli?.commands?.length)               {kinds.push('cli-command');}
+  if (manifest.rest?.routes?.length)                 {kinds.push('rest-route');}
+  if (manifest.ws?.channels?.length)                 {kinds.push('ws-channel');}
+  if (manifest.workflows?.handlers?.length)          {kinds.push('workflow');}
+  if (manifest.webhooks?.handlers?.length)           {kinds.push('webhook');}
+  if (manifest.jobs?.handlers?.length)               {kinds.push('job');}
+  if (manifest.cron?.schedules?.length)              {kinds.push('cron');}
+  if (manifest.studio?.pages?.length)                {kinds.push('studio-widget');}
+  if (manifest.studio?.menus?.length)                {kinds.push('studio-menu');}
 
   return kinds;
 }

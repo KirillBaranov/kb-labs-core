@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type {
   ArtifactsConfig,
+  CanonicalObservabilityMetric,
+  DiagnosisEvidence,
+  DiagnosisSuspect,
+  EvidenceBundle,
   ExecuteOptions,
   ExecutionDescriptorCore,
   ExecutionError,
@@ -16,7 +20,16 @@ import type {
   IExecutionBackend,
   IPlatformGateway,
   ISubprocessRunner,
+  ObservabilityCapability,
+  ObservabilityCheck,
   RunResult,
+  ServiceDependencyDescriptor,
+  ServiceHealthStatus,
+  ServiceObservabilityDescribe,
+  ServiceObservabilityHealth,
+  ServiceObservabilityState,
+  ServiceOperationSample,
+  ResourceSnapshot,
   WorkspaceConfig,
 } from '../index.js';
 
@@ -32,6 +45,8 @@ const REQUIRED_EXPORTS = [
   'ExecutionTarget',
   'WorkspaceConfig',
   'ArtifactsConfig',
+  'CANONICAL_OBSERVABILITY_METRICS',
+  'checkCanonicalObservabilityMetrics',
   'ExecutionMeta',
   'RunResult',
   'IExecutionBackend',
@@ -39,10 +54,19 @@ const REQUIRED_EXPORTS = [
   'ExecutionStats',
   'IPlatformGateway',
   'ISubprocessRunner',
+  'OBSERVABILITY_CAPABILITIES',
+  'OBSERVABILITY_CONTRACT_VERSION',
+  'OBSERVABILITY_SCHEMA',
+  'validateServiceObservabilityDescribe',
+  'validateServiceObservabilityHealth',
 ] as const;
 
 type _CompileTimeContractPresence = [
   ArtifactsConfig,
+  CanonicalObservabilityMetric,
+  DiagnosisEvidence,
+  DiagnosisSuspect,
+  EvidenceBundle,
   ExecuteOptions,
   ExecutionDescriptorCore,
   ExecutionError,
@@ -58,7 +82,16 @@ type _CompileTimeContractPresence = [
   IExecutionBackend,
   IPlatformGateway,
   ISubprocessRunner,
+  ObservabilityCapability,
+  ObservabilityCheck,
+  ResourceSnapshot,
   RunResult,
+  ServiceDependencyDescriptor,
+  ServiceHealthStatus,
+  ServiceObservabilityDescribe,
+  ServiceObservabilityHealth,
+  ServiceObservabilityState,
+  ServiceOperationSample,
   WorkspaceConfig,
 ];
 

@@ -19,6 +19,8 @@ export {
   removeFromMarketplaceLock,
   createEmptyLock,
   createMarketplaceEntry,
+  enablePlugin,
+  disablePlugin,
 } from './marketplace-lock.js';
 
 // Manifest loader

@@ -5,6 +5,11 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import {
+  checkCanonicalObservabilityMetrics,
+  validateServiceObservabilityDescribe,
+  validateServiceObservabilityHealth,
+} from '@kb-labs/core-contracts';
 import { StateDaemonServer } from '../server.js';
 
 describe('StateDaemonServer', () => {
@@ -13,7 +18,7 @@ describe('StateDaemonServer', () => {
   const baseURL = `http://localhost:${port}`;
 
   beforeAll(async () => {
-    server = new StateDaemonServer({ port, host: 'localhost', enableJobs: false });
+    server = new StateDaemonServer({ port, host: 'localhost' });
     await server.start();
   });
 
@@ -44,6 +49,34 @@ describe('StateDaemonServer', () => {
       expect(stats.totalEntries).toBeGreaterThanOrEqual(0);
       expect(stats.hitRate).toBeGreaterThanOrEqual(0);
       expect(stats.namespaces).toBeDefined();
+    });
+
+    it('should expose versioned observability documents', async () => {
+      const describeRes = await fetch(`${baseURL}/observability/describe`);
+      expect(describeRes.status).toBe(200);
+      const describe = await describeRes.json() as any;
+      expect(describe.serviceId).toBe('state-daemon');
+      expect(describe.contractVersion).toBe('1.0');
+      expect(validateServiceObservabilityDescribe(describe).ok).toBe(true);
+
+      const healthRes = await fetch(`${baseURL}/observability/health`);
+      expect(healthRes.status).toBe(200);
+      const observability = await healthRes.json() as any;
+      expect(observability.serviceId).toBe('state-daemon');
+      expect(observability.metricsEndpoint).toBe('/metrics');
+      expect(observability.snapshot).toBeDefined();
+      expect(validateServiceObservabilityHealth(observability).ok).toBe(true);
+      expect(observability.topOperations.map((entry: { operation: string }) => entry.operation)).toEqual(
+        expect.arrayContaining(['state.health', 'state.stats']),
+      );
+    });
+
+    it('should return prometheus metrics', async () => {
+      const res = await fetch(`${baseURL}/metrics`);
+      expect(res.status).toBe(200);
+      const body = await res.text();
+      expect(checkCanonicalObservabilityMetrics(body).missing).toEqual([]);
+      expect(body).toContain('state_broker_entries_total');
     });
   });
 
@@ -300,9 +333,9 @@ describe('StateDaemonServer', () => {
         body: 'invalid json{',
       });
 
-      expect(res.status).toBe(500);
+      expect(res.status).toBe(400);
       const body = await res.json() as any;
-      expect(body.error).toBeDefined();
+      expect(body.message ?? body.error).toBeDefined();
     });
   });
 

@@ -45,9 +45,9 @@ export class HealthAggregator {
     const components = plugins.map(plugin => {
       const manifest = this.deps.getManifest(plugin.id);
       const restRoutes = manifest?.rest?.routes?.length ?? 0;
-      const studioWidgets = manifest?.studio?.widgets?.length ?? 0;
-      if (restRoutes > 0) withRest++;
-      if (studioWidgets > 0) withStudio++;
+      const studioWidgets = manifest?.studio?.pages?.length ?? 0;
+      if (restRoutes > 0) {withRest++;}
+      if (studioWidgets > 0) {withStudio++;}
       return { id: plugin.id, version: plugin.version, restRoutes, studioWidgets };
     });
 
@@ -59,7 +59,7 @@ export class HealthAggregator {
       studio: process.env.KB_STUDIO_VERSION,
       ...(opts?.version ?? {}),
     };
-    if (!version.git && gitInfo) version.git = gitInfo;
+    if (!version.git && gitInfo) {version.git = gitInfo;}
 
     return {
       schema: 'kb.health/1',
@@ -90,7 +90,7 @@ export class HealthAggregator {
 let cachedGitInfo: GitInfo | null | undefined;
 
 function getGitInfo(root: string): GitInfo | undefined {
-  if (cachedGitInfo !== undefined) return cachedGitInfo ?? undefined;
+  if (cachedGitInfo !== undefined) {return cachedGitInfo ?? undefined;}
 
   const envSha = process.env.KB_GIT_SHA || process.env.CI_COMMIT_SHA;
   if (envSha) {
@@ -108,7 +108,7 @@ function getGitInfo(root: string): GitInfo | undefined {
     let sha = headContent;
     if (headContent.startsWith('ref:')) {
       const refPath = join(gitRoot, '.git', headContent.replace('ref:', '').trim());
-      if (existsSync(refPath)) sha = readFileSync(refPath, 'utf8').trim();
+      if (existsSync(refPath)) {sha = readFileSync(refPath, 'utf8').trim();}
     }
     let dirty = false;
     try {
@@ -124,7 +124,7 @@ function findGitRoot(start: string): string | null {
   let current = resolve(start);
   let prev = '';
   while (current !== prev) {
-    if (existsSync(join(current, '.git'))) return current;
+    if (existsSync(join(current, '.git'))) {return current;}
     prev = current;
     current = dirname(current);
   }

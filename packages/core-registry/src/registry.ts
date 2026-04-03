@@ -10,7 +10,7 @@ import { DiscoveryManager, type DiscoveredPlugin, type DiagnosticEvent } from '@
 import { EntityCatalog } from './catalog/entity-catalog.js';
 import { SnapshotManager } from './snapshot/snapshot-manager.js';
 import { HealthAggregator, resetGitInfoCache } from './health/health-aggregator.js';
-import { generateOpenAPISpec, mergeOpenAPISpecs } from './generators/openapi-spec.js';
+import { generateOpenAPISpec } from './generators/openapi-spec.js';
 import { generateStudioRegistry } from './generators/studio-registry.js';
 import { buildDiagnosticReport } from './diagnostics/reporter.js';
 import {
@@ -149,7 +149,7 @@ export class EntityRegistry implements IEntityRegistry {
 
   getOpenAPISpec(pluginId: string): OpenAPISpec | null {
     const manifest = this.manifests.get(pluginId);
-    if (!manifest?.rest?.routes?.length) return null;
+    if (!manifest?.rest?.routes?.length) {return null;}
     return generateOpenAPISpec(manifest);
   }
 

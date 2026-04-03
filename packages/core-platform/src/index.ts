@@ -109,6 +109,13 @@ export type {
 
 // Logging utilities
 export { createPrefixedLogger, SYSTEM_LOG_FIELDS } from './logging/prefixed-logger.js';
+export {
+  logDiagnosticEvent,
+  type DiagnosticLogEvent,
+  type DiagnosticLogLevel,
+  type DiagnosticDomain,
+  type DiagnosticOutcome,
+} from './logging/diagnostic-events.js';
 
 // Log reader adapter (read-only interface for querying logs)
 export type {

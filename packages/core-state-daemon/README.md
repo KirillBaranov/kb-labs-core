@@ -8,12 +8,12 @@ State Daemon provides a lightweight HTTP server that maintains persistent state 
 
 ### Features
 
-- **Zero external dependencies**: Pure Node.js HTTP server
+- **Fastify-based HTTP server**: Uniform service foundation across KB Labs
 - **In-memory storage**: Fast key-value operations (~1ms)
 - **Automatic TTL cleanup**: Background cleanup every 30s
 - **HTTP REST API**: Simple GET/PUT/DELETE endpoints
 - **Namespace isolation**: Per-plugin namespaces with statistics
-- **Health monitoring**: `/health` and `/stats` endpoints
+- **Observability contract**: `/health`, `/stats`, `/metrics`, `/observability/describe`, `/observability/health`
 - **Graceful shutdown**: SIGTERM/SIGINT handling
 
 ## Installation
@@ -58,7 +58,9 @@ await server.start();
 console.log('State daemon running on localhost:7777');
 
 // Graceful shutdown
-process.on('SIGTERM', () => server.shutdown());
+process.on('SIGTERM', () => {
+  void server.stop();
+});
 ```
 
 ## HTTP API
@@ -105,6 +107,30 @@ GET /stats
 ```
 
 **Response:** Same as health stats.
+
+### Metrics Snapshot
+
+```bash
+GET /metrics
+```
+
+Prometheus-compatible snapshot with canonical process and service metric families.
+
+### Observability Describe
+
+```bash
+GET /observability/describe
+```
+
+Returns the versioned KB Labs observability contract descriptor for the service.
+
+### Observability Health
+
+```bash
+GET /observability/health
+```
+
+Returns structured runtime diagnostics including checks, resource snapshot, top operations, and service state.
 
 ### Get Value
 

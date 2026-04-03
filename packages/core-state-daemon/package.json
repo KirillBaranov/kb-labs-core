@@ -30,11 +30,16 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@kb-labs/core-state-broker": "workspace:*",
-    "@kb-labs/core-runtime": "workspace:*",
+    "@fastify/swagger": ">=9.5.1",
+    "@fastify/swagger-ui": "^5.2.0",
+    "@kb-labs/core-contracts": "workspace:*",
     "@kb-labs/core-platform": "workspace:*",
-    "@kb-labs/plugin-runtime": "link:../../../../infra/kb-labs-plugin/packages/plugin-runtime",
-    "@kb-labs/shared-command-kit": "link:../../../kb-labs-shared/packages/shared-command-kit"
+    "@kb-labs/core-runtime": "workspace:*",
+    "@kb-labs/core-state-broker": "workspace:*",
+    "@kb-labs/core-sys": "workspace:*",
+    "@kb-labs/shared-http": "link:../../../kb-labs-shared/packages/shared-http",
+    "fastify": "^5.2.0",
+    "fastify-type-provider-zod": "^6.0.0"
   },
   "devDependencies": {
     "@kb-labs/devkit": "link:../../../../infra/kb-labs-devkit",

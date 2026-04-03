@@ -43,6 +43,7 @@ describe('DiscoveryManager', () => {
       integrity: 'sha256-abc',
       resolvedPath: './nonexistent',
       source: 'marketplace',
+      primaryKind: 'plugin',
       provides: ['plugin'],
     });
     await writeMarketplaceLock(tmpDir, lock);
@@ -85,6 +86,7 @@ describe('DiscoveryManager', () => {
       integrity,
       resolvedPath: './plugins/test-plugin',
       source: 'local',
+      primaryKind: 'plugin',
       provides: ['plugin', 'cli-command'],
     });
     await writeMarketplaceLock(tmpDir, lock);
@@ -119,6 +121,7 @@ describe('DiscoveryManager', () => {
       integrity: 'sha256-WRONG_HASH',
       resolvedPath: './plugins/bad-hash',
       source: 'marketplace',
+      primaryKind: 'plugin',
       provides: ['plugin'],
     });
     await writeMarketplaceLock(tmpDir, lock);
@@ -148,6 +151,7 @@ describe('DiscoveryManager', () => {
       integrity: 'sha256-WRONG',
       resolvedPath: './plugins/no-verify',
       source: 'marketplace',
+      primaryKind: 'plugin',
       provides: ['plugin'],
     });
     await writeMarketplaceLock(tmpDir, lock);
@@ -177,6 +181,7 @@ describe('DiscoveryManager', () => {
       integrity,
       resolvedPath: './plugins/unsigned',
       source: 'marketplace',
+      primaryKind: 'plugin',
       provides: ['plugin'],
     });
     await writeMarketplaceLock(tmpDir, lock);
@@ -211,7 +216,7 @@ describe('DiscoveryManager', () => {
       const integrity = `sha256-${crypto.createHash('sha256').update(pkgContent).digest('base64')}`;
       lock.installed[name] = createMarketplaceEntry({
         version: '1.0.0', integrity,
-        resolvedPath: `./plugins/${name}`, source: 'local', provides: ['plugin'],
+        resolvedPath: `./plugins/${name}`, source: 'local', primaryKind: 'plugin', provides: ['plugin'],
       });
     }
     await writeMarketplaceLock(tmpDir, lock);

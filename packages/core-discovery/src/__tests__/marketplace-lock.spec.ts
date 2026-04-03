@@ -63,7 +63,8 @@ describe('marketplace-lock', () => {
         integrity: 'sha256-abc',
         resolvedPath: './node_modules/@kb-labs/test',
         source: 'marketplace',
-        provides: ['plugin'],
+        primaryKind: 'plugin',
+      provides: ['plugin'],
       });
 
       await fs.mkdir(path.join(tmpDir, '.kb'), { recursive: true });
@@ -75,7 +76,7 @@ describe('marketplace-lock', () => {
 
       const result = await readMarketplaceLock(tmpDir, diag);
       expect(result).not.toBeNull();
-      expect(result!.schema).toBe('kb.marketplace/1');
+      expect(result!.schema).toBe('kb.marketplace/2');
       expect(result!.installed['@kb-labs/test']).toBeDefined();
       expect(result!.installed['@kb-labs/test']!.version).toBe('1.0.0');
       expect(diag.hasErrors()).toBe(false);
@@ -89,7 +90,7 @@ describe('marketplace-lock', () => {
 
       const content = await fs.readFile(path.join(tmpDir, '.kb', 'marketplace.lock'), 'utf-8');
       const parsed = JSON.parse(content);
-      expect(parsed.schema).toBe('kb.marketplace/1');
+      expect(parsed.schema).toBe('kb.marketplace/2');
       expect(parsed.installed).toEqual({});
     });
   });
@@ -101,7 +102,8 @@ describe('marketplace-lock', () => {
         integrity: 'sha256-xyz',
         resolvedPath: './node_modules/@kb-labs/new',
         source: 'marketplace',
-        provides: ['plugin', 'cli-command'],
+        primaryKind: 'plugin',
+      provides: ['plugin', 'cli-command'],
       });
 
       const result = await addToMarketplaceLock(tmpDir, '@kb-labs/new', entry);
@@ -117,11 +119,13 @@ describe('marketplace-lock', () => {
     it('adds to existing lock without overwriting others', async () => {
       const entry1 = createMarketplaceEntry({
         version: '1.0.0', integrity: 'sha256-a',
-        resolvedPath: './a', source: 'marketplace', provides: ['plugin'],
+        resolvedPath: './a', source: 'marketplace', primaryKind: 'plugin',
+      provides: ['plugin'],
       });
       const entry2 = createMarketplaceEntry({
         version: '2.0.0', integrity: 'sha256-b',
-        resolvedPath: './b', source: 'local', provides: ['plugin', 'workflow'],
+        resolvedPath: './b', source: 'local', primaryKind: 'plugin',
+      provides: ['plugin', 'workflow'],
       });
 
       await addToMarketplaceLock(tmpDir, '@kb-labs/a', entry1);
@@ -143,7 +147,8 @@ describe('marketplace-lock', () => {
     it('returns false if package not in lock', async () => {
       const entry = createMarketplaceEntry({
         version: '1.0.0', integrity: 'sha256-a',
-        resolvedPath: './a', source: 'marketplace', provides: ['plugin'],
+        resolvedPath: './a', source: 'marketplace', primaryKind: 'plugin',
+      provides: ['plugin'],
       });
       await addToMarketplaceLock(tmpDir, '@kb-labs/a', entry);
 
@@ -154,7 +159,8 @@ describe('marketplace-lock', () => {
     it('removes existing entry and persists', async () => {
       const entry = createMarketplaceEntry({
         version: '1.0.0', integrity: 'sha256-a',
-        resolvedPath: './a', source: 'marketplace', provides: ['plugin'],
+        resolvedPath: './a', source: 'marketplace', primaryKind: 'plugin',
+      provides: ['plugin'],
       });
       await addToMarketplaceLock(tmpDir, '@kb-labs/a', entry);
 
@@ -171,7 +177,8 @@ describe('marketplace-lock', () => {
       const before = new Date().toISOString();
       const entry = createMarketplaceEntry({
         version: '1.0.0', integrity: 'sha256-test',
-        resolvedPath: './test', source: 'local', provides: ['plugin'],
+        resolvedPath: './test', source: 'local', primaryKind: 'plugin',
+      provides: ['plugin'],
       });
       const after = new Date().toISOString();
 
@@ -180,10 +187,29 @@ describe('marketplace-lock', () => {
       expect(entry.source).toBe('local');
     });
 
+    it('sets primaryKind from opts', () => {
+      const entry = createMarketplaceEntry({
+        version: '1.0.0', integrity: 'sha256-test',
+        resolvedPath: './test', source: 'local', primaryKind: 'adapter',
+        provides: ['adapter'],
+      });
+      expect(entry.primaryKind).toBe('adapter');
+    });
+
+    it('defaults enabled to true', () => {
+      const entry = createMarketplaceEntry({
+        version: '1.0.0', integrity: 'sha256-test',
+        resolvedPath: './test', source: 'local', primaryKind: 'plugin',
+        provides: ['plugin'],
+      });
+      expect(entry.enabled).toBe(true);
+    });
+
     it('includes signature when provided', () => {
       const entry = createMarketplaceEntry({
         version: '1.0.0', integrity: 'sha256-test',
-        resolvedPath: './test', source: 'marketplace', provides: ['plugin'],
+        resolvedPath: './test', source: 'marketplace', primaryKind: 'plugin',
+      provides: ['plugin'],
         signature: {
           algorithm: 'ed25519',
           value: 'base64sig',
