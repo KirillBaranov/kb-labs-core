@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/core-ipc",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "IPC transport layer for KB Labs platform (Unix sockets, process IPC)",
   "type": "module",
   "main": "./dist/index.js",
