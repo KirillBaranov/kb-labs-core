@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/core-state-daemon",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "State daemon server for persistent cross-invocation state",
   "type": "module",
   "main": "./dist/index.js",
@@ -37,6 +37,7 @@
     "@kb-labs/core-runtime": "workspace:*",
     "@kb-labs/core-state-broker": "workspace:*",
     "@kb-labs/core-sys": "workspace:*",
+    "@kb-labs/plugin-contracts": "link:../../../../infra/kb-labs-plugin/packages/plugin-contracts",
     "@kb-labs/shared-http": "link:../../../kb-labs-shared/packages/shared-http",
     "fastify": "^5.2.0",
     "fastify-type-provider-zod": "^6.0.0"
