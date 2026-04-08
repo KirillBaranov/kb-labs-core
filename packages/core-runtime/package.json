@@ -1,6 +1,6 @@
 {
   "name": "@kb-labs/core-runtime",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "DI Container + Core Features Implementations for KB Labs Platform",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -30,6 +30,7 @@
     "@kb-labs/core-ipc": "workspace:*",
     "@kb-labs/core-platform": "workspace:*",
     "@kb-labs/core-resource-broker": "workspace:*",
+    "@kb-labs/core-workspace": "workspace:*",
     "@kb-labs/llm-router": "workspace:*",
     "@kb-labs/plugin-execution-factory": "link:../../../../infra/kb-labs-plugin/packages/plugin-execution-factory",
     "zod": "^4.1.5"
