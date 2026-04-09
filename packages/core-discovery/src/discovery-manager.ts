@@ -5,7 +5,6 @@
 
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
-import * as crypto from 'node:crypto';
 import { type ManifestV3 } from '@kb-labs/plugin-contracts';
 import type {
   DiscoveryResult,
@@ -16,6 +15,7 @@ import type {
 import { DiagnosticCollector } from './diagnostics.js';
 import { readMarketplaceLock, writeMarketplaceLock } from './marketplace-lock.js';
 import { loadManifest } from './manifest-loader.js';
+import { computePackageIntegrity } from './integrity.js';
 
 // ---------------------------------------------------------------------------
 // Options
@@ -187,9 +187,7 @@ export class DiscoveryManager {
     diag: DiagnosticCollector,
   ): Promise<void> {
     try {
-      const pkgJsonPath = path.join(packageRoot, 'package.json');
-      const content = await fs.readFile(pkgJsonPath);
-      const computed = `sha256-${crypto.createHash('sha256').update(content).digest('base64')}`;
+      const computed = await computePackageIntegrity(packageRoot);
 
       if (computed !== entry.integrity) {
         // Update the lock in place
@@ -218,16 +216,13 @@ export class DiscoveryManager {
     diag: DiagnosticCollector,
   ): Promise<boolean> {
     try {
-      const pkgJsonPath = path.join(packageRoot, 'package.json');
-      const content = await fs.readFile(pkgJsonPath);
-      const hash = crypto.createHash('sha256').update(content).digest('base64');
-      const computed = `sha256-${hash}`;
+      const computed = await computePackageIntegrity(packageRoot);
 
       if (computed !== expected) {
         diag.error('INTEGRITY_MISMATCH',
           `Integrity mismatch for "${pluginId}": expected ${expected}, got ${computed}`, {
           pluginId,
-          filePath: pkgJsonPath,
+          filePath: path.join(packageRoot, 'package.json'),
           remediation: `Re-install: kb marketplace install ${pluginId}`,
         });
         return false;

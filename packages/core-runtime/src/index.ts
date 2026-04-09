@@ -38,9 +38,34 @@ export { initPlatform, resetPlatform } from './loader.js';
 export { createServiceBootstrap, resetServiceBootstrap, loadEnvFromRoot } from './service-bootstrap.js';
 export type { ServiceBootstrapOptions } from './service-bootstrap.js';
 
+// Platform config loader (shared by CLI bootstrap and service bootstrap).
+// Resolves platformRoot/projectRoot and deep-merges platform defaults with
+// project overrides. See ./config-loader.ts for details.
+export { loadPlatformConfig } from './config-loader.js';
+export type {
+  LoadPlatformConfigOptions,
+  LoadPlatformConfigResult,
+} from './config-loader.js';
+
 // Adapter discovery (for testing/debugging)
 export { discoverAdapters, resolveAdapter } from './discover-adapters.js';
 export type { DiscoveredAdapter } from './discover-adapters.js';
+
+// Platform sync (reconcile .kb/marketplace.lock with filesystem)
+export { platformSync } from './platform-sync.js';
+export type {
+  PlatformSyncMode,
+  PlatformSyncOptions,
+  PlatformSyncResult,
+  PlatformSyncError,
+} from './platform-sync.js';
+export { createPnpmInstaller } from './platform-sync-installer.js';
+export type {
+  PackageInstaller,
+  PackageInstallRequest,
+  PackageInstallResult,
+  PnpmInstallerOptions,
+} from './platform-sync-installer.js';
 
 // Config types
 export type {

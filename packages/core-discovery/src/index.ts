@@ -26,6 +26,9 @@ export {
 // Manifest loader
 export { loadManifest } from './manifest-loader.js';
 
+// Integrity (SRI computation for marketplace entries)
+export { computePackageIntegrity, parseIntegrity } from './integrity.js';
+
 // Diagnostics
 export { DiagnosticCollector } from './diagnostics.js';
 

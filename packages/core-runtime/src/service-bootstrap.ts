@@ -16,11 +16,10 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { findNearestConfig, readJsonWithDiagnostics } from '@kb-labs/core-config';
 import { initPlatform, resetPlatform } from './loader.js';
 import { platform, type PlatformLifecycleHooks, type PlatformLifecycleContext, type PlatformLifecyclePhase } from './container.js';
 import { isDisposable } from '@kb-labs/core-platform/adapters';
-import type { PlatformConfig } from './config.js';
+import { loadPlatformConfig } from './config-loader.js';
 
 
 // ─── Module state ────────────────────────────────────────────────────────────
@@ -49,11 +48,6 @@ function _loadEnvFile(dir: string): void {
       if (key && !(key in process.env)) { process.env[key] = val; }
     }
   } catch { /* silently ignore — not critical for service operation */ }
-}
-
-function _resolvePlatformRoot(configPath: string): string {
-  const configDir = path.dirname(configPath);
-  return path.basename(configDir) === '.kb' ? path.dirname(configDir) : configDir;
 }
 
 /**
@@ -183,56 +177,49 @@ export async function createServiceBootstrap(
     return platform;
   }
 
-  // Step 1: load .env before any adapter instantiation (e.g. OPENAI_API_KEY)
-  if (loadEnv) {
-    _loadEnvFile(repoRoot);
-  }
-
   try {
-    const { path: configPath } = await findNearestConfig({
+    // Resolve roots and load layered config (platform defaults + project
+    // overrides) via the shared helper. loadPlatformConfig also handles .env
+    // loading, so we don't need to do it here — just pass loadEnvFile through.
+    const {
+      platformConfig,
+      rawConfig,
+      platformRoot,
+      projectRoot,
+      sources,
+    } = await loadPlatformConfig({
       startDir: repoRoot,
-      filenames: ['.kb/kb.config.json', 'kb.config.json'],
+      loadEnvFile: loadEnv,
     });
 
-    if (!configPath) {
-      process.stderr.write(`[${appId}:platform] No kb.config.json found, using NoOp adapters\n`);
-      await initPlatform({ adapters: {} }, repoRoot);
-      _initialized = true;
-      return platform;
+    if (storeRawConfig && rawConfig) {
+      (globalThis as Record<string, unknown>).__KB_RAW_CONFIG__ = rawConfig;
     }
 
-    const result = await readJsonWithDiagnostics<{ platform?: PlatformConfig }>(configPath);
-    const platformRoot = _resolvePlatformRoot(configPath);
-
-    if (!result.ok) {
-      process.stderr.write(`[${appId}:platform] Failed to read kb.config.json, using NoOp adapters\n`);
-      await initPlatform({ adapters: {} }, repoRoot);
-      _initialized = true;
-      return platform;
-    }
-
-    if (storeRawConfig) {
-      (globalThis as Record<string, unknown>).__KB_RAW_CONFIG__ = result.data;
-    }
-
-    const platformConfig = result.data.platform;
-    if (!platformConfig) {
-      process.stderr.write(`[${appId}:platform] No platform section in kb.config.json, using NoOp adapters\n`);
-      await initPlatform({ adapters: {} }, repoRoot);
-      _initialized = true;
-      return platform;
-    }
-
-    await initPlatform(platformConfig, platformRoot);
+    // Relative adapter paths (e.g. ".kb/database/kb.sqlite") must resolve
+    // against the project root, not the platform installation.
+    await initPlatform(platformConfig, projectRoot);
     _initialized = true;
+
+    const hasConfig =
+      !!sources.platformDefaults || !!sources.projectConfig;
+    if (!hasConfig) {
+      process.stderr.write(
+        `[${appId}:platform] No kb.config.json found, using NoOp adapters\n`,
+      );
+    }
 
     platform.logger.info('Platform adapters initialized', {
       app: appId,
       adapters: Object.keys(platformConfig.adapters ?? {}),
       platformRoot,
+      projectRoot,
+      sources,
     });
   } catch (error) {
-    process.stderr.write(`[${appId}:platform] Initialization failed, using NoOp adapters: ${error instanceof Error ? error.message : String(error)}\n`);
+    process.stderr.write(
+      `[${appId}:platform] Initialization failed, using NoOp adapters: ${error instanceof Error ? error.message : String(error)}\n`,
+    );
     await initPlatform({ adapters: {} }, repoRoot);
     _initialized = true;
   }

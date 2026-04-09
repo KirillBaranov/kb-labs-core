@@ -622,6 +622,44 @@ export async function initPlatform(
     // Load adapters with dependency resolution
     const loadedAdapters = await loader.loadAdapters(adapterConfigs, loadModule);
 
+    // Phase 7: loud failure when config declares adapters but nothing loaded.
+    //
+    // This catches the silent noop fallback that used to hide missing
+    // packages in Docker deployments: kb.config.json declared `adapters.llm`,
+    // but `.kb/marketplace.lock` was missing/empty, so `discoverAdapters()`
+    // returned an empty map, so nothing was registered, so `platform.llm`
+    // silently fell back to `new MockLLM()` at first use.
+    //
+    // We log loudly but do NOT throw — services should still boot in a
+    // degraded mode so operators can log in and diagnose. The message
+    // includes the exact command to fix it.
+    const declaredRoles = Object.keys(adapters).filter((name) => {
+      const value = (adapters as Record<string, unknown>)[name] as AdapterValue | undefined;
+      return normalizeAdapterValue(value).length > 0;
+    });
+
+    if (declaredRoles.length > 0 && loadedAdapters.size === 0) {
+      const lines = [
+        'Platform config declares adapters but none were discovered.',
+        `  Roles declared: ${declaredRoles.join(', ')}`,
+        '  This usually means .kb/marketplace.lock is missing or empty,',
+        '  or the listed packages are not installed on disk.',
+        '  Fix: run "kb platform provision --mode reconcile" during image build,',
+        '       or "kb marketplace install <package>" in development.',
+        '  Services will boot with NoOp adapters until this is resolved.',
+      ];
+      platform.logger.error(lines.join('\n'));
+    } else if (declaredRoles.length > 0) {
+      // Per-role check: declared but not actually loaded.
+      const missingRoles = declaredRoles.filter((name) => !loadedAdapters.has(name));
+      for (const role of missingRoles) {
+        platform.logger.warn(
+          `initPlatform: adapter role "${role}" was declared in config but no adapter was loaded — ` +
+          `NoOp fallback will be used. Check marketplace.lock and re-run "kb platform provision".`,
+        );
+      }
+    }
+
     // CRITICAL: Set analytics adapter FIRST (without wrapping) so wrapWithAnalytics() can use it
     if (loadedAdapters.has('analytics')) {
       platform.setAdapter('analytics', loadedAdapters.get('analytics') as any);
